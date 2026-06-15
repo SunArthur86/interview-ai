@@ -20,11 +20,21 @@ const State = {
 
 // ============ Category Config ============
 const CATEGORIES = {
-  'all':         { label: '全部', icon: '📚', color: '#0071e3', file: null },
-  'ai-basics':   { label: 'AI 基础', icon: '🧠', color: '#34c759', file: 'data/ai-basics.json' },
-  'ai-agent':    { label: 'AI Agent', icon: '🤖', color: '#af52de', file: 'data/ai-agent.json' },
-  'ai-harness':  { label: 'AI Harness', icon: '⚙️', color: '#ff9500', file: 'data/ai-harness.json' },
-  'llm-100':     { label: 'LLM面试100问', icon: '🔥', color: '#ff3b30', file: 'data/llm-100.json' },
+  'all':              { label: '全部', icon: '📚', color: '#0071e3', file: null },
+  'ai-basics':        { label: 'AI 基础', icon: '🧠', color: '#34c759', file: 'data/ai-basics.json' },
+  'ai-agent':         { label: 'AI Agent', icon: '🤖', color: '#af52de', file: 'data/ai-agent.json' },
+  'ai-harness':       { label: 'AI Harness', icon: '⚙️', color: '#ff9500', file: 'data/ai-harness.json' },
+  'llm-100':          { label: 'LLM面试100问', icon: '🔥', color: '#ff3b30', file: 'data/llm-100.json' },
+  'agent-concept':    { label: 'Agent基础概念', icon: '💡', color: '#5856d6', file: 'data/agent-concept.json' },
+  'agent-framework':  { label: '核心框架', icon: '⚙️', color: '#007aff', file: 'data/agent-framework.json' },
+  'agent-rag':        { label: 'RAG技术', icon: '🔍', color: '#34c759', file: 'data/agent-rag.json' },
+  'agent-tools':      { label: '工具调用', icon: '🔧', color: '#ff9500', file: 'data/agent-tools.json' },
+  'agent-memory':     { label: '记忆系统', icon: '💾', color: '#af52de', file: 'data/agent-memory.json' },
+  'agent-multi':      { label: '多智能体', icon: '🤝', color: '#ff2d55', file: 'data/agent-multi.json' },
+  'agent-llm':        { label: '大模型基础', icon: '🧪', color: '#5ac8fa', file: 'data/agent-llm.json' },
+  'agent-eng':        { label: '工程化实践', icon: '🏗️', color: '#ff6b35', file: 'data/agent-eng.json' },
+  'agent-prompt':     { label: 'Prompt工程', icon: '✏️', color: '#ffd60a', file: 'data/agent-prompt.json' },
+  'agent-interview-qa': { label: '企业面试问答', icon: '💼', color: '#1d1d1f', file: 'data/agent-interview-qa.json' },
 };
 
 // ============ Init ============

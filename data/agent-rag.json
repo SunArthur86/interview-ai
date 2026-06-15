@@ -1,0 +1,351 @@
+[
+  {
+    "id": "rag-001",
+    "category": "agent-rag",
+    "subcategory": "RAG技术",
+    "difficulty": "L1",
+    "tags": [
+      "RAG技术",
+      "RAG"
+    ],
+    "question": "简述 RAG 两步流水线（离线与在线）。",
+    "answer": "离线：解析→清洗→分块→嵌入→建索引；在线：Query（可选改写）→检索→（可选重排）\n→拼 Prompt→生成。追问：增量更新怎么做？（见 10.3）",
+    "follow_up": []
+  },
+  {
+    "id": "rag-002",
+    "category": "agent-rag",
+    "subcategory": "RAG技术",
+    "difficulty": "L1",
+    "tags": [
+      "RAG技术",
+      "微调",
+      "RAG"
+    ],
+    "question": "RAG 与微调如何配合？",
+    "answer": "微调改善 格式与领域表达，RAG 提供 可更新事实；事实类优先 RAG。追问：何时单独微\n调？（数据稳定且任务行为化）",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "rag-003",
+    "category": "agent-rag",
+    "subcategory": "RAG技术",
+    "difficulty": "L1",
+    "tags": [
+      "RAG技术"
+    ],
+    "question": "为什么需要 chunk_overlap？",
+    "answer": "防止关键句被切断在两块边界，检索时丢上下文；代价是存储增加。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "rag-004",
+    "category": "agent-rag",
+    "subcategory": "RAG技术",
+    "difficulty": "L1",
+    "tags": [
+      "RAG技术"
+    ],
+    "question": "RecursiveCharacterTextSplitter 的分隔符顺序为什么重要？",
+    "answer": "优先在更大语义单元（段落）断开，再退到句子、空格，减少碎片化。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "rag-005",
+    "category": "agent-rag",
+    "subcategory": "RAG技术",
+    "difficulty": "L1",
+    "tags": [
+      "RAG技术"
+    ],
+    "question": "语义分块比递归分块更好吗？",
+    "answer": "不一定；语义分块成本高、阈值敏感。应用数据 A/B 测试。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "rag-006",
+    "category": "agent-rag",
+    "subcategory": "RAG技术",
+    "difficulty": "L2",
+    "tags": [
+      "RAG技术"
+    ],
+    "question": "父子文档如何存储？",
+    "answer": "子块带 parent_id ，检索子块→映射父块文本再生成。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "rag-007",
+    "category": "agent-rag",
+    "subcategory": "RAG技术",
+    "difficulty": "L2",
+    "tags": [
+      "RAG技术",
+      "向量"
+    ],
+    "question": "Embedding 是否需要归一化？",
+    "answer": "若用 内积/余弦 且框架假设归一化向量，应归一化以稳定相似度。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "rag-008",
+    "category": "agent-rag",
+    "subcategory": "RAG技术",
+    "difficulty": "L2",
+    "tags": [
+      "RAG技术"
+    ],
+    "question": "FAISS IndexFlatIP 与 IndexHNSW 区别？",
+    "answer": "Flat 精确但慢；HNSW 近似快，适合大规模。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "rag-009",
+    "category": "agent-rag",
+    "subcategory": "RAG技术",
+    "difficulty": "L2",
+    "tags": [
+      "RAG技术"
+    ],
+    "question": "混合检索权重 alpha 怎么定？",
+    "answer": "验证集网格搜索；或 RRF 避免调权。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "rag-010",
+    "category": "agent-rag",
+    "subcategory": "RAG技术",
+    "difficulty": "L2",
+    "tags": [
+      "RAG技术"
+    ],
+    "question": "RRF 为什么鲁棒？",
+    "answer": "只用排名融合，规避不同路分数尺度问题。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "rag-011",
+    "category": "agent-rag",
+    "subcategory": "RAG技术",
+    "difficulty": "L2",
+    "tags": [
+      "RAG技术"
+    ],
+    "question": "HyDE 的风险如何缓解？",
+    "answer": "重排序、引用约束、拒答、对比多条检索结果。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "rag-012",
+    "category": "agent-rag",
+    "subcategory": "RAG技术",
+    "difficulty": "L2",
+    "tags": [
+      "RAG技术"
+    ],
+    "question": "BM25 在中文要不要分词？",
+    "answer": "依赖引擎；中文常需 分词或 n-gram，否则粒度不当影响效果。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "rag-013",
+    "category": "agent-rag",
+    "subcategory": "RAG技术",
+    "difficulty": "L3",
+    "tags": [
+      "RAG技术",
+      "向量"
+    ],
+    "question": "Cross-Encoder 为何不能替代向量索引？",
+    "answer": "需对 每个 doc 与 query 运行，复杂度高，无法对百万级全库实时扫描。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "rag-014",
+    "category": "agent-rag",
+    "subcategory": "RAG技术",
+    "difficulty": "L3",
+    "tags": [
+      "RAG技术"
+    ],
+    "question": "MMR 的 lambda 参数含义？",
+    "answer": "调节 相关性 vs 多样性；lambda 大更偏相关。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "rag-015",
+    "category": "agent-rag",
+    "subcategory": "RAG技术",
+    "difficulty": "L3",
+    "tags": [
+      "RAG技术",
+      "RAG"
+    ],
+    "question": "GraphRAG 解决普通 RAG 的什么痛点？",
+    "answer": "多跳关系与部分 全局聚合类 问题。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "rag-016",
+    "category": "agent-rag",
+    "subcategory": "RAG技术",
+    "difficulty": "L3",
+    "tags": [
+      "RAG技术",
+      "RAG"
+    ],
+    "question": "Agentic RAG 与一次性 RAG 差异？",
+    "answer": "多步工具决策与再检索，更灵活更高成本。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "rag-017",
+    "category": "agent-rag",
+    "subcategory": "RAG技术",
+    "difficulty": "L3",
+    "tags": [
+      "RAG技术",
+      "RAG"
+    ],
+    "question": "Self-RAG 核心思想？",
+    "answer": "生成中 自我评估 是否需要检索与证据是否充分。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "rag-018",
+    "category": "agent-rag",
+    "subcategory": "RAG技术",
+    "difficulty": "L3",
+    "tags": [
+      "RAG技术",
+      "RAG"
+    ],
+    "question": "Corrective RAG 触发条件？",
+    "answer": "检索置信度低或证据矛盾时 改查或换源。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "rag-019",
+    "category": "agent-rag",
+    "subcategory": "RAG技术",
+    "difficulty": "L3",
+    "tags": [
+      "RAG技术",
+      "RAG"
+    ],
+    "question": "RAGAS 的局限？",
+    "answer": "依赖裁判模型，可能有 偏好与盲区。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "rag-020",
+    "category": "agent-rag",
+    "subcategory": "RAG技术",
+    "difficulty": "L3",
+    "tags": [
+      "RAG技术",
+      "评估"
+    ],
+    "question": "如何做低成本在线评估？",
+    "answer": "采样 + 用户反馈（点赞/纠错）+ 弱监督信号（是否点击引用）。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "rag-021",
+    "category": "agent-rag",
+    "subcategory": "RAG技术",
+    "difficulty": "L4",
+    "tags": [
+      "RAG技术"
+    ],
+    "question": "索引频繁更新如何保持一致性？",
+    "answer": "版本号、双写切换、后台重建与灰度；读写分离。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "rag-022",
+    "category": "agent-rag",
+    "subcategory": "RAG技术",
+    "difficulty": "L4",
+    "tags": [
+      "RAG技术",
+      "Prompt",
+      "RAG"
+    ],
+    "question": "如何防止 Prompt 注入污染 RAG？",
+    "answer": "文档清洗、权限隔离、输出引用限制、检测异常指令模式。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "rag-023",
+    "category": "agent-rag",
+    "subcategory": "RAG技术",
+    "difficulty": "L4",
+    "tags": [
+      "RAG技术",
+      "RAG"
+    ],
+    "question": "长上下文模型出现后 RAG 会消失吗？",
+    "answer": "不会；私域数据规模与成本、检索聚焦证据、合规审计仍需要 RAG 范式。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "rag-024",
+    "category": "agent-rag",
+    "subcategory": "RAG技术",
+    "difficulty": "L4",
+    "tags": [
+      "RAG技术",
+      "RAG"
+    ],
+    "question": "多模态 RAG 要点？",
+    "answer": "图像/表格编码、跨模态对齐、与文本混合索引与路由。\n附录：LangChain 向量存储检索（LCEL 示意） \n# pip install langchain langchain-openai langchain-community faiss-cpu\nfrom langchain_community.vectorstores import FAISS\nfrom langchain_openai import OpenAIEmbeddings\nfrom langchain_text_splitters import RecursiveCharacterTextSplitter\nfrom langchain_core.documents import Document\ndocs = [Document(page_content=\"公司年假15天，需提前申请。\")]\nsplitter = RecursiveCharacterTextSplitter(chunk_size=200, \nchunk_overlap=20)\nchunks = splitter.split_documents(docs)\nemb = OpenAIEmbeddings(model=\"text-embedding-3-small\")\nvs = FAISS.from_documents(chunks, emb)\nretriever = vs.as_retriever(search_kwargs={\"k\": 2})\nfound = retriever.invoke(\"年假天数\")\nprint(found)\npython\n\n81\n小结 \nRAG 的本质是 用检索把「可更新证据」接到生成模型上；落地胜负手常在 解析与分块、混合检\n索、重排、评估与多租户安全。建议你在简历项目里准备 一条可量化指标（如：Top-5 召回提\n升、成本下降比例）与 一次失败案例分析（检索错还是生成胡编），面试会非常有说服力。\n\n82\n04 工具调用（Tool / Function Calling） \n面向初学者的 AI Agent「工具调用」面试八股文：从 Function Calling、Tool 设计，到\nMCP、路由与编排，再到安全与常见实现。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  }
+]

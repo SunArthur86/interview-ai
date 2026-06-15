@@ -1,0 +1,403 @@
+[
+  {
+    "id": "af-001",
+    "category": "agent-framework",
+    "subcategory": "Agent核心框架",
+    "difficulty": "L1",
+    "tags": [
+      "ReAct",
+      "Agent核心框架"
+    ],
+    "question": "ReAct 和「普通 CoT 提示」有什么本质区别？",
+    "answer": "普通 CoT 只在模型内部展开推理链，不强制与外部环境交互；ReAct 把推理与 可执行行动\n绑定，每一步行动后都有 真实 Observation 反馈，从而用工具结果约束生成，降低闭卷幻觉。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "af-002",
+    "category": "agent-framework",
+    "subcategory": "Agent核心框架",
+    "difficulty": "L1",
+    "tags": [
+      "ReAct",
+      "Agent核心框架"
+    ],
+    "question": "ReAct 为什么要显式写出 Thought？",
+    "answer": "显式 Thought 有三类价值：可解释性（便于人类审计）、可调试性（定位哪一步选错工具）、\n学习信号（可做监督微调或评估中间步骤质量）。在工程上，Thought 也帮助模型在下一步更稳定\n地选择 Action。\nUse the following format:\nQuestion: ...\nThought: ...\nAction: Search[query]\nObservation: ...\nThought: ...\nAction: Calculator[expression]\nObservation: ...\nThought: ...\nFinal Answer: ...\ntext",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "af-003",
+    "category": "agent-framework",
+    "subcategory": "Agent核心框架",
+    "difficulty": "L1",
+    "tags": [
+      "ReAct",
+      "Plan-and-Execute",
+      "Agent核心框架"
+    ],
+    "question": "Plan-and-Execute 相比 ReAct 什么时候更占优？",
+    "answer": "当任务 步骤多、结构清晰、需要全局分解（如多文件代码改动、数据分析流水线、复杂调研\n提纲）时，Planner 先给出路线图能减少「短视」；ReAct 更擅长 动态工具交互、逐步探索。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "af-004",
+    "category": "agent-framework",
+    "subcategory": "Agent核心框架",
+    "difficulty": "L1",
+    "tags": [
+      "Plan-and-Execute",
+      "Agent核心框架"
+    ],
+    "question": "Re-planning 会不会导致「计划抖动」？怎么缓解？",
+    "answer": "会。频繁重规划可能让执行轨迹不稳定。缓解方式包括：限制重规划次数、局部重规划优先、\n在 state 中保留已验证事实、对计划变更加 一致性检查（新旧计划差异说明）。\n    if needs_replan(state):\n        plan = replanner(task, plan, state)\nif error or inconsistency:\n    new_plan = LLM_replanner(original_task, old_plan, state, error_trace)\n    continue with new_plan\ntext",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "af-005",
+    "category": "agent-framework",
+    "subcategory": "Agent核心框架",
+    "difficulty": "L1",
+    "tags": [
+      "Agent核心框架"
+    ],
+    "question": "Reflexion 和「让模型自己检查一遍」有什么不同？",
+    "answer": "自检往往是一次性的；Reflexion 把评估与反思 显式化、结构化，并 跨尝试复用 反思文本，\n形成可累积的「策略记忆」。工程上更易控制与评测。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "af-006",
+    "category": "agent-framework",
+    "subcategory": "Agent核心框架",
+    "difficulty": "L2",
+    "tags": [
+      "ReAct",
+      "Agent核心框架"
+    ],
+    "question": "LATS 相比单次 ReAct 多在哪里成本？换来什么收益？",
+    "answer": "成本主要来自 多分支扩展 与 多次评估/模拟。收益是 更系统的探索，降低「一条路径走到\n黑」的局部最优风险，适合决策点多的任务。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "af-007",
+    "category": "agent-framework",
+    "subcategory": "Agent核心框架",
+    "difficulty": "L2",
+    "tags": [
+      "LangChain",
+      "Agent核心框架"
+    ],
+    "question": "LangChain 里 AgentExecutor 解决的核心问题是什么？",
+    "answer": "把「模型决策 → 工具执行 → 结果回填 → 再决策」的 控制流 标准化，统一处理 迭代限制、\n错误处理、中间消息结构，让开发者专注工具与提示。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "af-008",
+    "category": "agent-framework",
+    "subcategory": "Agent核心框架",
+    "difficulty": "L2",
+    "tags": [
+      "Agent核心框架",
+      "工具"
+    ],
+    "question": "工具描述为什么重要？",
+    "answer": "Agent 依赖描述进行 工具选择；描述不清会导致错选工具或参数幻觉。应包含 用途、输入输\n出、边界条件、示例。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "af-009",
+    "category": "agent-framework",
+    "subcategory": "Agent核心框架",
+    "difficulty": "L2",
+    "tags": [
+      "LangChain",
+      "Agent核心框架"
+    ],
+    "question": "什么时候选 LangGraph 而不是 AgentExecutor？",
+    "answer": "当流程不是「单一工具循环」，而是需要 多阶段流水线、条件路由、回环修复、人工审核节\n点、并行任务 时，用图编排更清晰可维护。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "af-010",
+    "category": "agent-framework",
+    "subcategory": "Agent核心框架",
+    "difficulty": "L2",
+    "tags": [
+      "LangChain",
+      "Agent核心框架"
+    ],
+    "question": "LangGraph 的状态更新为什么要谨慎设计？",
+    "answer": "多节点写入同一字段可能冲突；需要 schema 约束、归约策略（append vs replace）、明确\n每个节点的写入职责。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "af-011",
+    "category": "agent-framework",
+    "subcategory": "Agent核心框架",
+    "difficulty": "L2",
+    "tags": [
+      "Agent核心框架"
+    ],
+    "question": "多 Agent 一定比单 Agent 更强吗？",
+    "answer": "不一定。更多 Agent 可能带来 协调成本、错误级联、对话冗长。当任务可清晰分工且有评估\n机制时收益大；否则单 Agent + 强工具可能更简单高效。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "af-012",
+    "category": "agent-framework",
+    "subcategory": "Agent核心框架",
+    "difficulty": "L2",
+    "tags": [
+      "Agent核心框架"
+    ],
+    "question": "如何避免多 Agent「互相附和」？",
+    "answer": "引入 独立审查角色、基于规则的检查、外部工具验证（测试、检索），并明确 停止条件 与 异\n议处理流程。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "af-013",
+    "category": "agent-framework",
+    "subcategory": "Agent核心框架",
+    "difficulty": "L3",
+    "tags": [
+      "ReAct",
+      "Agent核心框架"
+    ],
+    "question": "请用一句话解释 ReAct。",
+    "answer": "让模型交替输出推理与可执行行动，并用工具返回的 Observation 闭环纠错，从而把推理接\n地到外部环境。\ndef run_crew(task: str, roles: dict, llm, rounds: int = 2) -> str:\n    thread = f\"Task: {task}\\n\"\n    order = [\"researcher\", \"writer\", \"reviewer\"]\n    for _ in range(rounds):\n        for r in order:\n            prompt = roles[r] + \"\\n\\n\" + thread\n            reply = llm(prompt)\n            thread += f\"\\n[{r}]:\\n{reply}\\n\"\n    return thread\npython",
+    "follow_up": []
+  },
+  {
+    "id": "af-014",
+    "category": "agent-framework",
+    "subcategory": "Agent核心框架",
+    "difficulty": "L3",
+    "tags": [
+      "ReAct",
+      "Agent核心框架"
+    ],
+    "question": "ReAct 轨迹里，哪一部分必须由系统生成？为什么？",
+    "answer": "Observation 必须由工具/环境生成，防止模型伪造证据导致「看似合理但错误」的答案。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "af-015",
+    "category": "agent-framework",
+    "subcategory": "Agent核心框架",
+    "difficulty": "L3",
+    "tags": [
+      "Plan-and-Execute",
+      "Agent核心框架"
+    ],
+    "question": "Plan-and-Execute 的最大风险是什么？如何缓解？",
+    "answer": "风险是 错误计划污染全局；缓解是 可验证子步骤、重规划、强 Planner 约束输出 与 执行期\n监控。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "af-016",
+    "category": "agent-framework",
+    "subcategory": "Agent核心框架",
+    "difficulty": "L3",
+    "tags": [
+      "Agent核心框架"
+    ],
+    "question": "Reflexion 的关键产出是什么？它如何提升下一轮？",
+    "answer": "关键是 高质量反思文本；它作为记忆进入下一轮提示，指导 Actor 改变策略而非重复错误。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "af-017",
+    "category": "agent-framework",
+    "subcategory": "Agent核心框架",
+    "difficulty": "L3",
+    "tags": [
+      "ReAct",
+      "Agent核心框架"
+    ],
+    "question": "LATS 与 ReAct 在「探索能力」上如何对比？",
+    "answer": "ReAct 通常主路径贪心推进；LATS/MCTS 通过 多分支搜索与价值回传 更系统探索决策空间\n（成本更高）。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "af-018",
+    "category": "agent-framework",
+    "subcategory": "Agent核心框架",
+    "difficulty": "L3",
+    "tags": [
+      "LangChain",
+      "Agent核心框架"
+    ],
+    "question": "LangChain AgentExecutor 中为什么要限制 max_iterations？",
+    "answer": "防止工具循环、解析失败导致的 无限循环，并控制成本与延迟。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "af-019",
+    "category": "agent-framework",
+    "subcategory": "Agent核心框架",
+    "difficulty": "L3",
+    "tags": [
+      "LangChain",
+      "Agent核心框架"
+    ],
+    "question": "描述 LangGraph 的条件边解决的业务问题。",
+    "answer": "根据中间状态动态路由，例如失败重试、需要人工审核、不同客户等级走不同流程。",
+    "follow_up": []
+  },
+  {
+    "id": "af-020",
+    "category": "agent-framework",
+    "subcategory": "Agent核心框架",
+    "difficulty": "L3",
+    "tags": [
+      "Agent核心框架",
+      "工具"
+    ],
+    "question": "什么时候更建议「单 Agent + 强工具」，而不是多 Agent？",
+    "answer": "任务边界清晰、无需组织化分工、协调成本可能大于收益时；或延迟/成本敏感场景。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "af-021",
+    "category": "agent-framework",
+    "subcategory": "Agent核心框架",
+    "difficulty": "L4",
+    "tags": [
+      "Agent核心框架",
+      "评估"
+    ],
+    "question": "多 Agent 系统的「评估器」可以有哪些实现？",
+    "answer": "单元测试/静态规则、更强模型评审、人工审核节点、外部检索核对事实等。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "af-022",
+    "category": "agent-framework",
+    "subcategory": "Agent核心框架",
+    "difficulty": "L4",
+    "tags": [
+      "ReAct",
+      "Prompt",
+      "Agent核心框架"
+    ],
+    "question": "ReAct Prompt 为什么要给 few-shot 示例？",
+    "answer": "提升模型对 固定格式 的遵从度，降低解析失败率，稳定工具调用。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "af-023",
+    "category": "agent-framework",
+    "subcategory": "Agent核心框架",
+    "difficulty": "L4",
+    "tags": [
+      "Plan-and-Execute",
+      "Agent核心框架"
+    ],
+    "question": "Re-planning 与 Reflexion 都「改正错误」，区别是什么？",
+    "answer": "Re-planning 偏 计划结构 的调整（下一步怎么走）；Reflexion 偏 策略/经验 的语言化总结并\n跨轮复用。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "af-024",
+    "category": "agent-framework",
+    "subcategory": "Agent核心框架",
+    "difficulty": "L4",
+    "tags": [
+      "LangChain",
+      "Agent核心框架"
+    ],
+    "question": "LangGraph 相比普通脚本编排的核心收益？",
+    "answer": "把流程 显式化 为图，分支/回环/人机节点一等公民，更易维护与观测。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "af-025",
+    "category": "agent-framework",
+    "subcategory": "Agent核心框架",
+    "difficulty": "L4",
+    "tags": [
+      "ReAct",
+      "Agent核心框架",
+      "工具"
+    ],
+    "question": "如果工具返回噪声很大，ReAct 可能出什么问题？怎么改进？",
+    "answer": "模型可能被噪声误导；改进包括 工具侧清洗/结构化输出、二次检索、在 Thought 里强制 引\n用证据片段、增加 校验工具。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "af-026",
+    "category": "agent-framework",
+    "subcategory": "Agent核心框架",
+    "difficulty": "L4",
+    "tags": [
+      "ReAct",
+      "Plan-and-Execute",
+      "Agent核心框架"
+    ],
+    "question": "你如何为一个企业场景选择 ReAct vs Plan-and-Execute？",
+    "answer": "看任务是否 强流程、是否需要 可审计计划书、是否允许 前期规划成本；需要强工具交互与动\n态环境用 ReAct，强分解与多步骤交付用 Plan-and-Execute。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "af-027",
+    "category": "agent-framework",
+    "subcategory": "Agent核心框架",
+    "difficulty": "L4",
+    "tags": [
+      "Agent核心框架",
+      "工具"
+    ],
+    "question": "为什么说「工具描述」是 Agent 的接口设计？",
+    "answer": "LLM 靠描述做路由与填参；描述就是 人机接口，直接影响成功率。\n\n50\n附录：对比速记表 \n框架/概念\n关键词\n典型循环\nReAct\n推理+行动交替\nThought→Action→Observation\nPlan-and-Execute\n先计划后执行\nPlan→Execute→(Replan)\nReflexion\n反思记忆\nAct→Eval→Reflect→Retry\nLATS\n树搜索 / MCTS\nSelect→Expand→Evaluate→Backprop\nLangChain Agent\nExecutor 循环\ndecide→tool→observe\nLangGraph\n图编排\nnode→conditional edge\n多 Agent\n角色协作\n对话/流水线\n文档版本：面向入门详解；落地代码请以你所使用的库版本官方文档为准。\n\n51\n03 RAG 技术（面试八股文 · 模块三） \n面向初学者的系统梳理：每个主题尽量包含 概念、原理、面试问答、追问应对 与 Python",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  }
+]

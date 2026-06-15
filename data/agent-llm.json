@@ -1,0 +1,398 @@
+[
+  {
+    "id": "llm-001",
+    "category": "agent-llm",
+    "subcategory": "大模型基础",
+    "difficulty": "L1",
+    "tags": [
+      "Transformer",
+      "大模型基础"
+    ],
+    "question": "写出缩放点积注意力的公式，并解释 (\\sqrt{d_k})。",
+    "answer": "(\\text{softmax}(QK^\\top/\\sqrt{d_k})V)。除 (\\sqrt{d_k}) 使点积方差稳定在约 1，避免\nsoftmax 饱和与梯度问题。",
+    "follow_up": []
+  },
+  {
+    "id": "llm-002",
+    "category": "agent-llm",
+    "subcategory": "大模型基础",
+    "difficulty": "L1",
+    "tags": [
+      "Transformer",
+      "大模型基础"
+    ],
+    "question": "多头注意力为什么比单头好？",
+    "answer": "多子空间并行关注不同依赖关系，表达力更强，类似多通道特征。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "llm-003",
+    "category": "agent-llm",
+    "subcategory": "大模型基础",
+    "difficulty": "L1",
+    "tags": [
+      "Transformer",
+      "大模型基础"
+    ],
+    "question": "Encoder 和 Decoder 的自注意力有何不同？",
+    "answer": "Encoder 一般为双向；Decoder 用 causal mask 保证自回归；Seq2Seq 中 Decoder 还有\nCross-Attention 读 Encoder。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "llm-004",
+    "category": "agent-llm",
+    "subcategory": "大模型基础",
+    "difficulty": "L1",
+    "tags": [
+      "大模型基础"
+    ],
+    "question": "RoPE 与正弦绝对位置编码各有什么特点？",
+    "answer": "RoPE 通过旋转编码相对位置，常用于 Decoder LLM；正弦为固定绝对位置，可外推性讨论\n较多但现代架构更常选 RoPE/ALiBi。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "llm-005",
+    "category": "agent-llm",
+    "subcategory": "大模型基础",
+    "difficulty": "L1",
+    "tags": [
+      "大模型基础"
+    ],
+    "question": "Pre-Norm 和 Post-Norm 区别？",
+    "answer": "Pre-Norm：LN 在子层前；Post-Norm：LN 在子层后。深层网络 Pre-Norm 通常更稳定。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "llm-006",
+    "category": "agent-llm",
+    "subcategory": "大模型基础",
+    "difficulty": "L2",
+    "tags": [
+      "大模型基础"
+    ],
+    "question": "解释 MQA 与 GQA 的动机。",
+    "answer": "减少 KV Cache 与带宽；MQA 共享全部 KV，GQA 分组共享以平衡质量。",
+    "follow_up": []
+  },
+  {
+    "id": "llm-007",
+    "category": "agent-llm",
+    "subcategory": "大模型基础",
+    "difficulty": "L2",
+    "tags": [
+      "性能",
+      "Transformer",
+      "大模型基础"
+    ],
+    "question": "Flash Attention 核心优化思想？",
+    "answer": "分块、减少 HBM 访问、融合算子；降低注意力显存峰值并提速。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "llm-008",
+    "category": "agent-llm",
+    "subcategory": "大模型基础",
+    "difficulty": "L2",
+    "tags": [
+      "大模型基础"
+    ],
+    "question": "BPE 如何构建词表？",
+    "answer": "从基础符号迭代合并最高频相邻对（或类似准则），直到目标规模。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "llm-009",
+    "category": "agent-llm",
+    "subcategory": "大模型基础",
+    "difficulty": "L2",
+    "tags": [
+      "大模型基础"
+    ],
+    "question": "SentencePiece 适合中文的原因？",
+    "answer": "不依赖空格分词，可学习子词；适合无空格语言与多语言统一。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "llm-010",
+    "category": "agent-llm",
+    "subcategory": "大模型基础",
+    "difficulty": "L2",
+    "tags": [
+      "大模型基础"
+    ],
+    "question": "Tokenizer 不一致会导致什么问题？",
+    "answer": "id 错位、性能异常；微调与推理必须与基座一致。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "llm-011",
+    "category": "agent-llm",
+    "subcategory": "大模型基础",
+    "difficulty": "L2",
+    "tags": [
+      "大模型基础"
+    ],
+    "question": "Prefill 和 Decode 阶段特点？",
+    "answer": "Prefill 并行处理 prompt；Decode 逐步生成，常受带宽与 KV Cache 影响。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "llm-012",
+    "category": "agent-llm",
+    "subcategory": "大模型基础",
+    "difficulty": "L2",
+    "tags": [
+      "大模型基础"
+    ],
+    "question": "KV Cache 是什么？为什么能加速？",
+    "answer": "缓存历史 K、V；避免重复计算过去 token 的注意力键值。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "llm-013",
+    "category": "agent-llm",
+    "subcategory": "大模型基础",
+    "difficulty": "L3",
+    "tags": [
+      "大模型基础"
+    ],
+    "question": "Temperature、Top-k、Top-p 各影响什么？",
+    "answer": "随机性/确定性；截断长尾候选；动态 nucleus 截断。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "llm-014",
+    "category": "agent-llm",
+    "subcategory": "大模型基础",
+    "difficulty": "L3",
+    "tags": [
+      "大模型基础"
+    ],
+    "question": "对话生成为什么少用 Beam Search？",
+    "answer": "易重复、不自然；开放域更常用采样类方法。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "llm-015",
+    "category": "agent-llm",
+    "subcategory": "大模型基础",
+    "difficulty": "L3",
+    "tags": [
+      "微调",
+      "大模型基础"
+    ],
+    "question": "LoRA 的低秩假设直觉？",
+    "answer": "任务适配更新近似落在低秩子空间，用 (BA) 参数高效逼近。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "llm-016",
+    "category": "agent-llm",
+    "subcategory": "大模型基础",
+    "difficulty": "L3",
+    "tags": [
+      "微调",
+      "大模型基础"
+    ],
+    "question": "QLoRA 为什么省显存？",
+    "answer": "基座 4-bit 存权重 + LoRA 训练少量参数；降低显存占用。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "llm-017",
+    "category": "agent-llm",
+    "subcategory": "大模型基础",
+    "difficulty": "L3",
+    "tags": [
+      "大模型基础"
+    ],
+    "question": "SFT 损失通常怎么算？",
+    "answer": "常对 assistant token 做交叉熵，忽略 user 与 mask。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "llm-018",
+    "category": "agent-llm",
+    "subcategory": "大模型基础",
+    "difficulty": "L3",
+    "tags": [
+      "大模型基础"
+    ],
+    "question": "RLHF 三阶段是什么？",
+    "answer": "SFT → 奖励模型 → PPO（带 KL）强化学习。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "llm-019",
+    "category": "agent-llm",
+    "subcategory": "大模型基础",
+    "difficulty": "L3",
+    "tags": [
+      "大模型基础"
+    ],
+    "question": "DPO 相对 RLHF 最大简化是什么？",
+    "answer": "不显式训练奖励模型与 RL 循环，用偏好直接优化策略。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "llm-020",
+    "category": "agent-llm",
+    "subcategory": "大模型基础",
+    "difficulty": "L3",
+    "tags": [
+      "大模型基础"
+    ],
+    "question": "PPO 中 KL 惩罚目的？",
+    "answer": "限制偏离参考策略，减轻 reward hacking 与模式崩塌。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "llm-021",
+    "category": "agent-llm",
+    "subcategory": "大模型基础",
+    "difficulty": "L4",
+    "tags": [
+      "大模型基础"
+    ],
+    "question": "INT4 量化主要风险？",
+    "answer": "精度损失；需分组缩放、混合精度或算法（GPTQ/AWQ）缓解。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "llm-022",
+    "category": "agent-llm",
+    "subcategory": "大模型基础",
+    "difficulty": "L4",
+    "tags": [
+      "大模型基础"
+    ],
+    "question": "GPTQ 大致做什么？",
+    "answer": "训练后量化权重，按层/块最小化误差，常用 Hessian 近似。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "llm-023",
+    "category": "agent-llm",
+    "subcategory": "大模型基础",
+    "difficulty": "L4",
+    "tags": [
+      "大模型基础"
+    ],
+    "question": "张量并行与流水线并行区别？",
+    "answer": "TP 切分单层张量；PP 切分不同层到不同设备。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "llm-024",
+    "category": "agent-llm",
+    "subcategory": "大模型基础",
+    "difficulty": "L4",
+    "tags": [
+      "Transformer",
+      "大模型基础"
+    ],
+    "question": "PagedAttention 解决什么？",
+    "answer": "KV Cache 变长导致的浪费与碎片化，提高批处理效率。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "llm-025",
+    "category": "agent-llm",
+    "subcategory": "大模型基础",
+    "difficulty": "L4",
+    "tags": [
+      "大模型基础"
+    ],
+    "question": "投机解码如何加速？",
+    "answer": "小模型提议多 token，大模型并行验证，减少串行步数。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "llm-026",
+    "category": "agent-llm",
+    "subcategory": "大模型基础",
+    "difficulty": "L4",
+    "tags": [
+      "大模型基础"
+    ],
+    "question": "MoE 训练难点？",
+    "answer": "负载均衡、通信、路由稳定性；避免专家坍塌。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "llm-027",
+    "category": "agent-llm",
+    "subcategory": "大模型基础",
+    "difficulty": "L4",
+    "tags": [
+      "大模型基础"
+    ],
+    "question": "开源模型相对闭源 API 的核心优势场景？",
+    "answer": "数据不出域、可深度定制、长期成本可控（有算力前提）。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "llm-028",
+    "category": "agent-llm",
+    "subcategory": "大模型基础",
+    "difficulty": "L4",
+    "tags": [
+      "大模型基础"
+    ],
+    "question": "GRPO / KTO 你了解到什么程度？",
+    "answer": "诚实答：GRPO 强调组内相对优化、可与特定 RL 基础设施配合；KTO 用二元反馈与前景式\n损失；细节以论文与最新报告为准，面试可说明「用于改进 RLHF 复杂管线或数据形态」。\n\n174\n附录：速查公式与术语 \n符号/术语\n含义\n(d_{model})\n模型隐藏维度\n(d_k)\n每头 Key/Query 维度\nKV Cache\n缓存每步 K、V 以加速自回归\nPEFT\n参数高效微调总称（LoRA、Adapter 等）\nPTQ\n训练后量化\nTP / PP\n张量并行 / 流水线并行\n文档版本：与「面试八股文」系列一致，可按岗位深度补充论文与源码阅读笔记。\n\n175\n08 工程化实践（面试八股文） \n面向零基础读者的系统梳理：把 AI Agent 从「能跑」做成「可观测、可容错、可计费、可\n审计、可上线」。每个知识点均包含「概念 + 原理 + 面试问答 + 追问 + 代码（如适用）」。\n建议配合一个小型生产级 Demo（路由 + 熔断 + 日志 + 评估集）动手练习。\n目录 \n1. 模型路由与容错\n2. Token 成本控制\n3. 全链路可观测性\n4. 安全与权限\n5. 部署与运维\n6. 性能优化\n7. 评估与测试\n8. 幻觉问题的工程解决方案\n9. 综合面试题库（15+ 题）\n1. 模型路由与容错",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  }
+]

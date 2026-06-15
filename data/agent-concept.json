@@ -1,0 +1,390 @@
+[
+  {
+    "id": "ac-001",
+    "category": "agent-concept",
+    "subcategory": "Agent基础概念",
+    "difficulty": "L1",
+    "tags": [
+      "Agent基础概念"
+    ],
+    "question": "一句话说明什么是 AI Agent？",
+    "answer": "AI Agent 是以大模型为认知核心，结合规划、记忆与工具调用，能在多步交互中根据环境反\n馈持续决策并完成任务的系统；其本质是 闭环的感知—思考—行动 循环，而不仅是单次文本生\n成。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "ac-002",
+    "category": "agent-concept",
+    "subcategory": "Agent基础概念",
+    "difficulty": "L1",
+    "tags": [
+      "工具",
+      "Plan-and-Execute",
+      "Agent基础概念",
+      "记忆"
+    ],
+    "question": "为什么说 Agent = LLM + Planning + Memory + Tools？缺一块会怎样？",
+    "answer": "缺 Planning：容易变成「只会接话」的聊天，长任务易跑偏或一步登天完不成。\n缺 Memory：长对话会丢线索，多会话无法延续用户偏好与任务状态。\n缺 Tools：只能「空谈」，无法查实时信息、执行代码、改系统状态。\n\n9\nLLM 仍是中枢，但单靠 LLM 没有外环则不是完整 Agent。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "ac-003",
+    "category": "agent-concept",
+    "subcategory": "Agent基础概念",
+    "difficulty": "L1",
+    "tags": [
+      "Prompt",
+      "Agent基础概念"
+    ],
+    "question": "Agent 和 Prompt Chain 有什么本质区别？",
+    "answer": "Prompt Chain 的拓扑与顺序主要由工程侧固定；Agent 在运行时在动作空间中做选择，并依\n赖 Observation 更新信念，适合输入与路径不确定的任务。二者可结合：链负责稳定流程，\nAgent 负责链内某段的灵活分支。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "ac-004",
+    "category": "agent-concept",
+    "subcategory": "Agent基础概念",
+    "difficulty": "L1",
+    "tags": [
+      "Agent基础概念"
+    ],
+    "question": "ChatBot 加上插件是不是就变成 Agent 了？",
+    "answer": "不一定。若插件调用由固定规则触发（例如关键词路由），更像「带工具的 Bot」。若由模型在\n多步推理中自主选择工具与参数，并形成闭环迭代，则更贴近 Agent。关键在是否具备多步自主决\n策与反馈闭环。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "ac-005",
+    "category": "agent-concept",
+    "subcategory": "Agent基础概念",
+    "difficulty": "L1",
+    "tags": [
+      "Agent基础概念",
+      "记忆"
+    ],
+    "question": "Agent 的记忆一般怎么设计？",
+    "answer": "分层设计最常见：工作记忆（当前轨迹与关键结论）+ 会话记忆（摘要滚动）+ 长期记忆（向\n量检索/结构化库）。写入要区分「事实」与「推断」，并带时间戳与来源，便于更新与撤销。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "ac-006",
+    "category": "agent-concept",
+    "subcategory": "Agent基础概念",
+    "difficulty": "L2",
+    "tags": [
+      "Agent基础概念"
+    ],
+    "question": "规划和执行要不要拆开两个模型？",
+    "answer": "视任务而定。Planner-Executor 拆分可提升可控性（强模型规划、快模型执行）；单模型端\n到端更简单但易在长链路漂移。可混合：规划用强模型，执行层做确定性校验。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "ac-007",
+    "category": "agent-concept",
+    "subcategory": "Agent基础概念",
+    "difficulty": "L2",
+    "tags": [
+      "Agent基础概念",
+      "工具"
+    ],
+    "question": "如何避免 Agent 在工具调用间「迷失」？",
+    "answer": "明确 停止条件 与 最大步数；\n维护 任务清单（todo） 与 当前子目标；\n对每步输出要求 结构化（JSON）；\n关键步骤 强制验证（单元测试式检查、二次 LLM 审核）。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "ac-008",
+    "category": "agent-concept",
+    "subcategory": "Agent基础概念",
+    "difficulty": "L2",
+    "tags": [
+      "Agent基础概念"
+    ],
+    "question": "基于效用的 Agent 和基于目标的有什么区别？",
+    "answer": "目标型关注「是否达成」；效用型在多个冲突目标间做权衡（成本、时延、风险、用户偏好），\n选综合最优而非单点达成。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "ac-009",
+    "category": "agent-concept",
+    "subcategory": "Agent基础概念",
+    "difficulty": "L2",
+    "tags": [
+      "Agent基础概念"
+    ],
+    "question": "反应式 Agent 有什么优缺点？",
+    "answer": "优点：快、可解释、易测试。缺点：对长程依赖与复杂推理弱；遇到未见输入可能失效。常与\n分层架构结合。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "ac-010",
+    "category": "agent-concept",
+    "subcategory": "Agent基础概念",
+    "difficulty": "L2",
+    "tags": [
+      "Agent基础概念"
+    ],
+    "question": "企业内部落地 Agent，你最先关心哪三个非功能需求？",
+    "answer": "安全与合规（权限、审计）、可控性（人在回路、工具白名单）、可观测性（轨迹、指标、回\n放）。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "ac-011",
+    "category": "agent-concept",
+    "subcategory": "Agent基础概念",
+    "difficulty": "L2",
+    "tags": [
+      "Agent基础概念",
+      "评估"
+    ],
+    "question": "怎么评估一个 Agent 的好坏？",
+    "answer": "分层评估：任务成功率、平均步数/成本、工具错误率、用户满意度、安全事件数；基准可包\n括静态数据集 + 仿真环境 + 线上 A/B。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "ac-012",
+    "category": "agent-concept",
+    "subcategory": "Agent基础概念",
+    "difficulty": "L2",
+    "tags": [
+      "Agent基础概念"
+    ],
+    "question": "Agent 的最大风险是什么？",
+    "answer": "复合错误与权限滥用——单步小错在多步放大，或工具被诱导执行高危操作；因此必须 最小\n权限 + 强审计 + 人在回路。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "ac-013",
+    "category": "agent-concept",
+    "subcategory": "Agent基础概念",
+    "difficulty": "L3",
+    "tags": [
+      "Agent基础概念"
+    ],
+    "question": "请用你自己的话定义 LLM Agent，并说明与单次调用的差异。 ",
+    "answer": "LLM Agent 是以大语言模型为推理核心，在 多轮 中与外部环境交互，通过 规划、记忆与工\n具 完成复杂任务的系统。与单次调用的差异在于：单次调用是 开环生成；Agent 是 闭环决策，每\n步可依据工具返回更新状态，直到终止条件。",
+    "follow_up": []
+  },
+  {
+    "id": "ac-014",
+    "category": "agent-concept",
+    "subcategory": "Agent基础概念",
+    "difficulty": "L3",
+    "tags": [
+      "ReAct",
+      "Agent基础概念"
+    ],
+    "question": "ReAct 框架里三个字母代表什么？解决什么问题？ ",
+    "answer": "Reasoning + Acting：在生成中交替进行 推理（Thought） 与 行动（Action），并接收 观\n察（Observation）。它解决的是：模型仅「空想」容易偏离事实；通过 显式推理 + 工具反馈 把\n推理锚定在真实环境上。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "ac-015",
+    "category": "agent-concept",
+    "subcategory": "Agent基础概念",
+    "difficulty": "L3",
+    "tags": [
+      "Agent基础概念"
+    ],
+    "question": "你会如何设计 Agent 的停止条件？ ",
+    "answer": "组合使用：模型声明 finish、任务清单全部完成、达到步数/预算上限、超时、连续无进展检\n测、外部成功信号（如测试通过）。生产环境必须有 硬上限 防止死循环。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "ac-016",
+    "category": "agent-concept",
+    "subcategory": "Agent基础概念",
+    "difficulty": "L3",
+    "tags": [
+      "Agent基础概念",
+      "工具"
+    ],
+    "question": "工具描述（tool description）为什么非常重要？ ",
+    "answer": "模型靠描述做 工具选择；描述不清会导致 选错工具、参数幻觉。好的描述包含：何时用、何\n时不用、参数含义、错误示例、返回格式。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "ac-017",
+    "category": "agent-concept",
+    "subcategory": "Agent基础概念",
+    "difficulty": "L3",
+    "tags": [
+      "向量",
+      "Agent基础概念",
+      "记忆"
+    ],
+    "question": "Memory 用向量库就够了吗？ ",
+    "answer": "不够。向量检索擅长相似度，但弱于精确约束与关系推理。工程上常见 向量 + 关键词/结构\n化库 + 图谱（按需），并维护 元数据与权限。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "ac-018",
+    "category": "agent-concept",
+    "subcategory": "Agent基础概念",
+    "difficulty": "L3",
+    "tags": [
+      "Agent基础概念",
+      "工具"
+    ],
+    "question": "多 Agent 协作和单 Agent 多工具怎么选？ ",
+    "answer": "单 Agent 多工具：实现简单、延迟低，适合任务边界清晰。\n多 Agent：角色分工、并行探索、对抗审查（如「批评者 Agent」）；但带来 协调成本与一致性\n问题。\n选型看 任务分解结构、组织边界、延迟与成本。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "ac-019",
+    "category": "agent-concept",
+    "subcategory": "Agent基础概念",
+    "difficulty": "L3",
+    "tags": [
+      "Agent基础概念"
+    ],
+    "question": "如何做「人在回路」又不打断体验？ ",
+    "answer": "分级：低风险自动执行；中风险 异步审批；高风险 实时确认。产品上 预授权（例如仅本次会\n话可读某目录）、可撤销、默认最小权限。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "ac-020",
+    "category": "agent-concept",
+    "subcategory": "Agent基础概念",
+    "difficulty": "L3",
+    "tags": [
+      "Agent基础概念"
+    ],
+    "question": "Agent 日志应记录什么？ ",
+    "answer": "用户输入（脱敏）、模型原始输出、解析后的工具调用、工具返回摘要、耗时与 Token、版本\n号（模型与 Prompt）、追踪 ID，便于复盘与合规审计。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "ac-021",
+    "category": "agent-concept",
+    "subcategory": "Agent基础概念",
+    "difficulty": "L4",
+    "tags": [
+      "Agent基础概念",
+      "工具"
+    ],
+    "question": "为什么「让模型自己选工具」可能不如「路由器 + 规则」？ ",
+    "answer": "在 域窄、路径稳定 的场景，路由器更 省成本、可测试、行为确定；全模型路由在 开放域 更\n灵活。最佳实践常是 混合：易分类走规则，难例走模型。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "ac-022",
+    "category": "agent-concept",
+    "subcategory": "Agent基础概念",
+    "difficulty": "L4",
+    "tags": [
+      "Plan-and-Execute",
+      "Agent基础概念"
+    ],
+    "question": "简述 Planner-Executor 架构及优缺点。 ",
+    "answer": "Planner 产出步骤或 DAG；Executor 逐步执行并可把结果反馈给 Planner 重规划。优点：\n结构清晰、易加校验；缺点：规划一次可能不准，需 迭代重规划；两阶段可能增加延迟。",
+    "follow_up": []
+  },
+  {
+    "id": "ac-023",
+    "category": "agent-concept",
+    "subcategory": "Agent基础概念",
+    "difficulty": "L4",
+    "tags": [
+      "Agent基础概念"
+    ],
+    "question": "Agent 如何做版本管理与灰度？ ",
+    "answer": "Prompt/工具/schema 版本化；影子模式（只记录建议不执行）；金丝雀 用户群；关键指标\n对比（成功率、成本、违规数）；一键回滚。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "ac-024",
+    "category": "agent-concept",
+    "subcategory": "Agent基础概念",
+    "difficulty": "L4",
+    "tags": [
+      "Agent基础概念"
+    ],
+    "question": "举一个「不是 Agent 但常被误认为 Agent」的例子。 ",
+    "answer": "固定三步的 RAG 流水线（query 改写 → 检索 → 生成），若无 基于观察的再决策循环，更像\nChain；若加入 多轮检索策略与失败分支 则接近 Agent。",
+    "follow_up": []
+  },
+  {
+    "id": "ac-025",
+    "category": "agent-concept",
+    "subcategory": "Agent基础概念",
+    "difficulty": "L4",
+    "tags": [
+      "Agent基础概念"
+    ],
+    "question": "你如何向非技术经理解释 Agent 的风险？ ",
+    "answer": "用 「能办事的实习生」 类比：能力强但可能 记错、被误导、误操作；所以我们要 权限卡、\n审批、监控录像（日志），重要操作 双人复核——对应最小权限、人在回路、审计。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "ac-026",
+    "category": "agent-concept",
+    "subcategory": "Agent基础概念",
+    "difficulty": "L4",
+    "tags": [
+      "Agent基础概念",
+      "记忆"
+    ],
+    "question": "上下文窗口越来越大，还需要外部记忆吗？ ",
+    "answer": "需要。长窗口 ≠ 低成本，也不等于 可检索、可治理、可遗忘。外部记忆解决 跨会话持久\n化、结构化权限、版本与溯源；窗口内更适合 热工作集。",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "ac-027",
+    "category": "agent-concept",
+    "subcategory": "Agent基础概念",
+    "difficulty": "L4",
+    "tags": [
+      "Agent基础概念",
+      "评估"
+    ],
+    "question": "如何测试 Agent？ ",
+    "answer": "单元测工具、模拟环境、回归集（固定任务与期望轨迹范围）、对抗用例（注入、越权）、线上\n金丝雀；避免只测最终答案而忽略 过程正确性。\n\n22\n附：知识点速查表 \n主题\n一句话\n定义\nLLM + 规划 + 记忆 + 工具，闭环决策\nvs Chain\n控制流在代码 vs 在模型+环境反馈\nvs ChatBot\n对话为主 vs 任务闭环与工具编排\n组成\n感知、规划、记忆、工具、执行、反思\n流程\n输入→分解→调用→整合→输出\n分类\n反应式、模型、目标、效用、学习\n场景\n客服、代码、数据、运维、知识管理\n挑战\n幻觉、安全、成本、可解释、评估\n学习建议： 读完本文后，尝试用 200 行内实现一个「带假工具」的循环 Agent，并刻意制造 工\n具失败 与 注入攻击 用例，观察系统行为，再对照本文的治理手段逐项加约束。\n\n23\n02 核心框架（AI Agent 面试八股文 · 模块二） \n面向零基础读者：本模块系统梳理主流 Agent「推理—行动—编排」框架。建议先理解\nReAct 的「一步想、一步做」，再对比 Plan-and-Execute 的「先想全局、再分步做」，最\n后把 LangChain / LangGraph / 多 Agent 当作「工程落地方式」来记忆。\n目录 \n1. ReAct 框架\n2. Plan-and-Execute 框架\n3. Reflexion 框架\n4. LATS（Language Agent Tree Search）\n5. LangChain Agent 实现\n6. LangGraph 状态机\n7. AutoGen / CrewAI 等多 Agent 框架\n8. 模块综合：15+ 道高频面试题速查\n1. ReAct 框架（重点中的重点）",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  }
+]
