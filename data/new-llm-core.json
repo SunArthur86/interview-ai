@@ -204,5 +204,25 @@
       "Sim2Real 的 gap 如何弥补？",
       "RT-2 如何将动作编码为 token？"
     ]
+  },
+  {
+    "id": "pdf-002",
+    "category": "llm-core",
+    "subcategory": "训练优化",
+    "difficulty": "L3",
+    "tags": [
+      "损失缩放",
+      "Loss Scaling",
+      "混合精度",
+      "FP16",
+      "训练",
+      "面试100问"
+    ],
+    "question": "什么是损失缩放（Loss Scaling）？为什么混合精度训练需要它？",
+    "answer": "**损失缩放 (Loss Scaling)** 是混合精度训练中解决 FP16 梯度下溢（underflow）的关键技术。\n\n**问题背景**\n- FP16 的最小正常数约为 6e-5，很多梯度值小于此值会被截断为 0\n- 梯度为 0 → 参数不更新 → 模型停止学习\n\n**损失缩放原理**\n\n1. **前向传播**：正常计算，得到 loss\n2. **损失放大**：loss × scale_factor（如 2^16 = 65536）\n3. **反向传播**：放大后的 loss 产生放大的梯度，避免下溢\n4. **梯度缩小**：更新前，梯度 ÷ scale_factor 恢复真实值\n\n```python\n# PyTorch AMP (自动混合精度)\nscaler = torch.cuda.amp.GradScaler()\n\nwith torch.cuda.amp.autocast():\n    output = model(inputs)\n    loss = criterion(output, targets)\n\nscaler.scale(loss).backward()  # 放大 loss\nscaler.step(optimizer)          # 更新（自动缩小梯度）\nscaler.update()                 # 动态调整 scale_factor\n```\n\n**动态损失缩放**\n- 如果梯度出现 inf/nan → scale_factor 减半\n- 连续 N 步无 inf/nan → scale_factor 翻倍\n- 自动找到合适的 scale，无需手动调参\n\n**bfloat16 vs float16**\n- float16: 指数位 5bit，尾数位 10bit → 动态范围小，需要 loss scaling\n- bfloat16: 指数位 8bit，尾数位 7bit → 动态范围与 float32 相同，**不需要 loss scaling**\n- 但 bfloat16 精度略低，某些任务可能略差\n\n**经验**：现代训练推荐用 bfloat16（如果 GPU 支持），省去 loss scaling 的复杂性。",
+    "follow_up": [
+      "如何判断梯度是否发生了下溢？",
+      "bfloat16 在哪些 GPU 上支持？"
+    ]
   }
 ]
