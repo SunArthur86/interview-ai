@@ -29,6 +29,32 @@ const CATEGORIES = {
   'ai-basics':        { label: 'AI 基础', icon: '🧠', color: '#34c759', files: ['data/ai-basics.json', 'data/new-ai-basics.json'] },
 };
 
+// ============ Subcategory Group Mapping (78 raw → 12 clean modules) ============
+const SUBCAT_GROUPS = {
+  'Transformer': ['Transformer架构', '注意力机制', '位置编码', '归一化', '激活函数', '模型结构', '模型架构'],
+  '训练与微调': ['训练与微调', '训练优化', 'LoRA与微调', '参数高效微调', '微调策略', 'SFT与RLHF', '对齐技术', '对齐训练', '训练理论', '分布式训练'],
+  '推理与部署': ['推理优化', '生产工程化', '生产化部署', '模型服务', '模型部署', '部署架构', '工程化', '工程化实践', '工程实践'],
+  'RAG技术': ['RAG技术', 'RAG进阶', 'RAG工程化', 'RAG与向量检索', '向量检索', '向量数据库'],
+  'Agent架构': ['Agent基础概念', 'Agent核心框架', 'Agent架构', 'Agent框架', 'Agent工程化', 'Agent稳定性'],
+  'Agent技能': ['工具调用', 'Function Calling', '记忆系统', 'Agent记忆', '规划与推理', '工具使用', 'Agent评估'],
+  'Prompt工程': ['Prompt工程', 'Prompt Engineering'],
+  '多智能体': ['多智能体系统', '多Agent系统'],
+  '大模型基础': ['大模型基础', '大模型架构', '大模型原理', '大模型综合', '大模型应用', '基础知识', '预训练模型', '表示学习', '长上下文'],
+  '评测与安全': ['评估与安全', '评估', '评估指标', '评测与质量', 'Agent安全', '安全', '可观测性'],
+  'LLM前沿': ['LLM前沿', 'LLM框架', 'DeepSeek-R1', '强化学习', 'Tokenizer', '多模态', 'Text2SQL', 'LLM推荐', '实验管理'],
+  '面试实战': ['企业面试问答', '手撕代码', 'AI编程', '文档处理'],
+};
+
+// Reverse lookup: raw subcategory → group name
+const SUBCAT_REVERSE = {};
+Object.entries(SUBCAT_GROUPS).forEach(([group, subs]) => {
+  subs.forEach(s => { SUBCAT_REVERSE[s] = group; });
+});
+
+function getSubcatGroup(subcategory) {
+  return SUBCAT_REVERSE[subcategory] || '其他';
+}
+
 // ============ Init ============
 async function init() {
   applyTheme();
@@ -75,7 +101,7 @@ function applyFilters() {
   State.filtered = State.allQuestions.filter(q => {
     if (State.currentCategory !== 'all' && q._category !== State.currentCategory) return false;
     if (State.currentDifficulty !== 'all' && q.difficulty !== State.currentDifficulty) return false;
-    if (State.currentSubcategory !== 'all' && q.subcategory !== State.currentSubcategory) return false;
+    if (State.currentSubcategory !== 'all' && getSubcatGroup(q.subcategory) !== State.currentSubcategory) return false;
     if (State.showFavoritesOnly && !State.favorites.has(q.id)) return false;
     if (State.searchQuery) {
       const q_lower = State.searchQuery.toLowerCase();
@@ -153,14 +179,19 @@ function renderCards() {
 function renderSubcategoryFilter() {
   const container = document.getElementById('subcategoryFilters');
   if (!container) return;
-  const subs = [...new Set(
+  // Use grouped subcategories instead of raw 78 values
+  const groups = [...new Set(
     State.allQuestions
       .filter(q => State.currentCategory === 'all' || q._category === State.currentCategory)
-      .map(q => q.subcategory)
+      .map(q => getSubcatGroup(q.subcategory))
   )].sort();
-  container.innerHTML = subs.map(s => {
-    const active = State.currentSubcategory === s ? 'active' : '';
-    return `<button class="filter-chip ${active}" onclick="setSubcategory('${escapeAttr(s)}')">${escapeHtml(s)}</button>`;
+  container.innerHTML = groups.map(g => {
+    const count = State.allQuestions.filter(q => 
+      (State.currentCategory === 'all' || q._category === State.currentCategory) &&
+      getSubcatGroup(q.subcategory) === g
+    ).length;
+    const active = State.currentSubcategory === g ? 'active' : '';
+    return `<button class="filter-chip ${active}" onclick="setSubcategory('${escapeAttr(g)}')">${escapeHtml(g)} <span style="opacity:0.5;font-size:0.625rem;">${count}</span></button>`;
   }).join('');
 }
 
@@ -213,7 +244,7 @@ function openModal(id) {
         <span class="card__id">${q.id.toUpperCase()}</span>
         <span class="card__difficulty" data-level="${q.difficulty}">${q.difficulty}</span>
         <span class="card__tag" style="border-color:${cat.color};color:${cat.color};">${cat.icon} ${cat.label}</span>
-        <span class="card__tag">${escapeHtml(q.subcategory)}</span>
+        <span class="card__tag">${escapeHtml(getSubcatGroup(q.subcategory))}</span>
       </div>
       <h2 class="modal__question">${escapeHtml(q.question)}</h2>
       <button class="modal__close" onclick="closeModal()">

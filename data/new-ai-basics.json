@@ -33,5 +33,43 @@
       "ViT 和 CNN (ResNet) 各有什么优劣？",
       "Q-Former 为什么能减少视觉 token 数量？"
     ]
+  },
+  {
+    "id": "dw-004",
+    "category": "ai-basics",
+    "subcategory": "多模态",
+    "difficulty": "L4",
+    "tags": [
+      "视觉指令微调",
+      "VLM",
+      "多模态",
+      "LLaVA",
+      "指令跟随"
+    ],
+    "question": "什么是视觉指令微调（Visual Instruction Tuning）？它为什么能让 VLM 具备对话能力？",
+    "answer": "**视觉指令微调** 是让视觉语言模型（VLM）学会遵循人类多模态指令的技术。\n\n**核心思想**\n- 类比 LLM 的指令微调（text-only instruction tuning），但在输入中混合图像和文本\n- 目标：让模型理解'看图回答问题'的指令格式\n\n**LLaVA 的做法（最经典实现）**\n\nStep 1: 构造指令数据\n- 用 GPT-4/Claude 基于图像描述自动生成多模态指令\n- 格式：[IMAGE] + \"请描述这张图片中的异常情况\" → 回答\n- 包含：描述、推理、对话、详细描述 4 种任务\n\nStep 2: 两阶段训练\n- Stage 1: **特征对齐预训练**\n  - 冻结 LLM 和 Vision Encoder\n  - 只训练 Projection Layer（MLP）\n  - 目标：让视觉特征对齐到 LLM 的 embedding 空间\n- Stage 2: **端到端指令微调**\n  - 冻结 Vision Encoder\n  - 微调 LLM + Projection Layer\n  - 目标：学会遵循多模态指令\n\n**为什么有效**\n1. 投影层让视觉特征'翻译'成 LLM 能理解的'伪文本 token'\n2. 指令微调让模型学会'看图 → 理解意图 → 生成回答'的模式\n3. 利用 LLM 已有的推理和对话能力\n\n**关键改进**：LLaVA-1.5 增加了多轮对话数据和高分辨率支持。",
+    "follow_up": [
+      "LLaVA 的 Projection Layer 用 MLP 还是 Q-Former？",
+      "如何构造高质量的视觉指令数据？"
+    ]
+  },
+  {
+    "id": "dw-005",
+    "category": "ai-basics",
+    "subcategory": "多模态",
+    "difficulty": "L4",
+    "tags": [
+      "VLM幻觉",
+      "多模态",
+      "幻觉",
+      "视觉语言",
+      "前沿"
+    ],
+    "question": "VLM（视觉语言模型）的幻觉问题与纯文本 LLM 有什么不同？如何缓解？",
+    "answer": "**VLM 幻觉的独特性**\n\n纯文本 LLM 幻觉：生成不存在的事实\nVLM 幻觉：模型'看到'图片中不存在的内容，或忽略图片中存在的内容\n\n**VLM 幻觉的 3 种类型**\n\n1. **对象幻觉 (Object Hallucination)**\n- 描述了图片中不存在的物体\n- 例：图片只有猫，模型说'猫和狗在玩耍'\n\n2. **属性幻觉 (Attribute Hallucination)**\n- 对象存在但属性描述错误\n- 例：红色的车被描述为'蓝色'\n\n3. **关系幻觉 (Relation Hallucination)**\n- 对象和属性都对，但空间/逻辑关系错误\n- 例：桌子上的杯子被描述为'杯子下面是桌子'\n\n**根本原因**\n1. 视觉特征压缩损失信息（ViT → Projection → LLM）\n2. LLM 的语言先验过强，'脑补'常见搭配\n3. 训练数据中图像描述质量不均\n4. 高分辨率图像 token 数不够\n\n**缓解策略**\n1. **对比解码 (VCD)**：减去无图条件下的输出分布，消除语言先验\n2. **CHAIR / POPE 评估**：用专门基准量化幻觉率\n3. **RLHF for VLM**：用人类反馈减少幻觉\n4. **DPO + 负样本**：'图片中没有XXX'作为 rejected pair\n5. **Set-of-Mark**：在图片上标注序号，减少空间关系幻觉\n6. **高分辨率处理**：动态分辨率（如 Qwen-VL 的 Window Attention）",
+    "follow_up": [
+      "POPE 评估方法的具体流程是什么？",
+      "对比解码为什么能减少幻觉？"
+    ]
   }
 ]

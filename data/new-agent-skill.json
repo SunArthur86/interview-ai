@@ -16,5 +16,23 @@
       "如何检测当前索引中是否存在污染？",
       "增量更新和全量重建的成本如何权衡？"
     ]
+  },
+  {
+    "id": "dw-007",
+    "category": "agent-skill",
+    "subcategory": "RAG进阶",
+    "difficulty": "L3",
+    "tags": [
+      "RAGFlow",
+      "开源框架",
+      "RAG",
+      "文档解析"
+    ],
+    "question": "RAGFlow、Dify、FastGPT 等开源 RAG 框架有什么区别？如何选型？",
+    "answer": "**主流开源 RAG 框架对比**\n\n| 框架 | 定位 | 核心优势 | 适用场景 |\n|------|------|----------|----------|\n| **RAGFlow** | 深度文档理解 RAG | 基于 DeepDoc 的精准文档解析（表格/图片/布局） | 复杂文档（PDF/合同/论文） |\n| **Dify** | LLM 应用开发平台 | 可视化工作流 + Agent + RAG 全栈 | 快速构建 AI 应用 |\n| **FastGPT** | 知识库问答 | 工作流编排 + 函数调用 | 企业知识库客服 |\n| **LangChain** | LLM 开发框架 | 最灵活的组件化设计 | 定制化 RAG 开发 |\n| **LlamaIndex** | 数据框架 | 专注数据连接和索引 | 企业数据湖 RAG |\n\n**选型决策**\n\n1. **文档复杂度高**（PDF 表格、扫描件）→ **RAGFlow**\n   - DeepDoc 引擎支持布局识别、表格还原、OCR\n   - 切片质量显著高于朴素按字数切分\n\n2. **快速构建产品**（工作流 + 多 Agent）→ **Dify**\n   - 拖拽式工作流设计\n   - 内置 prompt 模板、模型管理、监控\n\n3. **需要深度定制**（自定义检索逻辑）→ **LangChain**\n   - 最灵活，但需要更多开发工作\n   - 适合有工程团队的企业\n\n4. **企业知识库**（客服/FAQ）→ **FastGPT**\n   - 开箱即用的知识库管理\n   - 支持函数调用增强\n\n**经验**：先用 Dify 做原型验证效果，效果达标后用 LangChain/RAGFlow 做生产级部署。",
+    "follow_up": [
+      "RAGFlow 的 DeepDoc 如何处理复杂表格？",
+      "Dify 和 LangChain 什么时候选哪个？"
+    ]
   }
 ]

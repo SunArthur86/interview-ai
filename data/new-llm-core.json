@@ -127,5 +127,82 @@
       "Infini-attention 的压缩记忆如何避免信息丢失？",
       "Ring Attention 在多少 GPU 时有收益？"
     ]
+  },
+  {
+    "id": "dw-001",
+    "category": "llm-core",
+    "subcategory": "长上下文",
+    "difficulty": "L5",
+    "tags": [
+      "Mamba",
+      "SSM",
+      "状态空间模型",
+      "Transformer替代",
+      "前沿"
+    ],
+    "question": "Mamba（状态空间模型 SSM）与 Transformer 的核心区别是什么？它有什么优势？",
+    "answer": "**Mamba (State Space Model, SSM)**\n\n核心区别：\n1. **注意力机制**：Transformer 用全局自注意力（O(n²)），Mamba 用选择性状态空间模型（O(n)）\n2. **推理复杂度**：Transformer 推理时每生成一个 token 需回看全部历史（KV Cache）；Mamba 用固定大小的隐状态，推理 O(1)\n3. **长序列建模**：Mamba 天然适合超长序列（无 context window 限制）\n\n**Mamba 的核心创新：选择性 SSM**\n- 传统 SSM（S4）是时不变的，无法根据输入选择性记忆\n- Mamba 引入输入相关的参数（Δ, B, C 随输入变化），实现'选择性遗忘和记忆'\n- 类比：Mamba 像 RNN 一样有压缩的隐状态，但通过选择性机制接近 Transformer 的建模能力\n\n**优势**\n- 训练：可线性扩展到百万级 token\n- 推理：无 KV Cache 膨胀，吞吐量高\n- 显存：固定隐状态，不随序列长度增长\n\n**劣势**\n- 复制任务不如 Transformer（难以精确复制远距离 token）\n- 生态不如 Transformer 成熟\n- 当前在代码/数学任务上仍有差距\n\n**趋势**：Jamba (AI21) 等混合架构 = Transformer + Mamba，兼顾两者优势。",
+    "follow_up": [
+      "Mamba 的选择性机制具体怎么实现的？",
+      "Jamba 混合架构如何分配 Transformer 和 Mamba 层？"
+    ]
+  },
+  {
+    "id": "dw-002",
+    "category": "llm-core",
+    "subcategory": "对齐训练",
+    "difficulty": "L5",
+    "tags": [
+      "GSPO",
+      "DAPO",
+      "GRPO",
+      "对齐",
+      "强化学习",
+      "前沿"
+    ],
+    "question": "GSPO 和 DAPO 是什么？它们与 GRPO 有什么区别？",
+    "answer": "**GSPO (Group Sequence Policy Optimization)**\n\n是对 GRPO 的改进，核心变化：\n1. **序列级重要性采样**：GRPO 在 token 级别做重要性采样，GSPO 改为序列级别\n2. **降低方差**：序列级归一化减少训练不稳定性\n3. **更稳定的 KL 控制**：用序列级 KL 散度替代 token 级\n\n**DAPO (Dynamic Adaptive Policy Optimization)**\n\n另一个 GRPO 变体：\n1. **动态优势权重**：根据生成质量动态调整正负样本的权重\n2. **自适应 clip 范围**：PPO 的 clip 范围 ε 根据训练进度自适应调整\n3. **长序列友好**：对长推理链（如数学证明）的奖励信号更敏感\n\n**三者核心对比**\n\n| 维度 | GRPO | GSPO | DAPO |\n|------|------|------|------|\n| 采样粒度 | token 级 | 序列级 | 动态 |\n| KL 控制 | token 级 | 序列级 | 自适应 |\n| 优势估计 | 组内相对 | 序列归一化 | 动态加权 |\n| 适用场景 | 通用 | 稳定性优先 | 长推理链 |\n\n**总结**：从 GRPO → GSPO/DAPO 的演进，本质上是在解决'如何更稳定、更有效地将序列级奖励分配到 token 级别'的信用分配问题。",
+    "follow_up": [
+      "为什么 token 级 KL 散度不如序列级稳定？",
+      "DAPO 的自适应 clip 如何设计？"
+    ]
+  },
+  {
+    "id": "dw-003",
+    "category": "llm-core",
+    "subcategory": "对齐训练",
+    "difficulty": "L5",
+    "tags": [
+      "信用分配",
+      "token级奖励",
+      "序列级奖励",
+      "强化学习",
+      "前沿"
+    ],
+    "question": "在大模型强化学习对齐中，如何解决信用分配（Credit Assignment）问题？token 级别和序列级别的奖励有什么不同？",
+    "answer": "**信用分配问题**：给定一个序列级奖励（如'这个回答好/差'），如何确定序列中哪些 token 贡献了正向/负向价值？\n\n**序列级奖励 (Sequence-level)**\n- 整个回答获得一个标量 reward\n- 优点：标注成本低（人类只需整体评分）\n- 缺点：无法区分序列中哪部分好哪部分差\n\n**Token 级奖励 (Token-level)**\n- 序列中每个 token 获得独立 reward\n- 优点：精确指导哪些 token 该加强/减弱\n- 缺点：标注成本极高，通常无法直接获得\n\n**主流信用分配方法**\n\n1. **GAE (Generalized Advantage Estimation)**\n- PPO 标准方法，用 value function 估计每个 token 的优势\n- 需要 value model（额外参数和计算）\n\n2. **GRPO 的组内相对优势**\n- 同一 prompt 采样 G 个回答，用组内排名作为优势\n- 不需要 value model，但组大小影响估计质量\n\n3. **过程奖励模型 (PRM, Process Reward Model)**\n- 对推理过程的每一步打分（如 OpenAI 的 Math PRM）\n- 精确但需要大量步骤级标注数据\n\n4. **隐式 token 归因**\n- 用梯度或注意力权重推断哪些 token 贡献了奖励\n- 如 Integrated Gradients、Attention rollout\n\n**实践建议**：推理任务（数学/代码）适合 PRM，对话任务适合 GAE/GRPO。",
+    "follow_up": [
+      "PRM 的数据怎么收集？",
+      "为什么 GRPO 不需要 value model？"
+    ]
+  },
+  {
+    "id": "dw-006",
+    "category": "llm-core",
+    "subcategory": "LLM前沿",
+    "difficulty": "L4",
+    "tags": [
+      "具身智能",
+      "Embodied AI",
+      "机器人",
+      "LLM",
+      "前沿"
+    ],
+    "question": "什么是具身智能（Embodied AI）？LLM 如何赋能机器人？",
+    "answer": "**具身智能**：AI 拥有'身体'（机器人/虚拟形象），通过感知-决策-执行的闭环与物理世界交互。\n\n**LLM 在具身智能中的角色**\n\n1. **高级任务规划**\n- 用户：'帮我泡杯咖啡'\n- LLM 拆解：1.走到厨房 → 2.找到杯子 → 3.操作咖啡机 → 4.倒水 → 5.端回来\n\n2. **代码生成控制**\n- LLM 直接生成机器人控制代码（Python/C++）\n- 如 Google RT-2：视觉 → LLM → 动作 token\n\n3. **常识推理**\n- '杯子掉在地上会碎' → 规划时避免\n- '水太烫要等一下' → 执行时调整\n\n**核心挑战**\n1. **感知-动作鸿沟**：文本/图像是离散的，动作是连续的（关节角度、力大小）\n2. **实时性**：物理世界不能等 LLM 推理 5 秒\n3. **安全约束**：错误动作可能造成物理损坏\n4. **数据稀缺**：真实机器人交互数据采集成本极高\n\n**代表项目**\n- **RT-2 (Google)**：VLM 直接输出机器人动作\n- **NVIDIA GR00T**：人形机器人的基础模型\n- **Figure 01/02**：OpenAI 支持的人形机器人\n- **Tesla Optimus**：端到端神经网络控制\n\n**趋势**：从'仿真训练+真实部署'(Sim2Real) 到'真实数据+大规模训练'。",
+    "follow_up": [
+      "Sim2Real 的 gap 如何弥补？",
+      "RT-2 如何将动作编码为 token？"
+    ]
   }
 ]
