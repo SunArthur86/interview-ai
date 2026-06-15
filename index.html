@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>AI 面试题库 · 150 题精讲</title>
+  <meta name="description" content="AI / AI Agent / AI Harness 面试题库，150 道精选题目，涵盖大模型原理、Agent架构、RAG工程化、LLM框架等核心知识点。">
+  <meta name="keywords" content="AI面试题,大模型面试,Agent面试,RAG,LLM,人工智能,深度学习">
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0071e3">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="AI面试题">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/style.css">
+
+  <!-- SW -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(() => {});
+      });
+    }
+  </script>
+</head>
+<body>
+
+  <!-- ===== Loader ===== -->
+  <div id="loader" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);z-index:5000;">
+    <div style="text-align:center;">
+      <div style="font-size:3rem;margin-bottom:16px;animation:spin 1s linear infinite;display:inline-block;">⏳</div>
+      <p style="color:var(--text-tertiary);font-size:0.875rem;">加载题库中…</p>
+    </div>
+  </div>
+  <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+
+  <!-- ===== Top Nav ===== -->
+  <nav class="top-nav">
+    <div class="top-nav__brand">AI <span>面试题库</span></div>
+    <div class="top-nav__search">
+      <svg class="top-nav__search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+      </svg>
+      <input type="text" id="searchInput" placeholder="搜索题目、标签、内容… (⌘K)" autocomplete="off">
+    </div>
+    <div class="top-nav__actions">
+      <button class="top-nav__btn" id="favFilter" onclick="toggleFavoritesOnly()" title="只看收藏">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+        </svg>
+      </button>
+      <button class="top-nav__btn" id="themeBtn" title="切换主题"></button>
+      <button class="top-nav__btn" id="settingsBtn" onclick="toggleSettings()" title="设置">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ===== Category Tabs ===== -->
+  <div class="category-tabs">
+    <button class="category-tab active" data-cat="all" onclick="setCategory('all')">📚 全部 <span class="count">0</span></button>
+    <button class="category-tab" data-cat="ai-basics" onclick="setCategory('ai-basics')">🧠 AI 基础 <span class="count">0</span></button>
+    <button class="category-tab" data-cat="ai-agent" onclick="setCategory('ai-agent')">🤖 AI Agent <span class="count">0</span></button>
+    <button class="category-tab" data-cat="ai-harness" onclick="setCategory('ai-harness')">⚙️ AI Harness <span class="count">0</span></button>
+  </div>
+
+  <!-- ===== Filter Bar ===== -->
+  <div class="filter-bar">
+    <span class="filter-bar__info">难度：</span>
+    <button class="filter-chip active" data-diff="all" onclick="setDifficulty('all')">全部</button>
+    <button class="filter-chip" data-diff="L1" onclick="setDifficulty('L1')">L1 入门</button>
+    <button class="filter-chip" data-diff="L2" onclick="setDifficulty('L2')">L2 基础</button>
+    <button class="filter-chip" data-diff="L3" onclick="setDifficulty('L3')">L3 进阶</button>
+    <button class="filter-chip" data-diff="L4" onclick="setDifficulty('L4')">L4 高级</button>
+    <button class="filter-chip" data-diff="L5" onclick="setDifficulty('L5')">L5 专家</button>
+    <span class="filter-bar__spacer"></span>
+    <span class="filter-bar__info" id="statShown">0</span>
+    <span class="filter-bar__info">题</span>
+  </div>
+
+  <!-- ===== Main ===== -->
+  <main class="main">
+    <!-- Stats Row -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-card__value" id="statTotal">0</div>
+        <div class="stat-card__label">总题数</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card__value" id="statViewed" style="color:var(--success);">0</div>
+        <div class="stat-card__label">已学习</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card__value" id="statFav" style="color:var(--pink);">0</div>
+        <div class="stat-card__label">已收藏</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card__value" id="statPercent" style="color:var(--orange);">0%</div>
+        <div class="stat-card__label">完成率</div>
+      </div>
+    </div>
+
+    <!-- Subcategory Filters -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px;" id="subcategoryFilters"></div>
+
+    <!-- Cards Grid -->
+    <div class="cards-grid" id="cardsGrid"></div>
+  </main>
+
+  <!-- ===== Progress Ring ===== -->
+  <div class="progress-ring" id="progressRing" title="学习进度">
+    <svg width="56" height="56">
+      <circle class="progress-ring__bg" cx="28" cy="28" r="24" fill="none" stroke-width="4"/>
+      <circle class="progress-ring__fill" id="progressFill" cx="28" cy="28" r="24" fill="none" stroke-width="4" stroke-linecap="round"/>
+    </svg>
+    <span class="progress-ring__text" id="progressText">0%</span>
+  </div>
+
+  <!-- ===== Modal ===== -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal" id="modal"></div>
+  </div>
+
+  <!-- ===== Settings Panel ===== -->
+  <div class="settings-panel__overlay" id="settingsOverlay"></div>
+  <div class="settings-panel" id="settingsPanel">
+    <h3>⚙️ 设置</h3>
+    <div class="settings-group">
+      <div class="settings-group__label">外观</div>
+      <div class="settings-option" onclick="toggleTheme()">
+        <span class="settings-option__label">深色模式</span>
+        <div class="toggle" id="darkToggle"></div>
+      </div>
+    </div>
+    <div class="settings-group">
+      <div class="settings-group__label">学习数据</div>
+      <p style="font-size:0.8125rem;color:var(--text-secondary);margin-bottom:12px;">
+        数据存储在本地浏览器，清除浏览器数据将丢失。
+      </p>
+      <button id="resetProgress" style="width:100%;padding:10px;border:1px solid var(--danger);border-radius:var(--radius-sm);background:transparent;color:var(--danger);font-size:0.875rem;cursor:pointer;transition:all 0.15s;">
+        重置学习进度
+      </button>
+    </div>
+    <div class="settings-group">
+      <div class="settings-group__label">关于</div>
+      <p style="font-size:0.8125rem;color:var(--text-secondary);line-height:1.6;">
+        AI 面试题库 v1.0<br>
+        150 道精选题目<br>
+        覆盖 AI 基础 · Agent · Harness<br>
+        <br>
+        <span style="color:var(--text-tertiary);">对标阿里 P7 / 字节 2-2 / 腾讯 T9</span>
+      </p>
+    </div>
+  </div>
+
+  <!-- ===== Scripts ===== -->
+  <script src="js/app.js"></script>
+  <script>
+    // Sync dark toggle state
+    function syncDarkToggle() {
+      const t = document.getElementById('darkToggle');
+      if (t) t.classList.toggle('active', document.documentElement.getAttribute('data-theme') === 'dark');
+    }
+    // Override applyTheme to also sync toggle
+    const _origApplyTheme = applyTheme;
+    applyTheme = function() { _origApplyTheme(); syncDarkToggle(); };
+    // Update statPercent
+    const _origUpdateStats = updateStats;
+    updateStats = function() {
+      _origUpdateStats();
+      const el = document.getElementById('statPercent');
+      if (el && State.allQuestions.length > 0) {
+        el.textContent = Math.round((State.viewed.size / State.allQuestions.length) * 100) + '%';
+      }
+    };
+  </script>
+</body>
+</html>

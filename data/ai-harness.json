@@ -1,0 +1,854 @@
+[
+  {
+    "id": "harness-001",
+    "category": "ai-harness",
+    "subcategory": "LLM框架",
+    "difficulty": "L2",
+    "tags": [
+      "LangChain",
+      "LCEL",
+      "链式调用"
+    ],
+    "question": "LangChain的核心抽象是什么？LCEL相比传统Chain有什么优势？",
+    "answer": "**LangChain核心抽象：Runnable接口**\n\n所有组件都实现Runnable：invoke/ainvoke/stream/astream/batch/abatch\n\n**LCEL (LangChain Expression Language)：**\n```python\n# 声明式管道\nchain = prompt | model | parser\nresult = chain.invoke({\"input\": \"...\"})\n\n# 并行\nparallel = RunnableParallel(a=chain_a, b=chain_b)\n```\n\n**LCEL vs 传统Chain：**\n\n| | 传统Chain | LCEL |\n|--|-----------|------|\n| 语法 | 嵌套构造 | **管道操作符** |\n| 异步 | 需手动实现 | **原生支持** |\n| 流式 | 需手动实现 | **内置流式** |\n| 重试 | 需手动实现 | **自动重试** |\n| 可观测 | 难 | **自动trace** |\n\n**LCEL核心能力：**\n1. 自动异步/同步切换\n2. 自动batching\n3. 自动streaming（token级流式）\n4. 内置fallback（链路容错）\n5. 无缝集成LangSmith追踪",
+    "follow_up": [
+      "LCEL的RunnableParallel如何使用？",
+      "如何实现自定义Runnable？"
+    ]
+  },
+  {
+    "id": "harness-002",
+    "category": "ai-harness",
+    "subcategory": "LLM框架",
+    "difficulty": "L2",
+    "tags": [
+      "LlamaIndex",
+      "数据框架",
+      "RAG"
+    ],
+    "question": "LlamaIndex和LangChain的定位有什么区别？各自擅长什么场景？",
+    "answer": "**定位差异：**\n\n| | LangChain | LlamaIndex |\n|--|-----------|------------|\n| 核心定位 | **通用LLM应用框架** | **数据+LLM框架** |\n| 擅长 | Agent/链式调用/工具 | **RAG/索引/查询** |\n| 抽象 | Runnable/Chain | **Document/Node/Index** |\n| 数据处理 | 基础 | **深度优化** |\n| 查询引擎 | 基础 | **多种查询模式** |\n\n**LlamaIndex核心概念：**\n1. **Document** — 原始文档（PDF/HTML/Markdown）\n2. **Node** — 文档分块后的最小单元\n3. **Index** — 节点的索引结构（向量/树/关键词）\n4. **Query Engine** — 查询引擎（路由/子问题/多步）\n5. **Retriever** — 检索器\n\n**LlamaIndex高级查询模式：**\n- **Sub-Question Query** — 拆分复杂问题\n- **Multi-Document** — 跨文档推理\n- **Recursive Retrieval** — 分层检索\n- **Router Query** — 动态选择检索策略\n\n**选择建议：**\n- 纯RAG → LlamaIndex（数据处理更细）\n- Agent/工作流 → LangChain/LangGraph\n- 通用 → 两者结合",
+    "follow_up": [
+      "LlamaIndex的Router Query如何工作？",
+      "两者能否混用？"
+    ]
+  },
+  {
+    "id": "harness-003",
+    "category": "ai-harness",
+    "subcategory": "LLM框架",
+    "difficulty": "L2",
+    "tags": [
+      "DSPy",
+      "声明式",
+      "Prompt优化"
+    ],
+    "question": "DSPy的编程模型和LangChain有什么本质区别？",
+    "answer": "**本质区别：**\n\n| | LangChain | DSPy |\n|--|-----------|------|\n| 范式 | **命令式**（手写prompt） | **声明式**（定义输入输出） |\n| Prompt | 手动编写和调优 | **自动搜索最优prompt** |\n| 示例选择 | 手动 | **自动选择few-shot** |\n| 适配模型 | 需重写prompt | **自动适配** |\n\n**DSPy核心模式：**\n```python\n# 1. 定义Signature（做什么）\nclass QA(dspy.Signature):\n    \"\"\"回答问题\"\"\"\n    question = dspy.InputField()\n    answer = dspy.OutputField(desc=\"简洁准确的答案\")\n\n# 2. 选择Module（怎么做）\nqa = dspy.ChainOfThought(QA)\n\n# 3. 编译优化（自动找最优prompt+示例）\noptimizer = dspy.BootstrapFewShot(metric=accuracy)\ncompiled_qa = optimizer.compile(qa, trainset=data)\n\n# 4. 使用\nresult = compiled_qa(question=\"什么是注意力机制？\")\n```\n\n**DSPy vs 手写Prompt：**\n- 手写：依赖人工经验，换模型可能失效\n- DSPy：自动优化，换模型只需重新compile\n- 可版本管理、可复现、可A/B测试",
+    "follow_up": [
+      "DSPy的BootstrapFewShot如何选择示例？",
+      "DSPy能优化非英语任务吗？"
+    ]
+  },
+  {
+    "id": "harness-004",
+    "category": "ai-harness",
+    "subcategory": "LLM框架",
+    "difficulty": "L3",
+    "tags": [
+      "Haystack",
+      "deepset",
+      "Pipeline"
+    ],
+    "question": "Haystack框架的核心设计是什么？它和LangChain/LlamaIndex有什么区别？",
+    "answer": "**Haystack (deepset) 核心设计：Pipeline + Component**\n\n```python\n# 声明式Pipeline\npipeline = Pipeline()\npipeline.add_component(\"embed\", embedder)\npipeline.add_component(\"retriever\", retriever)\npipeline.add_component(\"reader\", reader)\npipeline.connect(\"embed.embedding\", \"retriever.query_embedding\")\npipeline.connect(\"retriever.documents\", \"reader.documents\")\n```\n\n**核心区别：**\n\n| | LangChain | LlamaIndex | Haystack |\n|--|-----------|------------|----------|\n| 设计 | 链式调用 | 数据索引 | **DAG Pipeline** |\n| 类型安全 | 弱 | 弱 | **强** |\n| 生产就绪 | 中 | 中 | **高** |\n| 评估 | 需外接 | 内置基础 | **内置评估** |\n| 配置 | 代码 | 代码 | **YAML配置** |\n\n**Haystack优势：**\n1. **类型安全** — 组件间连接有类型检查\n2. **YAML配置** — Pipeline可用YAML定义\n3. **生产就绪** — 日志/监控/错误处理完善\n4. **评估集成** — 内置评估pipeline\n\n**适合场景：** 企业级RAG系统、需要严格类型检查的生产环境",
+    "follow_up": [
+      "Haystack的YAML配置如何写？",
+      "组件如何自定义？"
+    ]
+  },
+  {
+    "id": "harness-005",
+    "category": "ai-harness",
+    "subcategory": "LLM框架",
+    "difficulty": "L3",
+    "tags": [
+      "LangGraph",
+      "状态图",
+      "循环工作流"
+    ],
+    "question": "LangGraph解决了LangChain的什么问题？什么时候应该用LangGraph？",
+    "answer": "**LangChain LCEL的局限：**\n\nLCEL是DAG（有向无环图），不支持：\n1. **循环** — 无法实现「执行→检查→重试」循环\n2. **条件分支** — 只能线性管道\n3. **状态管理** — 无全局状态\n4. **中断/恢复** — 无法暂停\n\n**LangGraph解决方案：StateGraph**\n\n```python\n# 定义全局状态\nclass State(TypedDict):\n    messages: list\n    current_node: str\n    retry_count: int\n\n# 构建图\ngraph = StateGraph(State)\ngraph.add_node(\"agent\", agent_node)\ngraph.add_node(\"tools\", tool_node)\ngraph.add_edge(START, \"agent\")\ngraph.add_conditional_edges(\"agent\", should_continue,\n    {\"continue\": \"tools\", \"end\": END})\ngraph.add_edge(\"tools\", \"agent\")  # 循环！\n\napp = graph.compile(checkpointer=MemorySaver())\n```\n\n**什么时候用LangGraph：**\n1. 需要循环（Agent重试/反思/多轮）\n2. 需要条件分支（路由/审批）\n3. 需要全局状态管理\n4. 需要中断/恢复（Human-in-the-Loop）\n5. 多Agent协作编排\n\n**什么时候不用：**\n- 简单的prompt→model→parser → 用LCEL\n- 无状态的API调用 → 用普通函数",
+    "follow_up": [
+      "LangGraph的Checkpointer如何工作？",
+      "如何实现Human-in-the-Loop？"
+    ]
+  },
+  {
+    "id": "harness-006",
+    "category": "ai-harness",
+    "subcategory": "LLM框架",
+    "difficulty": "L3",
+    "tags": [
+      "Instructor",
+      "结构化输出",
+      "Pydantic"
+    ],
+    "question": "Instructor库如何简化LLM结构化输出？它和Function Calling有什么关系？",
+    "answer": "**Instructor核心：用Pydantic模型定义输出，自动处理重试和验证**\n\n```python\nimport instructor\nfrom pydantic import BaseModel\n\nclass User(BaseModel):\n    name: str\n    age: int\n    email: str\n\n# 一行代码获取结构化输出\nclient = instructor.from_openai(openai_client)\nuser = client.chat.completions.create(\n    model=\"gpt-4\",\n    response_model=User,\n    messages=[{\"role\": \"user\", \"content\": \"提取：张三，25岁，zs@mail.com\"}]\n)\n# user.name = \"张三\", user.age = 25, user.email = \"zs@mail.com\"\n```\n\n**Instructor vs 原生Function Calling：**\n\n| | Function Calling | Instructor |\n|--|-----------------|------------|\n| Schema定义 | JSON Schema | **Pydantic类** |\n| 验证 | 手动 | **自动** |\n| 重试 | 手动 | **自动重试+错误注入** |\n| 嵌套 | 难 | **原生支持** |\n| 多语言 | Python/JS | **Python（主打）** |\n\n**Instructor优势：**\n1. **类型安全** — IDE自动补全+类型检查\n2. **自动验证** — Pydantic约束（min/max/regex）\n3. **自动重试** — 验证失败自动把错误信息发回给LLM重试\n4. **流式结构化** — 支持流式输出部分结果\n\n**类似工具：** Marvin, BAML, Outlines",
+    "follow_up": [
+      "Instructor的自动重试机制如何工作？",
+      "BAML和Instructor有什么区别？"
+    ]
+  },
+  {
+    "id": "harness-007",
+    "category": "ai-harness",
+    "subcategory": "LLM框架",
+    "difficulty": "L4",
+    "tags": [
+      "框架选型",
+      "对比",
+      "架构决策"
+    ],
+    "question": "如何选择LLM应用框架？LangChain vs LlamaIndex vs DSPy vs 原生API？",
+    "answer": "**选型决策矩阵：**\n\n```\n你的需求是什么？\n├─ 简单API调用 → 原生API/OpenAI SDK\n├─ RAG系统\n│   ├─ 快速原型 → LlamaIndex\n│   └─ 生产级 → Haystack/LangChain\n├─ Agent\n│   ├─ 单Agent工具调用 → OpenAI Assistants API\n│   ├─ 自定义Agent循环 → LangChain\n│   └─ 复杂状态管理 → LangGraph\n├─ Prompt优化 → DSPy\n├─ 结构化输出 → Instructor/Outlines\n└─ 全栈应用 → LangChain生态\n```\n\n**详细对比：**\n\n| 维度 | 原生API | LangChain | LlamaIndex | DSPy | Haystack |\n|------|---------|-----------|------------|------|----------|\n| 学习成本 | **最低** | 高 | 中 | 高 | 中 |\n| 灵活性 | **最高** | 中 | 中 | 中 | 中 |\n| 抽象层级 | 无 | 高 | 中 | 高 | 高 |\n| RAG能力 | 需自建 | 强 | **最强** | 弱 | 强 |\n| Agent能力 | 需自建 | **强** | 中 | 弱 | 中 |\n| Prompt优化 | 需自建 | 弱 | 弱 | **最强** | 弱 |\n| 生产就绪 | **是** | 中 | 中 | 低 | **高** |\n\n**个人建议：**\n- 快速验证：原生API + 几个辅助函数\n- 中等复杂度：LangChain\n- RAG为主：LlamaIndex\n- 追求效果：DSPy\n- 追求稳定：Haystack",
+    "follow_up": [
+      "什么时候不用框架？",
+      "框架会不会成为技术债？"
+    ]
+  },
+  {
+    "id": "harness-008",
+    "category": "ai-harness",
+    "subcategory": "LLM框架",
+    "difficulty": "L3",
+    "tags": [
+      "Outlines",
+      "结构化",
+      "约束解码"
+    ],
+    "question": "Outlines库如何实现100%结构化输出？约束解码的原理是什么？",
+    "answer": "**Outlines核心：约束解码（Constrained Decoding）**\n\n传统方式：LLM生成文本 → 解析 → 可能失败\n约束解码：**在推理时强制LLM只能生成符合格式的token**\n\n**原理：**\n1. 定义目标格式（JSON Schema / Regex / Pydantic）\n2. 转换为有限状态机（FSM）\n3. 每生成一个token，检查FSM允许的下一个token集合\n4. 将logits中不允许的token概率设为-∞\n5. softmax后只选合法token\n\n**效果：100%格式正确，0重试**\n\n```python\nfrom outlines import models, generate\n\n# 定义schema\nclass User(BaseModel):\n    name: str\n    age: int\n\n# 加载模型 + 约束\nmodel = models.transformers(\"mistral-7b\")\ngenerator = generate.json(model, User)\n\n# 输出保证是合法User\nuser = generator(\"提取用户信息：张三25岁\")\n# 100%合法，无需重试\n```\n\n**vs Function Calling：**\n| | Function Calling | Outlines |\n|--|-----------------|----------|\n| 依赖 | API支持 | **开源模型即可** |\n| 准确率 | ~99% | **100%** |\n| 灵活性 | API限制 | **Regex/JSON/Grammar** |\n| 模型限制 | 仅特定模型 | **任何模型** |\n| 性能 | 无额外开销 | **轻微推理开销** |",
+    "follow_up": [
+      "约束解码对推理速度有多大影响？",
+      "如何定义自定义Grammar？"
+    ]
+  },
+  {
+    "id": "harness-009",
+    "category": "ai-harness",
+    "subcategory": "LLM框架",
+    "difficulty": "L3",
+    "tags": [
+      "Vercel AI SDK",
+      "流式",
+      "前端集成"
+    ],
+    "question": "Vercel AI SDK的核心设计是什么？它如何简化LLM应用的前端开发？",
+    "answer": "**Vercel AI SDK核心：**\n\n前端（React/Vue/Svelte）与LLM API之间的桥接层。\n\n**三大模块：**\n1. **AI SDK Core** — 统一的LLM调用接口（generateText/streamText）\n2. **AI SDK UI** — 前端组件（useChat/useCompletion）\n3. **AI SDK RSC** — React Server Components集成\n\n**核心优势 — 统一Provider：**\n```typescript\n// 换Provider只需改一行\nimport { openai } from '@ai-sdk/openai'\n// import { anthropic } from '@ai-sdk/anthropic'\n\nconst result = await streamText({\n  model: openai('gpt-4'),\n  // model: anthropic('claude-3.5-sonnet'),\n  prompt: 'Hello'\n})\n```\n\n**前端流式渲染：**\n```tsx\nconst { messages, input, handleSubmit } = useChat()\n\nreturn (\n  <div>\n    {messages.map(m => <div key={m.id}>{m.content}</div>)}\n    <form onSubmit={handleSubmit}>\n      <input value={input} onChange={handleInputChange} />\n    </form>\n  </div>\n)\n```\n\n**适合场景：**\n- Next.js/React全栈LLM应用\n- 需要流式UI的聊天/生成界面\n- 快速原型开发",
+    "follow_up": [
+      "AI SDK的Tool Calling如何在前端使用？",
+      "RSC集成有什么优势？"
+    ]
+  },
+  {
+    "id": "harness-010",
+    "category": "ai-harness",
+    "subcategory": "LLM框架",
+    "difficulty": "L4",
+    "tags": [
+      "框架性能",
+      "Benchmark",
+      "对比"
+    ],
+    "question": "LLM框架本身的性能开销有多大？如何选择性能最优的框架？",
+    "answer": "**框架开销来源：**\n1. **抽象层开销** — 额外的类/函数调用\n2. **序列化/反序列化** — Prompt构造/输出解析\n3. **依赖膨胀** — 安装包大、import慢\n4. **错误处理** — 重试/fallback逻辑\n\n**性能对比（简单RAG任务基准测试）：**\n\n| 方案 | 延迟(ms) | 内存(MB) | 依赖数 |\n|------|---------|---------|--------|\n| 原生API | **~50** | **~20** | **1** |\n| LangChain | ~200 | ~150 | 200+ |\n| LlamaIndex | ~180 | ~120 | 100+ |\n| Haystack | ~160 | ~100 | 80+ |\n\n**性能优化建议：**\n\n1. **延迟敏感 → 原生API**\n   - 去掉框架中间层\n   - 手动管理prompt和解析\n\n2. **复杂逻辑 → 框架但精简依赖**\n   ```python\n   # 只安装需要的\n   pip install langchain-core  # 而非 langchain\n   ```\n\n3. **批量处理 → 减少框架开销**\n   - 用batch API而非循环单次调用\n   - 异步并发(asyncio)\n\n4. **缓存层**\n   - Prompt缓存（系统prompt复用）\n   - 结果缓存（相同输入直接返回）\n\n**结论：** 对于性能关键场景，推荐原生API + 轻量辅助库（如Instructor for structured output）",
+    "follow_up": [
+      "如何精简LangChain依赖？",
+      "原生API如何实现重试/流式等框架功能？"
+    ]
+  },
+  {
+    "id": "harness-011",
+    "category": "ai-harness",
+    "subcategory": "RAG工程化",
+    "difficulty": "L3",
+    "tags": [
+      "分块策略",
+      "Chunking",
+      "文档处理"
+    ],
+    "question": "生产级RAG系统的分块策略如何设计？有哪些高级分块技术？",
+    "answer": "**生产级分块策略矩阵：**\n\n| 文档类型 | 推荐策略 | chunk_size | overlap |\n|---------|---------|-----------|---------|\n| Markdown | 按标题层级 | 256-512 | 50 |\n| PDF | 按段落+页面 | 400-800 | 100 |\n| 代码 | 按函数/类 | 函数级 | 0 |\n| HTML | 按DOM结构 | 300-500 | 50 |\n| 对话 | 按轮次 | 200-400 | 0 |\n\n**高级分块技术：**\n\n1. **语义分块（Semantic Chunking）**\n   - 计算相邻句子的embedding相似度\n   - 相似度骤降处作为分块边界\n   - 块边界更符合语义\n\n2. **Late Chunking**\n   - 先对整个文档做embedding\n   - 再在embedding空间中分块\n   - 保留全文上下文信息\n\n3. **Contextual Retrieval（Anthropic）**\n   - 每个chunk前加一段文档摘要\n   - 「这段文字来自一篇关于XX的文档，第N部分」\n   - 解决chunk脱离全文上下文的问题\n\n4. **Agentic Chunking**\n   - 用LLM判断每段文本是否应该单独成块\n   - 理解内容后决定分块\n   - 最精确但成本最高",
+    "follow_up": [
+      "Late Chunking如何实现？",
+      "Contextual Retrieval的摘要如何生成？"
+    ]
+  },
+  {
+    "id": "harness-012",
+    "category": "ai-harness",
+    "subcategory": "RAG工程化",
+    "difficulty": "L3",
+    "tags": [
+      "查询扩展",
+      "Query Rewriting",
+      "多查询"
+    ],
+    "question": "生产RAG中查询扩展的最佳实践是什么？如何平衡效果和延迟？",
+    "answer": "**查询扩展技术对比：**\n\n| 技术 | 延迟增加 | 效果提升 | 适用 |\n|------|---------|---------|------|\n| Query Rewriting | +1次LLM | 中 | 模糊查询 |\n| HyDE | +1次LLM | **高** | 事实型查询 |\n| Multi-Query | +1次LLM | 高 | 覆盖面不足 |\n| Step-Back | +1次LLM | 高 | 全局问题 |\n| Query Decomposition | +1次LLM | **高** | 复杂多跳 |\n\n**延迟优化：**\n\n1. **并行查询**\n   - Multi-Query的多个查询并行检索\n   - 只增加1次LLM调用延迟（生成查询）\n\n2. **缓存**\n   - 相同/相似查询的结果缓存\n   - HyDE的假想文档缓存\n\n3. **条件触发**\n   - 简单查询不做扩展\n   - 用分类器判断是否需要扩展\n\n**生产推荐组合：**\n```\n用户查询 → 分类(简单/复杂)\n├─ 简单 → 直接向量检索\n└─ 复杂 → Query Rewriting + Multi-Query(3个变体) → 并行检索 → RRF融合 → Rerank\n```",
+    "follow_up": [
+      "如何判断查询是否需要扩展？",
+      "RRF融合的k值如何选择？"
+    ]
+  },
+  {
+    "id": "harness-013",
+    "category": "ai-harness",
+    "subcategory": "RAG工程化",
+    "difficulty": "L3",
+    "tags": [
+      "Reranker",
+      "重排序",
+      "BGE"
+    ],
+    "question": "如何选择和部署Reranker？自建Reranker vs API Reranker？",
+    "answer": "**Reranker选择矩阵：**\n\n| 方案 | 类型 | 延迟 | 成本 | 效果 |\n|------|------|------|------|------|\n| Cohere Rerank | API | 低 | $$ | **最好** |\n| BGE-Reranker-Large | 开源 | 中 | 免费 | 很好 |\n| BGE-Reranker-Base | 开源 | **低** | 免费 | 好 |\n| Jina Reranker | API | 低 | $ | 好 |\n| Cross-Encoder-ms-marco | 开源 | 中 | 免费 | 中 |\n\n**自建Reranker方案：**\n\n1. **数据准备** — 从搜索日志/用户反馈构建训练集\n2. **基座选择** — XLM-RoBERTa / DeBERTa-v3\n3. **训练方式** — Cross-Encoder，对比学习\n4. **蒸馏** — 用大Reranker蒸馏到小模型\n\n**部署优化：**\n- ONNX Runtime加速\n- 批量推理（50个候选一起打分）\n- GPU缓存模型\n\n**Pipeline最佳实践：**\n```\n向量检索Top-100 → Reranker精排Top-10 → 取Top-3-5注入Prompt\n```\n\n**效果对比：**\n- 无Rerank: Recall@5 = 62%\n- 有Rerank: Recall@5 = **85%**（+23%）",
+    "follow_up": [
+      "Cross-Encoder如何训练？",
+      "Rerank的候选数量如何确定？"
+    ]
+  },
+  {
+    "id": "harness-014",
+    "category": "ai-harness",
+    "subcategory": "RAG工程化",
+    "difficulty": "L4",
+    "tags": [
+      "多模态RAG",
+      "表格",
+      "图表"
+    ],
+    "question": "如何处理RAG中的表格、图表、公式等非文本内容？",
+    "answer": "**非文本内容RAG方案：**\n\n1. **表格处理**\n   - 提取为Markdown/CSV格式\n   - 用LLM生成表格摘要\n   - 存储为：摘要(embedding) + 原始表格(精确返回)\n   - 查询时：摘要检索 → 原始表格注入Prompt\n\n2. **图表/图片处理**\n   - VLM（如GPT-4V/LLaVA）生成图片描述\n   - 描述做embedding\n   - 原图URL/路径存储\n\n3. **公式处理**\n   - MathPix API转换为LaTeX\n   - LaTeX文本做embedding\n   - 渲染后的公式图片用VLM描述\n\n4. **PDF复杂版面**\n   - 使用Unstructured.io/Marker解析\n   - 保留页面结构（标题/段落/表格/图）\n   - 带页面号的metadata\n\n**多模态RAG架构：**\n```\n文档 → 解析器(文本/表格/图) \n     → 分别处理(文本embedding/VLM描述/表格摘要)\n     → 统一向量索引\n查询 → 检索 → 多模态结果聚合 → LLM生成\n```",
+    "follow_up": [
+      "表格精确匹配如何实现？",
+      "VLM生成的描述质量如何保证？"
+    ]
+  },
+  {
+    "id": "harness-015",
+    "category": "ai-harness",
+    "subcategory": "RAG工程化",
+    "difficulty": "L4",
+    "tags": [
+      "RAG优化",
+      "生产调优",
+      "性能优化"
+    ],
+    "question": "生产RAG系统的10个常见问题及解决方案？",
+    "answer": "**10大问题与方案：**\n\n| # | 问题 | 症状 | 解决方案 |\n|---|------|------|---------|\n| 1 | 检索不准 | 答非所问 | 加Reranker + 查询改写 |\n| 2 | 检索太多 | 上下文过长 | 减少Top-K + 压缩chunk |\n| 3 | 检索太少 | 答案不全 | Multi-Query扩大召回 |\n| 4 | 分块不合理 | 语义割裂 | 语义分块/结构化分块 |\n| 5 | 幻觉 | 编造答案 | 提示「只基于文档」+ 引用标注 |\n| 6 | 多语言 | 混合检索差 | BGE-M3多语言模型 |\n| 7 | 实时更新 | 知识过时 | 增量索引 + 通知机制 |\n| 8 | 大规模 | 检索慢 | 分区索引 + 缓存 |\n| 9 | 多轮对话 | 上下文丢失 | 对话历史改写查询 |\n| 10 | 评估难 | 不知效果如何 | Ragas/TruLens自动评估 |\n\n**优化优先级：**\n1. 数据质量（分块+解析）\n2. 检索质量（Reranker+查询扩展）\n3. 生成质量（Prompt+引用）\n4. 评估体系（Ragas+人工抽检）",
+    "follow_up": [
+      "如何系统性地评估RAG效果？",
+      "增量索引如何实现？"
+    ]
+  },
+  {
+    "id": "harness-016",
+    "category": "ai-harness",
+    "subcategory": "向量数据库",
+    "difficulty": "L3",
+    "tags": [
+      "向量数据库",
+      "选型",
+      "Pinecone"
+    ],
+    "question": "如何选择向量数据库？Pinecone vs Milvus vs Qdrant vs pgvector？",
+    "answer": "**向量数据库对比：**\n\n| 数据库 | 类型 | 适合规模 | 部署 | 特色 |\n|--------|------|---------|------|------|\n| Pinecone | SaaS | **任何** | 云 | **最省心** |\n| Milvus | 开源 | **十亿+** | 自建/云 | **最强性能** |\n| Qdrant | 开源 | 亿级 | 自建/云 | **Rust高性能** |\n| Weaviate | 开源 | 亿级 | 自建/云 | GraphQL API |\n| Chroma | 开源 | 百万级 | 嵌入式 | **最简单** |\n| pgvector | 插件 | 千万级 | PostgreSQL | **SQL集成** |\n\n**选型决策：**\n```\n规模 < 10万 → Chroma（嵌入式，零运维）\n规模 10万-1000万 → Qdrant/pgvector\n规模 > 1000万 → Milvus/Pinecone\n不想运维 → Pinecone（贵但省心）\n已有PostgreSQL → pgvector（无缝集成）\n需要混合检索 → Qdrant/Weaviate（原生BM25+向量）\n```\n\n**混合检索支持：**\n- Qdrant: 原生支持（向量+payload过滤+BM25）\n- Weaviate: 原生支持\n- Milvus 2.4+: 支持标量过滤\n- pgvector: 用SQL做全文检索+向量",
+    "follow_up": [
+      "pgvector的性能上限是多少？",
+      "Milvus的分片机制如何工作？"
+    ]
+  },
+  {
+    "id": "harness-017",
+    "category": "ai-harness",
+    "subcategory": "向量数据库",
+    "difficulty": "L3",
+    "tags": [
+      "ANN",
+      "HNSW",
+      "索引算法"
+    ],
+    "question": "HNSW索引算法的原理是什么？为什么它是最常用的ANN算法？",
+    "answer": "**HNSW (Hierarchical Navigable Small World)：**\n\n**核心思想：** 多层跳跃表式的近邻图。\n\n**结构：**\n```\nLayer 2:  A ←→ F              (稀疏，长距离连接)\nLayer 1:  A ←→ C ←→ F          (中等密度)\nLayer 0:  A←B←C←D←E←F          (密集，所有节点)\n```\n\n**搜索流程：**\n1. 从Layer 2的入口节点开始\n2. 贪心搜索到最近的节点\n3. 下降到Layer 1，从该节点继续搜索\n4. 逐层下降直到Layer 0\n5. 在Layer 0做精细近邻搜索\n\n**关键参数：**\n- **M** — 每个节点的最大连接数（通常16-48）\n- **efConstruction** — 构建时搜索宽度（通常200-500）\n- **efSearch** — 查询时搜索宽度（通常50-200）\n\n**为什么最常用：**\n1. **速度快** — 搜索复杂度O(log n)\n2. **召回率高** — 95%+ recall@10\n3. **支持动态插入** — 不需要重建索引\n4. **内存效率** — 比KD-Tree/IVF更实用\n\n**几乎所有向量数据库的默认索引：** Milvus/Qdrant/Weaviate/Chroma",
+    "follow_up": [
+      "HNSW的M值如何选择？",
+      "IVF-PQ和HNSW有什么区别？"
+    ]
+  },
+  {
+    "id": "harness-018",
+    "category": "ai-harness",
+    "subcategory": "向量数据库",
+    "difficulty": "L3",
+    "tags": [
+      "量化",
+      "PQ",
+      "SQ",
+      "压缩"
+    ],
+    "question": "向量数据库中的PQ（Product Quantization）和SQ（Scalar Quantization）是什么？如何选择？",
+    "answer": "**向量量化目标：** 压缩向量存储空间，加速搜索。\n\n**SQ (Scalar Quantization)：**\n- 将FP32向量的每个维度量化为INT8\n- 压缩比：4:1\n- 精度损失：极小（<1%）\n- 原理：线性映射 [min, max] → [0, 255]\n\n**PQ (Product Quantization)：**\n- 将向量分成M段，每段独立量化\n- 压缩比：32:1~64:1\n- 精度损失：中（3-8%）\n- 原理：每段用K-means聚类，存聚类中心ID\n\n**对比：**\n\n| | SQ | PQ |\n|--|-----|-----|\n| 压缩比 | 4:1 | **32:1** |\n| 精度损失 | **<1%** | 3-8% |\n| 速度 | 快 | **最快** |\n| 内存节省 | 4x | **32x** |\n| 适用 | 精度优先 | **成本优先** |\n\n**实际组合使用：**\n- **IVF-PQ** — 先聚类再量化，大规模+低成本\n- **HNSW-SQ** — HNSW图+标量量化，精度+速度平衡\n- Qdrant默认使用SQ\n- Milvus支持PQ和SQ",
+    "follow_up": [
+      "PQ的M值如何选择？",
+      "量化后如何恢复精度？"
+    ]
+  },
+  {
+    "id": "harness-019",
+    "category": "ai-harness",
+    "subcategory": "模型服务",
+    "difficulty": "L3",
+    "tags": [
+      "vLLM",
+      "SGLang",
+      "推理引擎对比"
+    ],
+    "question": "vLLM vs SGLang vs TGI vs Triton——推理引擎如何选择？",
+    "answer": "**推理引擎对比：**\n\n| 引擎 | 开发者 | 核心技术 | 优势 |\n|------|--------|---------|------|\n| **vLLM** | UC Berkeley | PagedAttention | **吞吐量最高** |\n| **SGLang** | UC Berkeley | RadixAttention | **复杂推理最快** |\n| **TGI** | HuggingFace | Continuous Batching | 易用/兼容HF |\n| **TensorRT-LLM** | NVIDIA | TensorRT优化 | **单卡延迟最低** |\n| **Ollama** | Ollama | llama.cpp | **本地部署最简** |\n\n**选择建议：**\n\n```\n高并发服务（100+ QPS）\n→ vLLM（PagedAttention吞吐量最强）\n\n结构化生成 / 多轮推理\n→ SGLang（RadixAttention加速前缀共享）\n\n快速原型 / 兼容HF\n→ TGI（HuggingFace生态）\n\n极致延迟（<100ms TTFT）\n→ TensorRT-LLM（GPU优化极致）\n\n本地开发\n→ Ollama（一行命令启动）\n```\n\n**SGLang vs vLLM：**\n- vLLM：通用吞吐量更好\n- SGLang：对于有共享前缀的场景（如多轮对话/Agent），RadixAttention复用前缀KV Cache，速度更快",
+    "follow_up": [
+      "RadixAttention和Prefix Caching有什么区别？",
+      "如何切换推理引擎？"
+    ]
+  },
+  {
+    "id": "harness-020",
+    "category": "ai-harness",
+    "subcategory": "模型服务",
+    "difficulty": "L3",
+    "tags": [
+      "Ollama",
+      "本地部署",
+      "模型管理"
+    ],
+    "question": "Ollama的架构设计有什么巧妙之处？它为什么能成为本地LLM部署的标准？",
+    "answer": "**Ollama核心设计：**\n\n1. **一行安装，一行运行**\n```bash\ncurl -fsSL https://ollama.ai/install | sh\nollama run llama3.2\n```\n\n2. **Modelfile（类似Dockerfile）**\n```dockerfile\nFROM llama3.2\nSYSTEM \"你是中文助手\"\nPARAMETER temperature 0.7\nPARAMETER num_ctx 4096\n```\n\n3. **GGUF格式** — 量化模型的标准格式\n   - llama.cpp底层\n   - 支持CPU/GPU混合推理\n   - 自动选择量化级别\n\n**为什么成为标准：**\n\n| 优势 | 说明 |\n|------|------|\n| **极简安装** | 无需CUDA/Python环境 |\n| **模型管理** | `ollama pull/push/rm` 类似Docker |\n| **API兼容** | 提供OpenAI兼容API |\n| **多平台** | macOS/Linux/Windows全覆盖 |\n| **GPU自动** | 自动检测并使用GPU |\n| **Registry** | 类似Docker Hub的模型仓库 |\n\n**架构：**\n```\nOllama CLI → Ollama Server(本地11433端口) → llama.cpp → GPU/CPU\n```\n\n**局限性：**\n- 不支持分布式推理（单机）\n- 并发能力有限\n- 不适合生产高并发场景",
+    "follow_up": [
+      "GGUF格式和Safetensors有什么区别？",
+      "Ollama如何做GPU/CPU混合推理？"
+    ]
+  },
+  {
+    "id": "harness-021",
+    "category": "ai-harness",
+    "subcategory": "Agent框架",
+    "difficulty": "L3",
+    "tags": [
+      "Dify",
+      "Coze",
+      "低代码Agent"
+    ],
+    "question": "Dify和Coze（扣子）的定位和核心功能有什么区别？",
+    "answer": "**Dify vs Coze：**\n\n| | Dify | Coze（扣子） |\n|--|------|-------------|\n| 定位 | 开源LLM应用平台 | 字节跳动Agent平台 |\n| 部署 | **可私有化** | 仅SaaS |\n| Agent | 工作流+Agent | **Bot+Plugin** |\n| 模型 | 任意（OpenAI/本地等） | 字节系为主 |\n| 知识库 | 内置RAG | 内置知识库 |\n| 发布渠道 | API/Web | **微信/抖音/飞书** |\n| 生态 | 开源社区 | 字节生态 |\n\n**Dify核心功能：**\n1. **Workflow编排** — 可视化拖拽工作流\n2. **Agent模式** — ReAct/Function Calling\n3. **RAG Pipeline** — 内置分块/检索/重排\n4. **Prompt管理** — 版本控制+AB测试\n5. **可观测性** — 日志/追踪/标注\n\n**选择：**\n- 私有化部署 → Dify\n- 快速上线 + 中国生态 → Coze",
+    "follow_up": [
+      "Dify如何私有化部署？",
+      "Coze的Plugin如何开发？"
+    ]
+  },
+  {
+    "id": "harness-022",
+    "category": "ai-harness",
+    "subcategory": "Agent框架",
+    "difficulty": "L3",
+    "tags": [
+      "LangGraph",
+      "生产部署",
+      "实战"
+    ],
+    "question": "LangGraph在生产环境中部署需要注意什么？如何管理Agent状态？",
+    "answer": "**LangGraph生产部署要点：**\n\n**1. 状态持久化（Checkpointer）**\n生产环境用PostgreSQL/Redis而非MemorySaver\n\n**2. 超时与限制**\n- 设置最大递归深度（recursion_limit）\n- 单步超时 + 全局超时\n\n**3. 人机协作（Interrupt）**\n在关键节点暂停，等待用户输入\n\n**4. 并行执行**\n使用Send API并行分发任务，结果自动合并到状态\n\n**5. 可观测性**\nLangSmith自动追踪 + 自定义callback记录指标\n\n**6. 错误恢复**\n从最近checkpoint恢复 + 工具调用幂等设计\n\n**部署架构：**\n用户 → FastAPI → LangGraph Worker → PostgreSQL(状态) → Redis(缓存) → LLM API",
+    "follow_up": [
+      "如何实现LangGraph的水平扩展？",
+      "checkpoint过多如何清理？"
+    ]
+  },
+  {
+    "id": "harness-023",
+    "category": "ai-harness",
+    "subcategory": "Agent框架",
+    "difficulty": "L3",
+    "tags": [
+      "CrewAI",
+      "生产实践",
+      "最佳实践"
+    ],
+    "question": "CrewAI在生产中如何使用？有哪些常见的坑？",
+    "answer": "**CrewAI生产最佳实践：**\n\n**1. Agent设计** — 角色明确、工具精确\n\n**2. Task设计** — 明确expected_output格式\n\n**3. 常见的坑：**\n\n| 坑 | 症状 | 解决 |\n|----|------|------|\n| 角色重叠 | Agent互相抢任务 | 明确职责边界 |\n| 无限委派 | Agent不停互相委派 | allow_delegation=False |\n| Token爆炸 | 上下文无限增长 | max_iter限制 |\n| 格式不一致 | 下游Agent无法解析 | 用output_schema |\n| 工具不可用 | Agent调错误工具 | 精确描述工具 |\n\n**4. 性能优化：**\n- 用haiku/flash做简单步骤\n- 缓存中间结果\n- 并行执行独立任务\n- 设置max_rpm限流",
+    "follow_up": [
+      "如何调试CrewAI的Agent行为？",
+      "CrewAI如何做评估？"
+    ]
+  },
+  {
+    "id": "harness-024",
+    "category": "ai-harness",
+    "subcategory": "Agent框架",
+    "difficulty": "L4",
+    "tags": [
+      "Agent框架对比",
+      "选型",
+      "趋势"
+    ],
+    "question": "主流Agent框架对比？LangGraph vs CrewAI vs AutoGen vs Dify？",
+    "answer": "**Agent框架全景对比：**\n\n| 框架 | 设计理念 | 适合 | 学习成本 | 生产就绪 |\n|------|---------|------|---------|---------|\n| **LangGraph** | 图结构编排 | 复杂工作流 | 高 | **高** |\n| **CrewAI** | 角色协作 | 明确分工 | 低 | 中 |\n| **AutoGen** | 对话式协作 | 探索任务 | 中 | 中 |\n| **Dify** | 可视化平台 | 企业应用 | **低** | **高** |\n| **OpenAI Swarm** | 极简Handoff | 路由分诊 | **最低** | 低(实验) |\n\n**选型决策树：**\n- 零代码 → Dify / Coze\n- 少量代码 → CrewAI\n- 全代码控制 → 简单路由用Swarm，自由协作用AutoGen，复杂状态用LangGraph\n\n**趋势观察：**\n1. **MCP标准化** — 框架逐渐支持MCP\n2. **声明式>命令式** — DSPy模式推广\n3. **可视化+代码混合** — Dify+LangGraph\n4. **Agent OS层** — 运行时与框架分离",
+    "follow_up": [
+      "Agent框架会不会被模型原生Agent取代？",
+      "如何迁移Agent框架？"
+    ]
+  },
+  {
+    "id": "harness-025",
+    "category": "ai-harness",
+    "subcategory": "可观测性",
+    "difficulty": "L3",
+    "tags": [
+      "LangSmith",
+      "Tracing",
+      "调试"
+    ],
+    "question": "LangSmith如何用于LLM应用的可观测性？核心功能有哪些？",
+    "answer": "**LangSmith核心功能：**\n\n1. **Trace（追踪）** — 可视化每一步的执行链，每个LLM调用的完整input/output，Token消耗和延迟\n\n2. **Datasets（数据集）** — 从生产Trace中创建评估数据集，手动标注/修正\n\n3. **Evaluation（评估）** — 在数据集上运行应用，自动评估（LLM-as-judge），版本对比\n\n4. **Playground（实验场）** — 修改prompt后立即测试，A/B对比效果\n\n**集成方式：**\n设置环境变量LANGCHAIN_TRACING_V2=true和LANGCHAIN_API_KEY，自动追踪所有LangChain/LangGraph调用\n\n**非LangChain应用：** 使用LangSmith SDK手动添加trace\n\n**定价：** 免费5K traces/月，之后按量付费",
+    "follow_up": [
+      "如何从Trace创建评估数据集？",
+      "LangSmith的LLM-as-judge如何配置？"
+    ]
+  },
+  {
+    "id": "harness-026",
+    "category": "ai-harness",
+    "subcategory": "可观测性",
+    "difficulty": "L3",
+    "tags": [
+      "Phoenix",
+      "Arize",
+      "开源可观测"
+    ],
+    "question": "Phoenix（Arize）如何实现LLM可观测性？它和LangSmith有什么区别？",
+    "answer": "**Phoenix核心：开源LLM可观测性**\n\n**功能：**\n1. **Tracing** — OpenTelemetry标准追踪\n2. **Evaluations** — LLM自动评估（hallucination/relevance/toxicity）\n3. **Datasets** — 从trace创建数据集\n4. **Embedding分析** — 向量空间可视化\n\n**vs LangSmith：**\n\n| | LangSmith | Phoenix |\n|--|-----------|---------|\n| 开源 | 否 | **是** |\n| 部署 | SaaS | **自托管** |\n| 框架依赖 | LangChain优先 | **框架无关** |\n| 价格 | 免费5K/月 | **完全免费** |\n| OpenTelemetry | 否 | **是** |\n| 数据隐私 | 上传到SaaS | **数据不出本地** |\n\n**适用场景：**\n- 数据敏感（医疗/金融）→ Phoenix自托管\n- LangChain生态 → LangSmith集成更深\n- 多框架混用 → Phoenix框架无关",
+    "follow_up": [
+      "Phoenix如何做LLM评估？",
+      "OpenTelemetry如何集成？"
+    ]
+  },
+  {
+    "id": "harness-027",
+    "category": "ai-harness",
+    "subcategory": "可观测性",
+    "difficulty": "L4",
+    "tags": [
+      "Prompt版本",
+      "管理",
+      "实验"
+    ],
+    "question": "Prompt版本管理最佳实践？如何做Prompt的A/B测试？",
+    "answer": "**Prompt版本管理方案：**\n\n| 方案 | 适用 | 优势 |\n|------|------|------|\n| Git + 文件 | 小团队 | 简单直观 |\n| LangSmith | LangChain | 内置版本+评估 |\n| Promptflow | 企业 | 微软开源方案 |\n| Langfuse | 开源 | 自托管+实验 |\n| DSPy | 优化型 | **自动优化** |\n\n**A/B测试流程：**\n1. 定义指标（准确率/用户满意度/延迟）\n2. 创建Prompt变体（v1当前, v2改进版）\n3. 流量分割（50/50 或 10%金丝雀）\n4. 收集数据（N>=100样本）\n5. 统计检验（t-test / 序贯检验）\n6. 决策（v2显著优于v1则全量切换）\n\n**关键原则：**\n1. Prompt和代码分离，每次修改有版本号+变更说明\n2. 生产prompt需要审批\n3. 可以快速回滚",
+    "follow_up": [
+      "如何评估Prompt变更的统计显著性？",
+      "DSPy自动优化如何替代手动AB测试？"
+    ]
+  },
+  {
+    "id": "harness-028",
+    "category": "ai-harness",
+    "subcategory": "工程实践",
+    "difficulty": "L4",
+    "tags": [
+      "成本优化",
+      "Token管理",
+      "缓存"
+    ],
+    "question": "LLM应用的成本优化策略有哪些？Token级别如何精细化管理？",
+    "answer": "**成本优化全景：**\n\n**1. 模型路由（省40-70%）**\n简单分类用Flash/Haiku，复杂推理用Sonnet/Opus\n\n**2. Prompt Caching（省50-80%系统prompt）**\nOpenAI/Anthropic支持前缀缓存，系统prompt只计费一次\n\n**3. 上下文压缩（省30-50%）**\n对话摘要替代完整历史，工具输出截断\n\n**4. 批量推理（省50%）**\nOpenAI Batch API（24小时内返回），价格减半\n\n**5. 结构化输出省Token**\nJSON比自然语言更紧凑，用schema约束输出长度\n\n**6. 模型蒸馏**\n用大模型生成训练数据，蒸馏到小模型\n\n**成本监控：**\n每次调用记录cost = input_tokens * input_price + output_tokens * output_price",
+    "follow_up": [
+      "Prompt Caching的命中率如何提升？",
+      "模型路由的准确率如何保证？"
+    ]
+  },
+  {
+    "id": "harness-029",
+    "category": "ai-harness",
+    "subcategory": "工程实践",
+    "difficulty": "L4",
+    "tags": [
+      "灰度发布",
+      "CI/CD",
+      "LLMOps"
+    ],
+    "question": "LLM应用如何做CI/CD和灰度发布？LLMOps和传统MLOps有什么区别？",
+    "answer": "**LLMOps vs MLOps：**\n\n| | MLOps | LLMOps |\n|--|-------|--------|\n| 部署对象 | 模型权重 | **Prompt+配置** |\n| 测试方法 | 精确率/F1 | **LLM-as-judge/人工** |\n| 回滚 | 模型版本 | **Prompt版本** |\n| 监控 | 数据漂移 | **质量漂移/幻觉** |\n| 成本 | 推理算力 | **Token计费** |\n\n**LLM CI/CD Pipeline：**\n代码提交 → Lint检查 → 单元测试 → Prompt评估(评估集+LLM-as-judge) → 金丝雀发布(5%流量) → 监控指标 → 全量发布 OR 回滚\n\n**灰度发布策略：**\n按用户ID hash分流，5%流量走新prompt，监控金丝雀指标，异常则回滚\n\n**关键测试：**\n1. **Prompt回归测试** — 评估集上对比新旧prompt\n2. **安全测试** — 越狱/注入测试\n3. **成本测试** — Token消耗在预算内\n4. **延迟测试** — P99延迟达标",
+    "follow_up": [
+      "LLM-as-judge的评估如何保证质量？",
+      "Prompt回滚机制如何设计？"
+    ]
+  },
+  {
+    "id": "harness-030",
+    "category": "ai-harness",
+    "subcategory": "RAG工程化",
+    "difficulty": "L3",
+    "tags": [
+      "Self-RAG",
+      "自适应",
+      "Corrective RAG"
+    ],
+    "question": "Self-RAG和Corrective-RAG（CRAG）是什么？它们如何让RAG系统更智能？",
+    "answer": "**Self-RAG：** 模型自己决定何时检索、检索什么。\n\n**流程：**\n1. 模型评估当前问题是否需要检索\n2. 如需要 → 生成检索query → 检索\n3. 评估检索结果是否相关\n4. 如相关 → 基于文档生成\n5. 如不相关 → 不用文档/重新检索\n\n**Corrective-RAG (CRAG)：**\n\n在标准RAG上增加「纠正」机制：\n检索 → 评估检索质量 → 相关(confidence>0.7)直接使用 / 部分相关提取信息+网络搜索 / 不相关完全依赖网络搜索\n\n**对比：**\n\n| | 标准RAG | Self-RAG | CRAG |\n|--|---------|----------|------|\n| 检索触发 | 总是检索 | **模型决定** | 总是检索 |\n| 结果评估 | 无 | 有 | **有** |\n| 纠正机制 | 无 | 重检索 | **网络搜索** |\n| 实现复杂度 | 低 | 高(需训练) | **中** |\n\n**CRAG优势：** 不需要额外训练（纯prompt工程），通过网络搜索兜底",
+    "follow_up": [
+      "CRAG的网络搜索如何选择数据源？",
+      "Self-RAG如何训练？"
+    ]
+  },
+  {
+    "id": "harness-031",
+    "category": "ai-harness",
+    "subcategory": "工程实践",
+    "difficulty": "L3",
+    "tags": [
+      "模型网关",
+      "LiteLLM",
+      "多供应商"
+    ],
+    "question": "LiteLLM和模型网关的作用是什么？如何管理多供应商LLM？",
+    "answer": "**LiteLLM核心：统一API接口**\n\n用一个接口调用所有LLM供应商（OpenAI/Anthropic/Zhipu/DeepSeek/本地Ollama等）。\n\n**核心功能：**\n1. **统一接口** — 100+供应商，一套SDK\n2. **负载均衡** — 多个API Key轮询\n3. **Fallback** — 主供应商失败自动切换\n4. **成本追踪** — 自动计算Token费用\n5. **限流** — 按用户/项目限流\n6. **缓存** — 相同请求缓存结果\n\n**使用方式：**\n```python\nfrom litellm import completion\n\n# 统一接口，只需改model名\nresponse = completion(model=\"gpt-4\", messages=[...])\nresponse = completion(model=\"claude-3-5-sonnet\", messages=[...])\nresponse = completion(model=\"zhipu/glm-4\", messages=[...])\n```\n\n**模型网关（Proxy模式）：**\n- 部署为独立服务\n- 所有应用通过网关访问LLM\n- 统一计费/日志/限流/缓存\n\n**vs 直接调用各供应商API：**\n- 优势：统一管理、故障转移、成本控制\n- 劣势：增加一层延迟、额外运维",
+    "follow_up": [
+      "LiteLLM如何做Fallback？",
+      "模型网关如何部署？"
+    ]
+  },
+  {
+    "id": "harness-032",
+    "category": "ai-harness",
+    "subcategory": "工程实践",
+    "difficulty": "L3",
+    "tags": [
+      "流式输出",
+      "SSE",
+      "WebSocket"
+    ],
+    "question": "LLM应用的流式输出如何实现？SSE vs WebSocket如何选择？",
+    "answer": "**流式输出方案：**\n\n**SSE (Server-Sent Events) — 最常用：**\n```\nHTTP响应头: Content-Type: text/event-stream\n\n每个chunk格式:\ndata: {\"token\": \"你好\"}\ndata: {\"token\": \"世界\"}\ndata: [DONE]\n```\n\n**优势：**\n- 基于HTTP，无需额外协议\n- 浏览器原生支持EventSource\n- 自动重连\n- 单向推送足够（LLM → 用户）\n\n**WebSocket：**\n- 双向通信\n- 适合需要用户中途打断/修改的场景\n- 更复杂，需额外库\n\n**选择建议：**\n- 单向流式输出 → **SSE**（95%场景）\n- 需要双向交互 → WebSocket\n\n**前端实现：**\n```javascript\nconst eventSource = new EventSource('/api/chat?prompt=...')\neventSource.onmessage = (e) => {\n    const data = JSON.parse(e.data)\n    appendToUI(data.token)\n}\neventSource.onerror = () => eventSource.close()\n```\n\n**后端实现（FastAPI）：**\n```python\n@app.get('/api/chat')\nasync def chat(prompt: str):\n    async def generate():\n        async for chunk in llm.stream(prompt):\n            yield f'data: {json.dumps({\"token\": chunk})}\\n\\n'\n        yield 'data: [DONE]\\n\\n'\n    return StreamingResponse(generate(), media_type='text/event-stream')\n```",
+    "follow_up": [
+      "SSE如何处理断线重连？",
+      "流式输出如何做错误处理？"
+    ]
+  },
+  {
+    "id": "harness-033",
+    "category": "ai-harness",
+    "subcategory": "RAG工程化",
+    "difficulty": "L3",
+    "tags": [
+      "ChatEngine",
+      "多轮对话",
+      "上下文管理"
+    ],
+    "question": "RAG系统如何处理多轮对话？上下文中的历史如何与检索结合？",
+    "answer": "**多轮RAG的核心挑战：**\n\n用户第二轮提问可能依赖第一轮的上下文。\n\n例：\n- 第一轮：「什么是Transformer？」\n- 第二轮：「它的注意力机制怎么工作？」←「它」指什么？\n\n**解决方案：**\n\n1. **查询改写（Query Rewriting）**\n   - 用LLM将「它的注意力机制怎么工作」改写为「Transformer的注意力机制怎么工作」\n   - 用改写后的查询做检索\n\n2. **对话摘要作为上下文**\n   - 将之前的对话摘要注入系统prompt\n   - 检索结果 + 对话摘要一起提供给LLM\n\n3. **LlamaIndex ChatEngine**\n   - 内置多轮对话RAG支持\n   - 自动管理上下文窗口\n   - 支持CondenseQuestionMode（改写查询）\n\n4. **滑动窗口 + 检索**\n   - 最近3轮对话完整保留\n   - 更早的历史用检索获取相关片段\n\n**最佳实践：**\n```\n系统prompt + 最近2轮对话 + 检索到的文档\n→ LLM生成回复\n```",
+    "follow_up": [
+      "CondenseQuestionMode的原理？",
+      "多轮RAG如何评估？"
+    ]
+  },
+  {
+    "id": "harness-034",
+    "category": "ai-harness",
+    "subcategory": "RAG工程化",
+    "difficulty": "L4",
+    "tags": [
+      "增量更新",
+      "实时索引",
+      "数据同步"
+    ],
+    "question": "RAG知识库如何实现增量更新？大规模文档变更时索引如何高效更新？",
+    "answer": "**增量更新策略：**\n\n1. **文档变更检测**\n   - 文件哈希（MD5/SHA256）对比\n   - 修改时间戳检查\n   - Webhook通知（CMS集成）\n\n2. **增量索引**\n   - 只对变更文档重新分块+embedding\n   - 删除旧向量，插入新向量\n   - 大多数向量数据库支持upsert\n\n3. **批量更新Pipeline**\n   ```\n   变更检测 → 增量分块 → 批量embedding → 向量库upsert → 索引刷新\n   ```\n\n4. **双缓冲更新**\n   - 新索引在后台构建\n   - 构建完成后原子切换\n   - 零停机更新\n\n**大规模场景（百万文档）：**\n- **分区索引** — 按时间/类别分区，只更新变更分区\n- **异步队列** — Kafka/SQS排队处理\n- **并行embedding** — 多GPU批量计算\n- **Qdrant/Milvus的批量upsert API**\n\n**删除处理：**\n- 软删除（标记deleted=true，检索时过滤）\n- 定期硬删除（低峰期清理）",
+    "follow_up": [
+      "向量库的upsert性能如何？",
+      "分区索引如何设计？"
+    ]
+  },
+  {
+    "id": "harness-035",
+    "category": "ai-harness",
+    "subcategory": "工程实践",
+    "difficulty": "L3",
+    "tags": [
+      "权限控制",
+      "多租户",
+      "安全"
+    ],
+    "question": "LLM应用如何实现多租户隔离和权限控制？RAG知识库如何做文档级权限？",
+    "answer": "**多租户隔离方案：**\n\n| 层级 | 方案 | 示例 |\n|------|------|------|\n| 数据隔离 | 租户独立的向量索引 | tenant_a_index, tenant_b_index |\n| 元数据过滤 | 同一索引+metadata过滤 | filter: {tenant_id: 'a'} |\n| 应用隔离 | 每租户独立部署 | Docker/K8s namespace |\n\n**文档级权限控制：**\n\n1. **Metadata标注**\n   ```json\n   {\n     \"content\": \"高管薪酬报告\",\n     \"metadata\": {\n       \"doc_id\": \"doc_123\",\n       \"access_level\": \"executive\",\n       \"department\": \"finance\",\n       \"tenant_id\": \"company_a\"\n     }\n   }\n   ```\n\n2. **检索时过滤**\n   ```python\n   # Qdrant\n   results = qdrant.search(\n       collection_name=\"docs\",\n       query_vector=embedding,\n       query_filter={\n           \"must\": [\n               {\"key\": \"tenant_id\", \"match\": {\"value\": user.tenant_id}},\n               {\"key\": \"access_level\", \"match\": {\"any\": user.permissions}}\n           ]\n       }\n   )\n   ```\n\n3. **RBAC + ABAC**\n   - RBAC: 基于角色（admin/editor/viewer）\n   - ABAC: 基于属性（部门/项目/安全等级）",
+    "follow_up": [
+      "向量库的metadata过滤性能如何？",
+      "如何实现行级权限？"
+    ]
+  },
+  {
+    "id": "harness-036",
+    "category": "ai-harness",
+    "subcategory": "工程实践",
+    "difficulty": "L4",
+    "tags": [
+      "评估体系",
+      "LLM-as-Judge",
+      "自动化测试"
+    ],
+    "question": "如何建立完整的LLM应用评估体系？LLM-as-Judge如何设计？",
+    "answer": "**LLM评估三层体系：**\n\n**1. 单元测试（函数级）**\n- Prompt格式验证\n- JSON Schema验证\n- 工具参数合法性\n\n**2. 集成测试（端到端）**\n- 评估数据集（100-1000样本）\n- 人工标注金标准\n- 自动化批量测试\n\n**3. 线上监控（实时）**\n- 用户反馈（赞/踩）\n- 质量打分（LLM-as-Judge）\n- 异常检测（幻觉率/延迟/成本）\n\n**LLM-as-Judge设计：**\n```python\njudge_prompt = f\"\"\"\n你是评估专家。请评估以下回答的质量。\n\n问题：{question}\n回答：{answer}\n参考答案：{reference}\n\n评分维度（1-5分）：\n1. 准确性：答案是否正确\n2. 完整性：是否覆盖所有要点\n3. 相关性：是否切题\n4. 流畅性：是否表达清晰\n\n输出JSON格式评分。\n\"\"\"\n```\n\n**注意事项：**\n- Judge模型要比被评估模型更强\n- 多次评估取平均（减少随机性）\n- 人工抽检验证Judge质量\n- 注意Judge的偏见（偏好长回答等）",
+    "follow_up": [
+      "如何减少LLM-as-Judge的偏见？",
+      "评估数据集如何构建？"
+    ]
+  },
+  {
+    "id": "harness-037",
+    "category": "ai-harness",
+    "subcategory": "工程实践",
+    "difficulty": "L4",
+    "tags": [
+      "RAG vs微调",
+      "选型",
+      "知识注入"
+    ],
+    "question": "什么时候用RAG，什么时候微调？两者如何结合？",
+    "answer": "**RAG vs 微调决策矩阵：**\n\n| 维度 | RAG | 微调 |\n|------|-----|------|\n| 知识更新 | **实时** | 需重新训练 |\n| 成本 | **低** | 高 |\n| 幻觉控制 | **好（有据可查）** | 中 |\n| 风格/格式 | 弱 | **好** |\n| 推理速度 | 慢（检索开销） | **快** |\n| 知识量 | 受检索限制 | **可内化大量** |\n\n**选择建议：**\n```\n需求是「知道新知识」？\n├─ 是 → RAG\n└─ 需求是「改变行为/风格」？\n    ├─ 是 → 微调\n    └─ 两者都需要 → RAG + 微调\n```\n\n**两者结合的最佳实践：**\n\n1. **微调教格式/风格** + **RAG提供知识**\n   - 微调让模型学会输出特定格式\n   - RAG注入最新的领域知识\n\n2. **微调教工具使用** + **RAG提供上下文**\n   - 微调提升Function Calling准确率\n   - RAG提供具体任务信息\n\n3. **微调 embedding模型** + **RAG检索**\n   - 领域数据微调embedding\n   - 提升检索准确率\n\n**成本对比：** RAG成本低10-100倍，优先尝试RAG",
+    "follow_up": [
+      "RAG什么场景下效果不如微调？",
+      "如何评估是否需要微调？"
+    ]
+  },
+  {
+    "id": "harness-038",
+    "category": "ai-harness",
+    "subcategory": "RAG工程化",
+    "difficulty": "L4",
+    "tags": [
+      "Agentic RAG",
+      "Agent检索",
+      "自适应"
+    ],
+    "question": "Agentic RAG是什么？它和传统RAG有什么本质区别？",
+    "answer": "**Agentic RAG：用Agent架构重新设计RAG**\n\n**传统RAG：** 固定流程（查询→检索→生成），无法自适应\n\n**Agentic RAG：** LLM作为Agent，自主决策检索策略\n\n**核心能力：**\n\n1. **自适应检索**\n   - 简单问题：直接回答（不检索）\n   - 复杂问题：多轮检索+多源检索\n   - 推理问题：先检索背景知识再推理\n\n2. **多步检索**\n   - 第一轮检索→分析→发现信息不足→第二轮检索\n   - 查询分解：复杂问题拆为子问题分别检索\n\n3. **工具选择**\n   - 向量检索（语义）\n   - 关键词检索（精确匹配）\n   - 网络搜索（实时信息）\n   - SQL查询（结构化数据）\n   - API调用（外部服务）\n\n4. **结果验证**\n   - 检索后评估结果质量\n   - 不满意则重新检索或换策略\n\n**实现框架：** LangGraph/LangChain的Self-Querying Retriever、CRAG\n\n**效果：** Agentic RAG比传统RAG在复杂查询上准确率提升15-30%，但延迟和成本也更高",
+    "follow_up": [
+      "如何控制Agentic RAG的成本？",
+      "Agentic RAG何时停止检索？"
+    ]
+  },
+  {
+    "id": "harness-039",
+    "category": "ai-harness",
+    "subcategory": "模型服务",
+    "difficulty": "L4",
+    "tags": [
+      "量化",
+      "GGUF",
+      "AWQ",
+      "GPTQ"
+    ],
+    "question": "模型量化方案GGUF vs AWQ vs GPTQ有什么区别？如何选择？",
+    "answer": "**量化方案对比：**\n\n| 方案 | 类型 | 精度损失 | 推理框架 | 适用 |\n|------|------|---------|---------|------|\n| **GGUF** | INT4/INT8 | 中 | llama.cpp/Ollama | **本地部署** |\n| **AWQ** | INT4 | **低** | vLLM/HuggingFace | **GPU服务** |\n| **GPTQ** | INT4/INT8 | 中 | vLLM/HF | GPU服务 |\n| **BitsAndBytes** | INT8/NF4 | 高 | HFTransformers | **微调** |\n| **FP8** | FP8 | **最低** | TensorRT-LLM | **最新GPU** |\n\n**详细分析：**\n\n**GGUF (llama.cpp)**\n- CPU/GPU混合推理\n- 零门槛本地部署（Ollama）\n- 支持Q4_K_M/Q5_K_M等多种量化级别\n- 适合：个人电脑/边缘设备\n\n**AWQ (Activation-aware Weight Quantization)**\n- 只量化不重要的权重通道\n- 精度损失最小\n- vLLM原生支持\n- 适合：生产GPU推理\n\n**选择建议：**\n- 本地开发 → GGUF (Ollama)\n- GPU生产推理 → AWQ (vLLM)\n- 追求极致精度 → FP8 (TensorRT-LLM)\n- 微调场景 → BitsAndBytes NF4",
+    "follow_up": [
+      "AWQ为什么精度损失小？",
+      "Q4_K_M和Q4_0有什么区别？"
+    ]
+  },
+  {
+    "id": "harness-040",
+    "category": "ai-harness",
+    "subcategory": "模型服务",
+    "difficulty": "L3",
+    "tags": [
+      "PagedAttention",
+      "KV Cache",
+      "内存管理"
+    ],
+    "question": "vLLM的PagedAttention核心原理是什么？它如何提升推理效率？",
+    "answer": "**PagedAttention：受OS虚拟内存启发的KV Cache管理**\n\n**传统KV Cache问题：**\n- 每个请求预分配连续内存\n- 实际使用 < 预分配 → 内存浪费\n- 碎片化严重\n- GPU利用率低（30-60%）\n\n**PagedAttention解决方案：**\n\n1. **分页管理**\n   - KV Cache分成固定大小的block（如16个token）\n   - 物理block可以不连续\n   - Block表（类似页表）映射逻辑→物理\n\n2. **按需分配**\n   - 只为实际生成的token分配block\n   - 零浪费\n\n3. **共享（Copy-on-Write）**\n   - 多个请求共享相同前缀的KV Cache\n   - 如系统prompt相同 → 共享block\n   - 修改时才复制\n\n**效果：**\n- GPU利用率：30% → **90%+**\n- 吞吐量：**2-4倍提升**\n- 内存浪费：<4%\n\n**Continuous Batching：**\n- 不同请求的不同长度可以在同一batch中处理\n- 请求完成立即释放资源\n- 新请求动态加入batch",
+    "follow_up": [
+      "PagedAttention的block大小如何选择？",
+      "Continuous Batching如何工作？"
+    ]
+  },
+  {
+    "id": "harness-041",
+    "category": "ai-harness",
+    "subcategory": "工程实践",
+    "difficulty": "L3",
+    "tags": [
+      "Embedding服务",
+      "向量化",
+      "Pipeline"
+    ],
+    "question": "如何设计高性能的Embedding服务？批量embedding的优化策略？",
+    "answer": "**Embedding服务架构：**\n\n**核心组件：**\n1. **模型加载** — BGE-M3/E5等，GPU推理\n2. **批量推理** — 多文档同时编码\n3. **缓存层** — 相同文本直接返回\n4. **负载均衡** — 多GPU/多实例\n\n**批量优化策略：**\n\n1. **动态batching**\n   - 等待一定数量或超时后批量推理\n   - 平衡延迟和吞吐\n\n2. **文本截断**\n   - 超过max_length截断\n   - 长文档分段编码后平均池化\n\n3. **ONNX/TensorRT加速**\n   - 导出为ONNX格式\n   - TensorRT引擎优化\n   - 推理速度提升2-3倍\n\n4. **异步Pipeline**\n```\n文档变更 → 队列(Kafka) → Worker(批量取embedding) → 向量库\n```\n\n**性能基准（BGE-M3, A100）：**\n- 单条：~5ms\n- 批量256条：~200ms（0.8ms/条）\n- ONNX加速：~120ms（0.5ms/条）",
+    "follow_up": [
+      "如何选择pooling策略？",
+      "embedding维度如何影响性能？"
+    ]
+  },
+  {
+    "id": "harness-042",
+    "category": "ai-harness",
+    "subcategory": "工程实践",
+    "difficulty": "L4",
+    "tags": [
+      "高可用",
+      "容灾",
+      "SLA"
+    ],
+    "question": "LLM应用如何设计高可用架构？LLM API不稳定时如何保证服务？",
+    "answer": "**高可用架构设计：**\n\n**1. 多供应商冗余**\n```\n用户请求 → API网关\n          ├─ 主供应商(OpenAI) ← 健康检查\n          ├─ 备供应商(Anthropic) ← 自动切换\n          └─ 兜底(本地模型/Ollama) ← 极端情况\n```\n\n**2. 请求级容错**\n```python\nasync def call_llm_with_failover(prompt):\n    providers = [\n        ('openai', 'gpt-4', 0.7),      # 70%流量\n        ('anthropic', 'claude-3.5', 0.2), # 20%\n        ('zhipu', 'glm-4', 0.1),       # 10%\n    ]\n    for provider, model, weight in providers:\n        try:\n            return await call(provider, model, prompt)\n        except (Timeout, RateLimit, ServerError):\n            continue\n    # 所有供应商都失败\n    return fallback_response\n```\n\n**3. 缓存兜底**\n- 热门查询缓存结果\n- API全部不可用时返回缓存\n\n**4. 降级策略**\n| 级别 | 策略 |\n|------|------|\n| L0 | 正常服务 |\n| L1 | 切换备用供应商 |\n| L2 | 使用小模型(更快) |\n| L3 | 返回缓存结果 |\n| L4 | 返回静态回复(维护中) |\n\n**SLA目标：** 99.9%可用性 = 每月最多43分钟不可用",
+    "follow_up": [
+      "如何做多供应商的负载均衡？",
+      "健康检查如何设计？"
+    ]
+  },
+  {
+    "id": "harness-043",
+    "category": "ai-harness",
+    "subcategory": "RAG工程化",
+    "difficulty": "L3",
+    "tags": [
+      "RAG评估",
+      "Ragas",
+      "指标体系"
+    ],
+    "question": "Ragas框架如何评估RAG系统？有哪些核心指标？如何部署？",
+    "answer": "**Ragas评估指标体系：**\n\n**检索质量指标：**\n1. **Context Precision** — 检索到的上下文中相关部分的比例\n2. **Context Recall** — 金标准答案所需的信息是否被检索到\n3. **Context Relevancy** — 检索上下文与问题的相关性\n\n**生成质量指标：**\n1. **Faithfulness** — 答案是否忠于检索到的文档（无幻觉）\n2. **Answer Relevancy** — 答案是否回应了用户问题\n\n**使用方式：**\n```python\nfrom ragas import evaluate\nfrom ragas.metrics import (\n    faithfulness, answer_relevancy,\n    context_precision, context_recall\n)\n\nresult = evaluate(\n    dataset=eval_dataset,  # 包含question/answer/context/ground_truth\n    metrics=[\n        faithfulness,\n        answer_relevancy,\n        context_precision,\n        context_recall\n    ]\n)\nprint(result.scores)  # 每个指标的分数\n```\n\n**评估数据集构建：**\n- 人工标注（question + ground_truth）\n- LLM自动生成（从文档生成问答对）\n- 从用户日志中提取\n\n**最佳实践：** 建立持续评估Pipeline，每次RAG配置变更后自动运行评估",
+    "follow_up": [
+      "Faithfulness如何自动计算？",
+      "如何减少评估的成本？"
+    ]
+  },
+  {
+    "id": "harness-044",
+    "category": "ai-harness",
+    "subcategory": "Agent框架",
+    "difficulty": "L3",
+    "tags": [
+      "Mastra",
+      "TypeScript",
+      "全栈"
+    ],
+    "question": "Mastra框架的核心设计是什么？它和LangChain(Python生态)有什么区别？",
+    "answer": "**Mastra：TypeScript原生LLM应用框架**\n\n**核心定位：** 为TS/JS全栈开发者设计的AI应用框架\n\n**核心功能：**\n1. **Workflow** — 类型安全的工作流编排\n2. **Agent** — 内置Agent抽象\n3. **RAG** — 文档处理+检索\n4. **Memory** — 短期/长期记忆\n5. **Tool** — 类型安全的工具定义\n\n**vs LangChain：**\n\n| | LangChain (Python) | Mastra (TypeScript) |\n|--|---------------------|---------------------|\n| 语言 | Python | **TypeScript** |\n| 类型安全 | 弱 | **强** |\n| 前端集成 | 需要Vercel AI SDK | **原生支持** |\n| 部署 | Python服务器 | **Edge/Serverless** |\n| 生态 | 最大 | 增长中 |\n\n**适合场景：**\n- Next.js/Remix全栈应用\n- Edge函数部署\n- TS/JS技术栈团队\n- 需要端到端类型安全",
+    "follow_up": [
+      "Mastra如何在Edge上运行？",
+      "TS框架和Python框架的生态差异？"
+    ]
+  },
+  {
+    "id": "harness-045",
+    "category": "ai-harness",
+    "subcategory": "Agent框架",
+    "difficulty": "L4",
+    "tags": [
+      "多模态Agent",
+      "Vision",
+      "文档理解"
+    ],
+    "question": "如何构建多模态Agent？处理图片/PDF/截图的架构如何设计？",
+    "answer": "**多模态Agent架构：**\n\n**输入处理Pipeline：**\n```\n多模态输入 → 类型路由\n├─ 文本 → 直接进入LLM\n├─ 图片 → VLM(GPT-4V/LLaVA)理解 → 文本描述\n├─ PDF → 解析(Unstructured/Marker) → 文本+表格+图\n├─ 截图 → OCR + VLM → 结构化描述\n└─ 音频 → Whisper转录 → 文本\n```\n\n**核心设计：**\n\n1. **统一文档处理**\n   - 使用Unstructured.io解析PDF/DOCX/PPT\n   - 保留文档结构（标题/段落/表格/图）\n   - 表格转为Markdown，图片用VLM描述\n\n2. **视觉理解**\n   - 场景描述：「这张图片展示了什么？」\n   - 细节提取：「读取图表中的数值」\n   - 对比分析：「比较两张图的差异」\n\n3. **多模态RAG**\n   - 文本和图片描述统一做embedding\n   - 检索时可以找到「含相关图表的文档」\n   - 返回时附带原始图片\n\n**Agent工具设计：**\n- analyze_image(image_url, question)\n- extract_text_from_pdf(file_path)\n- compare_documents(doc1, doc2)",
+    "follow_up": [
+      "VLM的推理延迟如何优化？",
+      "如何处理超长PDF？"
+    ]
+  },
+  {
+    "id": "harness-046",
+    "category": "ai-harness",
+    "subcategory": "工程实践",
+    "difficulty": "L4",
+    "tags": [
+      "A/B测试",
+      "实验",
+      "统计"
+    ],
+    "question": "LLM应用的A/B测试如何设计？统计显著性如何保证？",
+    "answer": "**A/B测试设计：**\n\n**1. 定义指标**\n- 主指标：任务成功率 / 用户满意度 / 准确率\n- 辅助指标：延迟 / 成本 / Token消耗\n- 护栏指标：幻觉率 / 安全违规率\n\n**2. 样本量计算**\n```\n# 最小样本量（近似公式）\nn = 16 * σ² / Δ²\n\nσ = 指标标准差\nΔ = 最小可检测效应\n\n例：σ=0.2, Δ=0.05 → n=1280 per group\n```\n\n**3. 流量分配**\n- 50/50均分（统计功效最强）\n- 90/10金丝雀（先小流量验证）\n- 基于用户ID的确定性分桶\n\n**4. 统计检验**\n```python\nfrom scipy import stats\n\n# 比例检验（成功率）\nz_stat, p_value = stats.proportions_ztest(\n    [success_a, success_b],\n    [total_a, total_b]\n)\n\nif p_value < 0.05:\n    print(\"显著差异\")\n```\n\n**5. 常见陷阱**\n- 多重检验问题（同时测多个指标→Bonferroni校正）\n- 新鲜效应（新版本短期效果不代表长期）\n- 幸存者偏差（只看完成用户）\n- Simpson's Paradox（子群体结论与总体矛盾）",
+    "follow_up": [
+      "序贯检验如何提前终止实验？",
+      "如何处理多变量测试？"
+    ]
+  },
+  {
+    "id": "harness-047",
+    "category": "ai-harness",
+    "subcategory": "LLM框架",
+    "difficulty": "L3",
+    "tags": [
+      "Semantic Router",
+      "意图路由",
+      "分类"
+    ],
+    "question": "Semantic Router（语义路由）是什么？它如何高效做意图分类？",
+    "answer": "**Semantic Router：** 基于语义相似度的意图路由，无需训练分类器。\n\n**核心思想：**\n- 预定义一组「意图描述」\n- 用户输入与意图描述做embedding相似度\n- 最相似的意图 = 路由目标\n\n**示例：**\n```python\nfrom semantic_router import Route\n\n# 定义路由\nbilling = Route(\n    name=\"billing\",\n    utterances=[\n        \"我的账单有问题\",\n        \"怎么退款\",\n        \"支付失败\",\n        \"发票相关\",\n    ]\n)\n\ntech = Route(\n    name=\"tech_support\",\n    utterances=[\n        \"代码报错了\",\n        \"API调用失败\",\n        \"如何集成SDK\",\n    ]\n)\n\n# 路由\nrouter = SemanticRouter(routes=[billing, tech])\nresult = router(\"我想取消订阅\")  # → billing\n```\n\n**优势：**\n1. **无需训练** — 只需几条示例\n2. **速度快** — embedding比对，比LLM调用快100倍\n3. **可扩展** — 新增意图只需加示例\n4. **零样本** — 不需要标注数据\n\n**应用场景：**\n- 客服意图路由\n- Agent工具选择\n- RAG索引选择\n- 内容分类",
+    "follow_up": [
+      "Semantic Router如何处理多意图？",
+      "如何提高路由准确率？"
+    ]
+  },
+  {
+    "id": "harness-048",
+    "category": "ai-harness",
+    "subcategory": "RAG工程化",
+    "difficulty": "L4",
+    "tags": [
+      "长上下文",
+      "vs RAG",
+      "融合"
+    ],
+    "question": "128K长上下文LLM会取代RAG吗？长上下文+RAG的融合方案？",
+    "answer": "**长上下文 vs RAG：**\n\n| 维度 | 长上下文(128K-1M) | RAG |\n|------|------------------|-----|\n| 知识量 | 受限于上下文窗口 | **无限** |\n| 检索精度 | 模型自己找(可能遗漏) | **精确检索** |\n| 成本 | **极高**(每token计费) | 低 |\n| 延迟 | 高(长序列推理慢) | **低** |\n| 多文档 | 可以(但窗口有限) | **天然支持** |\n| 更新 | 需重新传入 | **增量更新** |\n\n**结论：长上下文不会取代RAG，而是融合使用**\n\n**融合方案：**\n\n1. **RAG → 长上下文**\n   - RAG检索Top-K文档\n   - 将K个完整文档放入长上下文\n   - 模型在长上下文中做精细推理\n\n2. **层级RAG**\n   - 第一层：粗粒度检索（文档级）\n   - 第二层：在长上下文中细粒度阅读\n   - 减少检索次数但提高精度\n\n3. **缓存+增量检索**\n   - 系统prompt+知识库摘要缓存在长上下文中\n   - 只对动态部分做RAG检索\n\n**最佳实践：** 用RAG做知识管理 + 用长上下文做推理",
+    "follow_up": [
+      "Claude 200K上下文的检索准确率如何？",
+      "如何评估长上下文的Lost-in-the-Middle？"
+    ]
+  },
+  {
+    "id": "harness-049",
+    "category": "ai-harness",
+    "subcategory": "工程实践",
+    "difficulty": "L4",
+    "tags": [
+      "微调 vs Prompt",
+      "成本分析",
+      "ROI"
+    ],
+    "question": "什么时候值得微调模型？微调 vs Prompt工程的ROI分析？",
+    "answer": "**微调 vs Prompt决策框架：**\n\n**优先用Prompt Engineering的情况（90%场景）：**\n- 知识注入 → 用RAG\n- 格式调整 → 用结构化Prompt\n- 角色设定 → 用System Prompt\n- 简单分类 → 用Few-shot\n\n**需要微调的情况（10%场景）：**\n\n| 场景 | 原因 |\n|------|------|\n| **特定输出格式** | Prompt无法稳定约束 |\n| **领域术语理解** | 通用模型不懂专业术语 |\n| **Function Calling优化** | 工具调用准确率不足 |\n| **推理速度优化** | 蒸馏小模型降低延迟 |\n| **风格一致性** | 品牌声音/写作风格 |\n| **安全合规** | 特定安全边界 |\n\n**ROI分析：**\n\n```\n微调成本：\n- 数据标注：$5K-20K\n- GPU训练：$500-5000\n- 评估测试：$2K-5K\n- 持续维护：$1K/月\n\nPrompt成本：\n- 开发时间：1-2周\n- 推理额外成本：$200-2000/月(多token)\n- 维护：低\n```\n\n**决策流程：**\n1. 先用Prompt+RAG（成本最低）\n2. 效果不达标 → 优化Prompt\n3. 仍不达标 → 评估微调ROI\n4. 数据充足(>1K样本) + 效果提升>15% → 微调",
+    "follow_up": [
+      "LoRA微调的成本？",
+      "如何构建微调数据集？"
+    ]
+  },
+  {
+    "id": "harness-050",
+    "category": "ai-harness",
+    "subcategory": "工程实践",
+    "difficulty": "L5",
+    "tags": [
+      "AI工程",
+      "最佳实践",
+      "总结"
+    ],
+    "question": "从0到1构建一个生产级LLM应用的完整路线图是什么？",
+    "answer": "**生产级LLM应用路线图（7阶段）：**\n\n**阶段1：验证（1-2周）**\n- 明确场景和成功指标\n- 用Prompt+原生API做原型\n- 10-50个测试样本验证可行性\n\n**阶段2：架构（1-2周）**\n- 选择技术栈（框架/向量库/模型）\n- 设计系统架构\n- 确定API设计\n\n**阶段3：核心开发（2-4周）**\n- RAG/Agent核心逻辑\n- Prompt工程\n- 工具集成\n- 流式输出\n\n**阶段4：评估体系（1-2周）**\n- 构建评估数据集（100+样本）\n- 自动评估Pipeline（Ragas/LLM-as-judge）\n- 人工评估标注\n\n**阶段5：优化（2-4周）**\n- 检索优化（Reranker/查询改写）\n- 成本优化（模型路由/缓存）\n- 延迟优化\n- 安全加固\n\n**阶段6：生产部署（1-2周）**\n- CI/CD Pipeline\n- 可观测性（LangSmith/Phoenix）\n- 限流/灰度/监控\n- 高可用架构\n\n**阶段7：持续运营**\n- 用户反馈收集\n- A/B测试\n- 定期评估回归\n- 知识库更新\n\n**关键原则：**\n1. 先用最简方案验证\n2. 评估先行，不要等做完才测\n3. 成本和质量持续监控\n4. 安全和权限从一开始就设计",
+    "follow_up": [
+      "如何估算LLM应用的运营成本？",
+      "团队需要什么样的人才？"
+    ]
+  }
+]
