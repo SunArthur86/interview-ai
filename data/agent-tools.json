@@ -373,5 +373,39 @@
     "follow_up": [
       "面试官追问方向请结合实际项目经验展开"
     ]
+  },
+  {
+    "id": "supp-019",
+    "category": "agent-tools",
+    "subcategory": "Function Calling",
+    "difficulty": "L2",
+    "tags": [
+      "tool_choice",
+      "tool_call_id",
+      "Function Calling"
+    ],
+    "question": "OpenAI Function Calling中tool_choice和tool_call_id有什么作用？",
+    "answer": "**tool_choice — 控制工具选择行为：**\n\n| 值 | 含义 |\n|------|------|\n| `\"auto\"` | 模型自己决定是否调用工具（默认） |\n| `\"none\"` | 禁止调用任何工具 |\n| `\"required\"` | **必须**调用至少一个工具 |\n| `{\"type\":\"function\",\"function\":{\"name\":\"xxx\"}}` | 强制调用指定工具 |\n\n**tool_call_id — 关联请求和响应：**\n\n工具调用的两步流程中，tool_call_id将「模型请求调用」和「工具执行结果」关联起来。\n```python\n# Step 1: 模型决定调用工具\nresponse = client.chat.completions.create(...)\ntool_call = response.choices[0].message.tool_calls[0]\ntool_call_id = tool_call.id  # \"call_abc123\"\n\n# Step 2: 执行工具后返回结果\nresult = execute_tool(tool_call)\n\n# Step 3: 把结果传回模型（必须带tool_call_id）\nmessages.append({\n    \"role\": \"tool\",\n    \"tool_call_id\": tool_call_id,  # 关键！\n    \"content\": json.dumps(result)\n})\n```\n\n**为什么需要循环 for _ in range(5)：**\n模型可能需要多步工具调用（A的结果决定B），循环允许模型多次调用直到finish。",
+    "follow_up": [
+      "tool_choice设为required会有什么风险？",
+      "如何处理模型调用不存在的工具？"
+    ]
+  },
+  {
+    "id": "supp-020",
+    "category": "agent-tools",
+    "subcategory": "Function Calling",
+    "difficulty": "L3",
+    "tags": [
+      "@tool",
+      "StructuredTool",
+      "LangChain工具"
+    ],
+    "question": "LangChain中@tool装饰器和StructuredTool有什么区别？如何选择？",
+    "answer": "**两种定义工具的方式：**\n\n**1. @tool装饰器（快速简洁）：**\n```python\nfrom langchain.tools import tool\n\n@tool\ndef search(query: str, limit: int = 5) -> str:\n    \"\"\"搜索文档库。\n    \n    Args:\n        query: 搜索关键词\n        limit: 返回数量\n    \"\"\"\n    return db.search(query, limit)\n```\n- 自动从docstring + 类型注解生成schema\n- 简单快速\n- **适合：** 原型开发、简单工具\n\n**2. StructuredTool（完全控制）：**\n```python\nfrom langchain.tools import StructuredTool\nfrom pydantic import BaseModel\n\nclass SearchInput(BaseModel):\n    query: str = Field(description=\"搜索关键词\")\n    limit: int = Field(default=5, ge=1, le=100)\n\ntool = StructuredTool.from_function(\n    func=search,\n    name=\"search_docs\",\n    description=\"搜索内部文档库\",\n    args_schema=SearchInput,\n    return_direct=False\n)\n```\n- 完全控制名称、描述、参数schema\n- 支持Pydantic验证\n- **适合：** 生产环境、复杂工具\n\n**选择：**\n- 快速原型 → @tool\n- 生产环境 → StructuredTool",
+    "follow_up": [
+      "如何处理工具返回的大数据？",
+      "工具的return_direct是什么意思？"
+    ]
   }
 ]

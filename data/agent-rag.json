@@ -347,5 +347,142 @@
     "follow_up": [
       "面试官追问方向请结合实际项目经验展开"
     ]
+  },
+  {
+    "id": "supp-011",
+    "category": "agent-rag",
+    "subcategory": "文档处理",
+    "difficulty": "L2",
+    "tags": [
+      "PDF解析",
+      "Unstructured",
+      "Tika"
+    ],
+    "question": "RAG系统中PDF解析有哪些常见坑？Unstructured和Apache Tika各有什么优缺点？",
+    "answer": "**PDF解析常见坑：**\n\n1. **多栏布局** — 文字顺序错乱\n2. **表格** — 被拆成碎片\n3. **图片/公式** — 纯文本提取丢失\n4. **页眉页脚** — 噪声混入正文\n5. **扫描件** — 需要OCR\n6. **编码问题** — 特殊字符乱码\n\n**工具对比：**\n\n| 工具 | 优势 | 劣势 |\n|------|------|------|\n| **Unstructured.io** | 保留文档结构(标题/表格/图)、支持40+格式 | 安装复杂、依赖多 |\n| **Apache Tika** | Java生态、支持1000+格式、轻量 | 结构化能力弱 |\n| **PyMuPDF(fitz)** | 速度快、精确控制 | 需手动处理布局 |\n| **Marker** | Markdown输出、表格转MD | 仅学术PDF |\n| **pdfplumber** | 表格提取强 | 大文件慢 |\n\n**最佳实践：**\n- 通用文档 → Unstructured\n- 技术PDF → Marker\n- 表格密集 → PyMuPDF + Camelot\n- 简单文本 → Tika",
+    "follow_up": [
+      "如何处理扫描件PDF？",
+      "表格提取后如何保持语义？"
+    ]
+  },
+  {
+    "id": "supp-012",
+    "category": "agent-rag",
+    "subcategory": "向量检索",
+    "difficulty": "L3",
+    "tags": [
+      "FAISS",
+      "IndexFlatIP",
+      "IndexHNSW",
+      "向量索引"
+    ],
+    "question": "FAISS中IndexFlatIP和IndexHNSW有什么区别？如何选择？",
+    "answer": "**FAISS索引类型对比：**\n\n| | IndexFlatIP | IndexHNSW |\n|--|------------|-----------|\n| 原理 | 暴力搜索(计算所有点) | 图结构近似搜索 |\n| 精度 | **100%精确** | 近似(95%+ recall) |\n| 速度 | 慢(O(n)) | **快(O(log n))** |\n| 内存 | 低(只存向量) | 高(存图结构) |\n| 构建时间 | 无需构建 | 需要构建 |\n| 适合规模 | **<10万** | **>10万** |\n\n**选择建议：**\n```\n数据量 < 10万 → IndexFlatIP（暴力搜索，精度最高）\n数据量 10万-100万 → IndexHNSW（图搜索，速度快）\n数据量 > 100万 → IVF-PQ（聚类+量化，内存友好）\n```\n\n**IndexHNSW关键参数：**\n- **M**：每个节点的连接数（16-48，越大越精确越耗内存）\n- **efConstruction**：构建搜索宽度（200-500）\n- **efSearch**：查询搜索宽度（50-200，运行时可调）\n- efSearch调大 → 精度提升但速度下降",
+    "follow_up": [
+      "IVF-PQ的精度如何？",
+      "FAISS如何做GPU加速？"
+    ]
+  },
+  {
+    "id": "supp-013",
+    "category": "agent-rag",
+    "subcategory": "向量检索",
+    "difficulty": "L2",
+    "tags": [
+      "MMR",
+      "多样性",
+      "lambda"
+    ],
+    "question": "MMR（Maximal Marginal Relevance）的lambda参数是什么含义？如何调节检索结果的多样性？",
+    "answer": "**MMR 目标：** 在相关性和多样性之间做平衡，避免返回高度相似的多个结果。\n\n**公式：**\n```\nMMR = argmax [ λ × Sim(d, q) - (1-λ) × max_{d'∈S} Sim(d, d') ]\n\nλ=1：完全按相关性排序（退化为普通检索）\nλ=0：完全按多样性排序（不考虑相关性）\nλ=0.5-0.7：平衡相关性和多样性（最常用）\n```\n\n**参数选择：**\n| lambda值 | 效果 | 适用 |\n|---------|------|------|\n| 0.3 | 极度多样 | 新闻聚合/探索 |\n| 0.5 | 平衡 | **通用推荐** |\n| 0.7 | 偏相关 | 精确问答 |\n| 1.0 | 纯相关 | 精确检索 |\n\n**实际使用(LangChain)：**\n```python\nretriever = vectorstore.as_retriever(\n    search_type=\"mmr\",\n    search_kwargs={\"k\": 5, \"fetch_k\": 20, \"lambda_mult\": 0.5}\n)\n# fetch_k: 先取20个候选，再用MMR从中选5个\n```",
+    "follow_up": [
+      "MMR的计算复杂度如何？",
+      "除了MMR还有什么去重方法？"
+    ]
+  },
+  {
+    "id": "supp-014",
+    "category": "agent-rag",
+    "subcategory": "向量检索",
+    "difficulty": "L3",
+    "tags": [
+      "RRF",
+      "鲁棒性",
+      "混合检索"
+    ],
+    "question": "RRF（Reciprocal Rank Fusion）为什么比加权分数融合更鲁棒？",
+    "answer": "**RRF原理：**\n```\nRRF_score(d) = Σ 1 / (k + rank_i(d))\n\nk通常取60\nrank_i(d): 文档d在第i个检索系统中的排名\n```\n\n**为什么比加权分数更鲁棒：**\n\n1. **不需要分数归一化**\n   - BM25分数和向量相似度分数量级完全不同\n   - 加权平均需要复杂的归一化\n   - RRF只看排名，不关心分数绝对值\n\n2. **对异常值不敏感**\n   - 一个检索系统的极端高分不会主导结果\n   - 排名是相对的，天然归一化\n\n3. **简单可调**\n   - 只有一个超参数k\n   - k=60是一个经验值，几乎不需要调\n\n**对比示例：**\n```\n文档A: BM25排名=1, 向量排名=5\n文档B: BM25排名=3, 向量排名=1\n\nRRF(A) = 1/61 + 1/65 = 0.0311\nRRF(B) = 1/63 + 1/61 = 0.0320\n→ B更优（两个系统都排在前面）\n```",
+    "follow_up": [
+      "k=60是怎么确定的？",
+      "RRF的数学推导是什么？"
+    ]
+  },
+  {
+    "id": "supp-015",
+    "category": "agent-rag",
+    "subcategory": "工程化",
+    "difficulty": "L3",
+    "tags": [
+      "索引更新",
+      "增量更新",
+      "一致性"
+    ],
+    "question": "RAG知识库索引频繁更新时，如何保证检索一致性？",
+    "answer": "**一致性挑战：**\n\n用户提问的瞬间，文档可能正在更新 → 检索到旧/新混合数据。\n\n**解决方案：**\n\n1. **双缓冲（Double Buffering）**\n   - 维护两个索引版本：active + standby\n   - 新文档写入standby → 构建完成 → 原子切换\n   - 检索始终读active\n\n2. **版本号标记**\n   - 每个文档/chunk带version字段\n   - 检索时可以指定版本范围\n\n3. **增量upsert + 软删除**\n   - 新文档: INSERT\n   - 更新: 软删除旧 + INSERT新\n   - 定期compact清理\n\n4. **写后读一致性**\n   - 更新后立即刷新索引\n   - Qdrant/Milvus支持force refresh\n\n5. **CDC（Change Data Capture）**\n   - 监听数据变更流\n   - 异步更新索引\n   - 最终一致性",
+    "follow_up": [
+      "双缓冲的切换时机如何确定？",
+      "多副本索引如何同步？"
+    ]
+  },
+  {
+    "id": "supp-016",
+    "category": "agent-rag",
+    "subcategory": "工程化",
+    "difficulty": "L2",
+    "tags": [
+      "RecursiveCharacterTextSplitter",
+      "分隔符",
+      "分块策略"
+    ],
+    "question": "LangChain的RecursiveCharacterTextSplitter的分隔符顺序为什么重要？",
+    "answer": "**RecursiveCharacterTextSplitter 核心思想：**\n\n递归尝试分隔符列表，优先使用「更自然」的边界。\n\n**默认分隔符顺序：**\n```\n['\\n\\n', '\\n', ' ', '']\n```\n\n**为什么顺序重要：**\n\n1. **语义完整性** — 先按段落(\\n\\n)切分，保持语义完整\n2. **递归回退** — 段落太长 → 按句子(\\n)切 → 句子太长 → 按词( )切\n3. **避免硬截断** — 不会在一个句子/词中间切断\n\n**自定义分隔符示例：**\n```python\nsplitter = RecursiveCharacterTextSplitter(\n    chunk_size=500,\n    chunk_overlap=50,\n    separators=[\n        '\\n## ',      # Markdown H2\n        '\\n### ',     # Markdown H3\n        '\\n\\n',       # 段落\n        '\\n',         # 行\n        '. ',         # 句子\n        ' ',          # 词\n        ''            # 字符\n    ]\n)\n```\n\n**为什么比Fixed-size好：** 固定长度切分会在句子中间断裂，Recursive优先在自然边界切分",
+    "follow_up": [
+      "chunk_overlap的作用是什么？",
+      "如何为代码文件设计分隔符？"
+    ]
+  },
+  {
+    "id": "supp-017",
+    "category": "agent-rag",
+    "subcategory": "工程化",
+    "difficulty": "L2",
+    "tags": [
+      "Embedding归一化",
+      "余弦相似度",
+      "向量预处理"
+    ],
+    "question": "RAG中Embedding向量是否需要归一化？归一化对检索有什么影响？",
+    "answer": "**归一化的影响：**\n\n**归一化前：** 向量的长度（模长）不固定，余弦相似度需要除以两个向量的模长。\n\n**归一化后：** 所有向量长度=1，余弦相似度 = 点积(Dot Product)。\n\n**好处：**\n1. **计算更快** — 点积比余弦相似度少了两次开方和一次除法\n2. **精度更高** — 浮点运算步骤减少\n3. **索引兼容** — FAISS的IndexFlatIP(内积索引)可直接用\n\n**实践：**\n```python\nimport numpy as np\n\n# 归一化\nembeddings = embeddings / np.linalg.norm(embeddings, axis=1, keepdims=True)\n```\n\n**大部分Embedding模型已内置归一化：**\n- OpenAI text-embedding-3 → 已归一化\n- BGE系列 → 已归一化\n- Sentence-Transformers → 可选归一化(normalize_embeddings=True)\n\n**检查方法：**\n```python\nnorm = np.linalg.norm(embedding)\nprint(f'Norm: {norm}')  # 应接近1.0\n```\n\n**建议：** 总是做归一化，用IndexFlatIP(内积)代替余弦相似度",
+    "follow_up": [
+      "L2归一化的原理？",
+      "不同归一化方式对结果的影响？"
+    ]
+  },
+  {
+    "id": "supp-018",
+    "category": "agent-rag",
+    "subcategory": "评估",
+    "difficulty": "L3",
+    "tags": [
+      "BM25",
+      "中文分词",
+      "全文检索"
+    ],
+    "question": "BM25在中文场景下需要分词吗？中文全文检索有什么特殊处理？",
+    "answer": "**BM25在中文中的处理：**\n\n**需要分词！** BM25基于词项频率(TF)和逆文档频率(IDF)，需要先将文本切分成词。\n\n**中文分词方案：**\n\n| 工具 | 特点 |\n|------|------|\n| **jieba** | 最流行，支持自定义词典 |\n| **HanLP** | 功能全面，支持命名实体识别 |\n| **pkuseg** | 北京大学，学术领域效果好 |\n| **IK Analyzer** | Elasticsearch中文分词插件 |\n\n**Elasticsearch中文BM25：**\n```json\n{\n  \"analysis\": {\n    \"analyzer\": {\n      \"chinese\": {\n        \"tokenizer\": \"ik_max_word\"\n      }\n    }\n  }\n}\n```\n\n**中文BM25的坑：**\n1. **分词错误** — 影响检索准确性\n2. **未登录词** — 专业术语/新词需要自定义词典\n3. **混合检索** — 中文+英文+数字需要特殊处理\n4. **同义词** — 中文同义词丰富，需要扩展\n\n**替代方案：** BM25 + 向量检索混合，向量检索不需要分词",
+    "follow_up": [
+      "向量检索为什么不需要分词？",
+      "jieba如何添加自定义词典？"
+    ]
   }
 ]

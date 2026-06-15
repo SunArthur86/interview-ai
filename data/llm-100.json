@@ -1824,5 +1824,175 @@
     "answer": "🥥在DeepSeek的研究中，蒸馏是指将大型模型（如DeepSeek-R1）的知识通过监督微调\n（SFT）传递到较小的模型中。具体而言，DeepSeek团队使用DeepSeek-R1生成的数据，对\n较小的模型（如Llama和Qwen系列）进行微调，使其具备类似的推理能力。\n107.1 蒸馏与从零开始的强化学习（RL）训练的比较\n🍋蒸馏与从零开始的强化学习（RL）训练的比较\n性能表现： 研究表明，蒸馏模型在推理任务中的表现优于直接通过RL训练的小模型。例如，\nDeepSeek-R1-Distill-Qwen-7B在AIME 2024基准测试中。÷÷超越了QwQ-32B-Preview。 \n计算成本： 从零开始对小模型进行RL训练需要巨大的计算资源。相比之下，蒸馏策略更为经\n济高效，能够在较小的模型上实现出色的推理能力。\n基础模型质量： 尽管蒸馏策略有效，但其效果仍取决于基础模型的质量。例如，基于1.5B参\n数的模型与7B参数的模型相比，后者在蒸馏后的性能更佳。 \n107.2 结果分析\n🌻数据质量： 蒸馏过程中使用的高质量推理数据，使得小模型能够学习到有效的推理模式，而\n无需经历RL训练中的探索过程。\n训练稳定性： 直接对小模型进行RL训练可能导致不稳定性，而蒸馏通过SFT提供了稳定的训\n练过程，减少了训练难度。\n资源效率： 蒸馏策略在计算资源和时间成本上更具优势，特别是在资源有限的情况下。\n\n在DeepSeek的研究中，通过蒸馏将大型模型的推理能力传递到小模型，比从零开始对小模型进行\nRL训练更为有效和高效。然而，蒸馏效果仍依赖于基础模型的质量，选择合适的基础模型对于实现\n最佳性能至关重要。",
     "follow_up": [],
     "images": []
+  },
+  {
+    "id": "supp-001",
+    "category": "llm-100",
+    "subcategory": "训练优化",
+    "difficulty": "L3",
+    "tags": [
+      "负熵原则",
+      "数据质量",
+      "Llama3"
+    ],
+    "question": "Llama 3.1 的「负熵原则」是什么含义？为什么高质量数据能提升模型？",
+    "answer": "**负熵原则（Negative Entropy Principle）：**\n\n源自信息论。在训练中引入高质量外部数据，相当于向系统注入「秩序」（负熵），降低信息熵，提升模型确定性。\n\n**Llama 3.1 的实践：**\n1. **多层次数据过滤** — 质量分类器 + 去重 + 安全过滤\n2. **行级别去重** — 精确到文本行，而非文档级\n3. **负熵效果** — 噪声减少 → 信息密度提升 → 模型学到的模式更纯粹\n\n**关键：** 数据质量 > 数据数量。少量高质量数据比大量噪声数据更有效。",
+    "follow_up": [
+      "如何设计数据质量分类器？",
+      "行级别去重的实现方式？"
+    ]
+  },
+  {
+    "id": "supp-002",
+    "category": "llm-100",
+    "subcategory": "模型架构",
+    "difficulty": "L4",
+    "tags": [
+      "DualPipe",
+      "DeepSeek",
+      "双向流水线"
+    ],
+    "question": "DeepSeek V3 的 DualPipe 算法解决了什么问题？和传统流水线并行有什么区别？",
+    "answer": "**DualPipe 核心思想：**\n\n传统流水线并行（Pipeline Parallelism）存在「气泡」（bubble），即部分GPU空闲等待。\n\n**DualPipe 创新点：**\n1. **双向流水线** — 前向和后向同时进行，从两端向中间收敛\n2. **计算-通信重叠** — 在计算的同时做跨节点通信\n3. **极小化气泡** — 几乎消除GPU空闲时间\n\n**对比：**\n\n| 方法 | 气泡大小 | 通信开销 |\n|------|---------|---------|\n| GPipe | 大 | 中 |\n| 1F1B | 中 | 中 |\n| Interleaved 1F1B | 小 | 中 |\n| **DualPipe** | **极小** | **低(重叠)** |\n\n**效果：** DeepSeek V3 训练效率提升显著，2048张H800 GPU上达到约 1800 TFLOPS。",
+    "follow_up": [
+      "DualPipe如何处理前向和后向的依赖？",
+      "MoE训练中通信如何优化？"
+    ]
+  },
+  {
+    "id": "supp-003",
+    "category": "llm-100",
+    "subcategory": "模型架构",
+    "difficulty": "L4",
+    "tags": [
+      "MTP",
+      "多令牌预测",
+      "DeepSeek"
+    ],
+    "question": "DeepSeek V3 的 MTP（多令牌预测）是什么？和 Medusa 有什么区别？",
+    "answer": "**MTP (Multi-Token Prediction)：**\n\n传统模型一次预测1个token。MTP一次预测多个未来token。\n\n**DeepSeek V3 的 MTP 实现：**\n1. **主模型** 预测第 i 个token\n2. **MTP模块** 预测第 i+1, i+2... 个token\n3. MTP模块共享主模型的embedding层\n4. 训练时用MTP loss辅助训练\n5. **推理时可丢弃MTP模块**（不增加推理成本）\n\n**vs Medusa：**\n| | Medusa | DeepSeek MTP |\n|--|--------|-------------|\n| 多头位置 | 解码器上 | 独立MTP模块 |\n| 训练目标 | 推测解码 | 辅助训练+推测解码 |\n| 训练方式 | 后加微调 | 联合从头训练 |\n| 推理 | 增加额外计算 | 可选启用 |\n\n**核心价值：** 训练时提升表征学习能力，推理时可选启用加速。",
+    "follow_up": [
+      "MTP如何改善训练效果？",
+      "MTP模块的深度如何选择？"
+    ]
+  },
+  {
+    "id": "supp-004",
+    "category": "llm-100",
+    "subcategory": "训练优化",
+    "difficulty": "L3",
+    "tags": [
+      "SFT问题",
+      "过拟合",
+      "灾难性遗忘"
+    ],
+    "question": "SFT（监督微调）后会出现哪些常见问题？如何缓解？",
+    "answer": "**SFT 后的五大问题：**\n\n1. **过拟合（Overfitting）**\n   - 模型在小数据集上过度拟合\n   - 缓解：数据增强、Dropout、早停、减小训练轮数\n\n2. **灾难性遗忘（Catastrophic Forgetting）**\n   - 忘记预训练知识\n   - 缓解：低学习率(2e-5)、LoRA(冻结主干)、混合预训练数据\n\n3. **模型偏差增加**\n   - SFT数据集的偏差被放大\n   - 缓解：数据均衡、多样化来源\n\n4. **泛化能力下降**\n   - 只在SFT任务上表现好，其他任务退化\n   - 缓解：通用+领域混合训练、指令多样化\n\n5. **鲁棒性降低**\n   - 对输入扰动敏感\n   - 缓解：对抗训练、输入增强\n\n**最佳实践：** LoRA微调 + 混合数据(领域20%+通用80%) + 低学习率 + 监控验证集loss",
+    "follow_up": [
+      "如何判断是否发生了灾难性遗忘？",
+      "LoRA为什么能减少遗忘？"
+    ]
+  },
+  {
+    "id": "supp-005",
+    "category": "llm-100",
+    "subcategory": "推理优化",
+    "difficulty": "L3",
+    "tags": [
+      "No Repeat Ngram",
+      "重复惩罚",
+      "repetition_penalty"
+    ],
+    "question": "大模型推理时为什么会出现重复输出？有哪些缓解方法？",
+    "answer": "**重复原因：**\n\n1. **概率分布尖锐化** — 模型对某些token概率过高\n2. **训练数据偏差** — 训练数据中有重复模式\n3. **上下文强化** — 之前生成的重复内容强化后续重复\n\n**缓解方法：**\n\n| 方法 | 原理 | 参数 |\n|------|------|------|\n| **repetition_penalty** | 降低已出现token的概率 | 1.1-1.3 |\n| **no_repeat_ngram_size** | 禁止重复n-gram | 3-4 |\n| **frequency_penalty** | 按出现次数惩罚 | 0.1-0.5 |\n| **presence_penalty** | 出现过就惩罚 | 0.1-0.5 |\n| **Temperature调高** | 增加随机性 | 0.7-0.9 |\n| **Top-p调大** | 扩大候选集 | 0.92-0.95 |\n\n**no_repeat_ngram_size 原理：**\n- 设 n=3\n- 每次生成新token时，检查是否与已生成内容形成3-gram重复\n- 如果重复，跳过该token\n\n**生产建议：** repetition_penalty=1.1 + temperature=0.7 + top_p=0.92",
+    "follow_up": [
+      "repetition_penalty过高会有什么问题？",
+      "为什么beam search在对话中容易重复？"
+    ]
+  },
+  {
+    "id": "supp-006",
+    "category": "llm-100",
+    "subcategory": "推理优化",
+    "difficulty": "L3",
+    "tags": [
+      "显存带宽",
+      "推理瓶颈",
+      "Memory-Bound"
+    ],
+    "question": "为什么大模型推理速度受限于显存带宽？如何估算推理延迟？",
+    "answer": "**核心瓶颈：推理是 Memory-Bound**\n\n推理的每一步：从显存读取模型权重 → 计算 → 输出\n\n**关键公式：**\n```\n延迟 ≈ 模型权重大小 / 显存带宽\n\n例：7B模型（FP16 = 14GB）\n显存带宽: A100 = 1.5 TB/s\n延迟 ≈ 14GB / 1.5TB/s ≈ 9.3ms/token\n生成速度 ≈ 107 tokens/s\n```\n\n**为什么是带宽瓶颈：**\n1. Decode阶段每次只算1个token → 计算量很小\n2. 但每次都要读取完整模型权重 → 数据搬运量巨大\n3. 算术强度(Arithmetic Intensity) = 计算/数据搬运 ≈ 2 FLOP/byte\n4. 远低于GPU的「屋顶线」 → 被带宽限制\n\n**Prefill阶段不同：**\n- 一次处理所有prompt token → 计算量大 → Compute-Bound\n\n**优化方向：**\n- 量化（减少权重体积）\n- 批处理（摊薄权重读取成本）\n- PagedAttention（优化KV Cache管理）",
+    "follow_up": [
+      "Prefill和Decode哪个更吃带宽？",
+      "如何提高推理的算术强度？"
+    ]
+  },
+  {
+    "id": "supp-007",
+    "category": "llm-100",
+    "subcategory": "训练优化",
+    "difficulty": "L2",
+    "tags": [
+      "warmup_ratio",
+      "学习率调度",
+      "训练策略"
+    ],
+    "question": "什么是 warmup_ratio？训练时为什么要做 warmup？如何设置？",
+    "answer": "**Warmup：** 训练初期用极小学习率，逐渐增加到目标值。\n\n**为什么需要 Warmup：**\n1. **初始权重随机** — 大学习率会导致梯度爆炸\n2. **Adam优化器** — 需要时间累积梯度统计量\n3. **稳定训练** — 逐步适应损失函数landscape\n\n**warmup_ratio：** warmup步数占总训练步数的比例。\n\n**典型设置：**\n\n| 场景 | warmup_ratio | 学习率 |\n|------|-------------|--------|\n| 预训练 | 0.01-0.05 | 1e-4~3e-4 |\n| SFT | 0.03 | 2e-5 |\n| LoRA | 0.03 | 1e-4~3e-4 |\n| 增量预训练 | 0.05-0.1 | 5e-5 |\n\n**调度策略：**\n- Warmup → Cosine Decay（最常用）\n- Warmup → Linear Decay\n- Warmup → Constant\n\n**代码(HuggingFace)：**\n```python\ntraining_args = TrainingArguments(\n    warmup_ratio=0.03,\n    lr_scheduler_type=\"cosine\",\n    learning_rate=2e-5,\n)\n```",
+    "follow_up": [
+      "Warmup过短会怎样？",
+      "Cosine Decay和Linear Decay哪个好？"
+    ]
+  },
+  {
+    "id": "supp-008",
+    "category": "llm-100",
+    "subcategory": "训练优化",
+    "difficulty": "L4",
+    "tags": [
+      "4D并行",
+      "训练并行",
+      "DeepSpeed"
+    ],
+    "question": "什么是 4D 并行训练？数据/张量/流水线/Expert 并行如何组合？",
+    "answer": "**4D 并行 = Data + Tensor + Pipeline + Expert(序列)并行**\n\n| 维度 | 切分对象 | 通信类型 | 适合 |\n|------|---------|---------|------|\n| **数据并行(DP)** | Batch | AllReduce梯度 | 通用 |\n| **张量并行(TP)** | 权重矩阵 | AllReduce激活 | 大模型 |\n| **流水线并行(PP)** | 模型层 | 点对点激活 | 超大模型 |\n| **序列并行(SP)** | 序列长度 | AllGather | 长上下文 |\n\n**组合策略：**\n```\nGPU总数 = DP × TP × PP × SP\n\n例: 2048 GPU\nDP=32, TP=8, PP=8 → 32×8×8=2048\n```\n\n**Llama 3.1 的4D并行：**\n- DP: 跨节点数据并行\n- TP: 节点内8卡张量并行(NVLink高速互联)\n- PP: 跨节点流水线并行\n- SP: 序列并行处理长上下文\n\n**DeepSpeed ZeRO：**\n- ZeRO-1: 优化器状态分片\n- ZeRO-2: +梯度分片\n- ZeRO-3: +模型参数分片(类似DP但更高效)\n- 可与TP/PP叠加",
+    "follow_up": [
+      "TP和PP哪个通信量更大？",
+      "ZeRO-3和TP有什么区别？"
+    ]
+  },
+  {
+    "id": "supp-009",
+    "category": "llm-100",
+    "subcategory": "评估",
+    "difficulty": "L2",
+    "tags": [
+      "PPL",
+      "困惑度",
+      "评估指标"
+    ],
+    "question": "PPL（Perplexity，困惑度）是什么？如何用于评估大模型？",
+    "answer": "**PPL (Perplexity)：** 衡量模型对文本的「困惑程度」。\n\n**数学定义：**\n```\nPPL = exp(-1/N * Σ log P(x_i | x_{<i}))\n\nPPL越低 → 模型越确信 → 质量越好\n```\n\n**直觉理解：**\n- PPL=1：模型完美预测每个token\n- PPL=10：模型每步平均在10个token间犹豫\n- PPL=100：模型非常不确定\n\n**用途：**\n1. **模型对比** — 同一测试集上PPL越低越好\n2. **训练监控** — 训练过程中PPL应持续下降\n3. **语言质量** — 衡量生成文本的流畅性\n\n**局限性：**\n- PPL低不代表回答准确（只衡量语言建模能力）\n- 不同Tokenizer的PPL不可直接比较\n- 对长文本不敏感（平均效应）\n\n**实践：** 预训练用PPL监控，下游任务用任务特定指标(accuracy/F1/BLEU)",
+    "follow_up": [
+      "PPL和Cross-Entropy Loss有什么关系？",
+      "不同模型的PPL能直接比较吗？"
+    ]
+  },
+  {
+    "id": "supp-010",
+    "category": "llm-100",
+    "subcategory": "评估",
+    "difficulty": "L3",
+    "tags": [
+      "大海捞针",
+      "Needle in Haystack",
+      "长上下文评估"
+    ],
+    "question": "「大海捞针」测试是什么？它如何评估长上下文模型的检索能力？",
+    "answer": "**大海捞针测试（Needle in a Haystack）：**\n\n在超长上下文中插入一个特定事实（「针」），测试模型能否找到并使用它。\n\n**测试流程：**\n1. 准备一段长文本（如100K tokens的文档）\n2. 在文本的某个位置插入一句关键信息（「针」）\n   - 例：「这本书的密码是 42-7-3」\n3. 让模型回答关于「针」的问题\n4. 变化「针」的位置（开头/中间/结尾）和文本长度\n5. 绘制热力图：X轴=位置，Y轴=长度，颜色=正确率\n\n**评估维度：**\n- **深度**：针在不同深度位置时的检索准确率\n- **长度**：不同上下文长度下的表现\n- **多针**：插入多根针测试多跳检索\n\n**典型结果：**\n- 开头和结尾准确率高（Lost in the Middle效应）\n- 中间位置准确率低\n- 长度越长，整体越差\n\n**对比：** Claude/GPT-4在200K上下文中，大部分位置能找到针；开源模型在32K以上开始下降",
+    "follow_up": [
+      "如何缓解Lost in the Middle？",
+      "多针测试如何设计？"
+    ]
   }
 ]
