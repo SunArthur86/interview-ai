@@ -116,6 +116,7 @@ function renderCards() {
         <div class="card__question">${escapeHtml(q.question)}</div>
         <div class="card__tags">
           ${q.tags.slice(0, 4).map(t => `<span class="card__tag">${escapeHtml(t)}</span>`).join('')}
+          ${q.images && q.images.length > 0 ? `<span class="card__tag" style="color:var(--info);">🖼️ ${q.images.length}</span>` : ''}
           ${isViewed ? '<span class="card__tag" style="color:var(--success);">✓ 已看</span>' : ''}
         </div>
         <button class="card__fav ${isFav ? 'active' : ''}" onclick="event.stopPropagation(); toggleFavorite('${q.id}', this)" title="收藏">
@@ -189,6 +190,13 @@ function openModal(id) {
         <div class="modal__label">📖 参考答案</div>
         <div class="modal__answer markdown-body">${renderMarkdown(q.answer)}</div>
       </div>
+      ${q.images && q.images.length > 0 ? `
+      <div class="modal__section">
+        <div class="modal__label">🖼️ 配图 (${q.images.length})</div>
+        <div class="modal__images">
+          ${q.images.map(img => `<img class="modal__image" src="images/${img}" alt="${escapeAttr(img)}" loading="lazy" onclick="openImageFullscreen(this)">`).join('')}
+        </div>
+      </div>` : ''}
       ${q.follow_up && q.follow_up.length ? `
       <div class="modal__section">
         <div class="modal__label">❓ 延伸追问</div>
@@ -216,9 +224,34 @@ function openModal(id) {
 function closeModal() {
   document.getElementById('modalOverlay').classList.remove('active');
   document.body.style.overflow = '';
+  closeImageFullscreen();
   // Re-render cards to update viewed status
   renderCards();
   updateStats();
+}
+
+// ============ Image Fullscreen Viewer ============
+function openImageFullscreen(img) {
+  let viewer = document.getElementById('imageViewer');
+  if (!viewer) {
+    viewer = document.createElement('div');
+    viewer.id = 'imageViewer';
+    viewer.className = 'image-viewer';
+    viewer.onclick = (e) => { if (e.target === viewer) closeImageFullscreen(); };
+    document.body.appendChild(viewer);
+  }
+  viewer.innerHTML = `
+    <button class="image-viewer__close" onclick="closeImageFullscreen()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+    <img class="image-viewer__img" src="${img.src}" alt="${img.alt}">
+  `;
+  viewer.classList.add('active');
+}
+
+function closeImageFullscreen() {
+  const viewer = document.getElementById('imageViewer');
+  if (viewer) viewer.classList.remove('active');
 }
 
 function searchAndOpen(query) {
@@ -320,7 +353,9 @@ function toggleSettings() {
 // ============ Keyboard ============
 function handleKeyboard(e) {
   if (e.key === 'Escape') {
-    if (document.getElementById('modalOverlay').classList.contains('active')) closeModal();
+    const viewer = document.getElementById('imageViewer');
+    if (viewer && viewer.classList.contains('active')) closeImageFullscreen();
+    else if (document.getElementById('modalOverlay').classList.contains('active')) closeModal();
     else if (document.getElementById('settingsPanel').classList.contains('active')) toggleSettings();
   }
   if ((e.metaKey || e.ctrlKey) && e.key === 'k') {

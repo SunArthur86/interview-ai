@@ -13,6 +13,7 @@
 - 📱 **PWA 支持** — 离线访问，可安装到桌面
 - 🌙 **深色模式** — 自动跟随系统，手动切换
 - 📖 **详细答案** — Markdown 渲染，支持表格/代码/列表
+- 🖼️ **配图展示** — LLM面试100问附带 PDF 原始配图，支持点击全屏查看
 - ❓ **延伸追问** — 部分题目附带深入追问
 - ⚡ **纯前端** — 零依赖，数据展示分离架构
 
@@ -29,7 +30,7 @@ ai-interview/
 │   ├── ai-basics.json          # 50 题：大模型原理/训练微调/推理优化/RAG/Prompt/多模态/评估安全
 │   ├── ai-agent.json           # 50 题：Agent架构/工具使用/记忆系统/规划推理/多Agent/评估/生产化
 │   ├── ai-harness.json         # 50 题：LLM框架/RAG工程化/向量数据库/模型服务/Agent框架/可观测/工程实践
-│   ├── llm-100.json            # 107 题：Transformer/LoRA/RLHF/DPO/PPO/手撕代码/DeepSeek-R1等
+│   ├── llm-100.json            # 107 题：Transformer/LoRA/RLHF/DPO/PPO/手撕代码/DeepSeek-R1等（含93张配图）
 │   ├── agent-concept.json      # 27 题：AI Agent 基础概念（定义/架构/组件/工作流程）
 │   ├── agent-framework.json    # 27 题：ReAct/Plan-and-Execute/Reflexion/LATS/LangChain/LangGraph
 │   ├── agent-rag.json          # 24 题：分块策略/向量数据库/混合检索/重排序/GraphRAG/Agentic RAG
@@ -40,6 +41,7 @@ ai-interview/
 │   ├── agent-eng.json          # 29 题：模型路由/熔断器/缓存/Trace/安全/金丝雀发布/K8s
 │   ├── agent-prompt.json       # 27 题：CoT/Few-shot/结构化输出/Prompt注入/DSPy/版本管理
 │   └── agent-interview-qa.json # 92 题：架构设计/技术实现/性能优化/故障处理/工程质量/业务理解（STAR格式）
+├── images/                 # LLM面试100问配图（93张，来自PDF原始图表）
 ├── manifest.json           # PWA manifest
 ├── sw.js                   # Service Worker
 └── README.md
