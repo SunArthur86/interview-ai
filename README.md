@@ -1,11 +1,11 @@
-# 🧠 AI 面试题库 · 576 题精讲
+# 🧠 AI 面试题库 · 637 题精讲
 
-> AI 基础 / AI Agent / AI Harness / LLM面试100问 / AI Agent面试全攻略
-> 576 道精选面试题，对标 **阿里 P7 / 字节 2-2 / 腾讯 T9**
+> AI 基础 / AI Agent / AI Harness / LLM面试100问 / AI Agent面试全攻略 / LLM基础与实践
+> 637 道精选面试题，对标 **阿里 P7 / 字节 2-2 / 腾讯 T9**
 
 ## ✨ 特性
 
-- 📚 **576 道精选题目** — 15 大分类，全面覆盖 AI Agent 面试知识体系
+- 📚 **637 道精选题目** — 16 大分类，全面覆盖 AI Agent 面试知识体系
 - 🔍 **智能搜索** — 题目、标签、答案全文搜索
 - 🏷️ **多维筛选** — 分类 / 难度(L1-L5) / 子分类
 - 💝 **收藏功能** — 一键收藏，只看收藏
@@ -41,6 +41,7 @@ ai-interview/
 │   ├── agent-eng.json          # 29 题：模型路由/熔断器/缓存/Trace/安全/金丝雀发布/K8s
 │   ├── agent-prompt.json       # 27 题：CoT/Few-shot/结构化输出/Prompt注入/DSPy/版本管理
 │   └── agent-interview-qa.json # 92 题：架构设计/技术实现/性能优化/故障处理/工程质量/业务理解（STAR格式）
+│   └── llm-notes.json          # 61 题：分词/Embedding/Attention/FFN/位置编码/RoPE/MoE/SFT/RLHF/DPO/GRPO/LoRA/QLoRA/量化/幻觉/RAG（来源：《大语言模型基础与实践学习笔记》）
 ├── images/                 # LLM面试100问配图（93张，来自PDF原始图表）
 ├── manifest.json           # PWA manifest
 ├── sw.js                   # Service Worker

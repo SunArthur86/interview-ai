@@ -35,6 +35,7 @@ const CATEGORIES = {
   'agent-eng':        { label: '工程化实践', icon: '🏗️', color: '#ff6b35', file: 'data/agent-eng.json' },
   'agent-prompt':     { label: 'Prompt工程', icon: '✏️', color: '#ffd60a', file: 'data/agent-prompt.json' },
   'agent-interview-qa': { label: '企业面试问答', icon: '💼', color: '#1d1d1f', file: 'data/agent-interview-qa.json' },
+  'llm-notes':          { label: 'LLM基础与实践', icon: '📖', color: '#008080', file: 'data/llm-notes.json' },
 };
 
 // ============ Init ============

@@ -1,0 +1,938 @@
+[
+  {
+    "id": "llm-notes-001",
+    "category": "llm-notes",
+    "subcategory": "大模型架构",
+    "difficulty": "L3",
+    "tags": [
+      "Transformer",
+      "架构设计"
+    ],
+    "question": "RNN、CNN和Transformer三大NLP特征提取器对比",
+    "answer": "•\nRNN：采取线性序列结构不断从前往后收集输入信息，但这种线性序列结构在反向传播的时候存在优化困难问题，因为反向传播\n路径太长，容易导致严重的梯度消失或梯度爆炸问题。RNN结构（LSTM，GRU）结构存在序列依赖，对大规模并行非常不友好\n•\nCNN：卷积层其实是保留了相对位置信息的，并行能力比较强\nRNN，CNN，Transformer对比：\n1. 语义特征提取能力：Transformer在这方面的能力非常显著地超过RNN和CNN，RNN和CNN两者能力差不太多\n2. 长距离特征捕获能力：原生CNN特征抽取器在这方面极为显著地弱于RNN和Transformer，Transformer微弱优于RNN模型(尤其\n在主语谓语距离小于13时)，能力由强到弱排序为Transformer>RNN>>CNN; 但在比较远的距离上（主语谓语距离大于13），\nRNN微弱优于Transformer，所以综合看，可以认为Transformer和RNN在这方面能力差不太多，而CNN则显著弱于前两者\n3. 任务综合特征抽取能力（机器翻译）：Transformer综合能力要明显强于RNN和CNN，而RNN和CNN看上去表现基本相当，貌似\nCNN表现略好一些\n4. 并行计算能力及运行效率：RNN在并行计算方面有严重缺陷，这是它本身的序列依赖特性导致的；对于CNN和Transformer来\n说，因为它们不存在网络中间状态不同时间步输入的依赖关系，所以可以非常方便及自由地做并行计算改造。Transformer和\nCNN差不多，都远远远远强于RNN\n单从任务综合效果方面来说，Transformer明显优于CNN，CNN略微优于RNN。速度方面Transformer和CNN明显占优，RNN在\n这方面劣势非常明显",
+    "follow_up": [
+      "具体解释Multi-Head Attention的并行计算优势",
+      "为什么CNN的长距离依赖建模能力弱？"
+    ]
+  },
+  {
+    "id": "llm-notes-002",
+    "category": "llm-notes",
+    "subcategory": "手撕代码",
+    "difficulty": "L3",
+    "tags": [
+      "手撕代码",
+      "编程题"
+    ],
+    "question": "手撕交叉熵",
+    "answer": "•\n首先是交叉熵的公式\n◦\n二分类交叉熵： \n\nL\n =\nBCE\n−\n\n[y\nlog(\n) +\nN\ni=1\n∑\nN\ni\ny\ni^\n(1 −y\n)log(1 −\ni\n)]\ny\ni^\n◦\n多分类交叉熵： \n\nL\n =\nCCE\n−\n\ny\nlog(\n\n)\nN\ni=1\n∑\nN\nc=1\n∑\nC\ni,c\ny^i,c\n•\n写一个二分类交叉熵流程代码\n# 二分类交叉熵loss\ndef binary_cross_entropy_loss(y_pred, y_true):\n    # 应用 Sigmoid 将模型输出转换为概率\n    y_pred = 1 / (1 + torch.exp(-y_pred))\n    \n    # 防止 log(0) 导致的数值不稳定，使用 epsilon 做平滑处理\n    epsilon = 1e-7\n    # 限制预测值在 (epsilon, 1-epsilon) 范围内\n    y_pred = torch.clamp(y_pred, min=epsilon, max=1.0 - epsilon) \n    # 计算交叉熵损失\n    loss = - (y_true * torch.log(y_pred) + (1 - y_true) * torch.log(1 - y_pred))\n    return loss.mean()\n# 分类器\nmodel = SimpleNN()\n# 特征数据和标签\nfeatures = np.array([[0.1, 0.2], [0.3, 0.4], [0.5, 0.6], [0.7, 0.8], [0.9, 1.0]]) \nlabels = np.array([0, 1, 0, 1, 0]) \n# model输出\noutputs = model(features)\nloss = binary_cross_entropy_loss(outputs, labels)\n•\n交叉熵loss反向链式求导过程\n\n◦\n\n对 \n求导： \n\nL\ny^\n =\n∂\ny^\n∂L\n−[\n −\ny^\ny\n]\n1 −\ny^\n1 −y\n◦\n\n对 \n 求导：令 \n， \n，这里用到了 \n 激活函数的导数性质\ny^\nsigmoid\n =\ny^\nσ(z)\n =\n∂z\n∂\ny^\n(1 −\ny^\n)\ny^\nsigmoid(z) =\n\n1 + e−z\n•\n使用numpy手撕二分类交叉熵，包括train和predict的函数\nimport numpy as np\n# 定义sigmoid和其导数\ndef sigmoid(z):\n    return 1 / (1 + np.exp(-z))\ndef sigmoid_derivative(z):\n    return sigmoid(z) * (1 - sigmoid(z))\n# 定义model以及训练推理代码\nclass SimpleNN:\n    def __init__(self, input_size, hidden_size, output_size):\n        # 初始化权重和偏置\n        self.weights1 = np.random.randn(input_size, hidden_size)\n        self.bias1 = np.zeros((1, hidden_size))\n        self.weights2 = np.random.randn(hidden_size, output_size)\n        self.bias2 = np.zeros((1, output_size))\n    def forward(self, X):\n        self.Z1 = np.dot(X, self.weights1) + self.bias1\n        self.A1 = sigmoid(self.Z1)\n        self.Z2 = np.dot(self.A1, self.weights2) + self.bias2\n        self.A2 = sigmoid(self.Z2)\n        return self.A2\n    def backward(self, X, y, learning_rate):\n        # 样本数量 \n        m = X.shape[0]\n        # 计算输出层的误差\n        dA2 = -y / self.A2 + (1 - y) / (1 - self.A2)\n        dZ2 = dA2 * sigmoid_derivative(self.Z2)  # dZ2其实可以直接等于 self.A2-y\n        dW2 = np.dot(self.A1.T, dZ2) / m\n        db2 = np.sum(dZ2, axis=0, keepdims=True) / m\n        # 计算隐藏层的误差\n        dA1 = np.dot(dZ2, self.weights2.T)\n        dZ1 = dA1 * sigmoid_derivative(self.Z1)\n        dW1 = np.dot(X.T, dZ1) / m\n        db1 = np.sum(dZ1, axis=0, keepdims=True) / m\n        # 更新权重和偏置\n        self.weights1 -= learning_rate * dW1\n        self.bias1 -= learning_rate * db1\n        self.weights2 -= learning_rate * dW2\n        self.bias2 -= learning_rate * db2\n    def compute_loss(self, X, y):\n        # 计算交叉熵损失\n        A2 = self.forward(X)\n        m = X.shape[0]\n        loss = - np.mean(y * np.log(A2) + (1 - y) * np.log(1 - A2))\n        return loss\n    def train(self, X_train, y_train, epochs, learning_rate):\n        # 训练模型\n        for epoch in range(epochs):\n            self.forward(X_train)  # 前向传播\n            self.backward(X_train, y_train, learning_rate)  # 反向传播            \n            # 每100次迭代打印一次损失\n            if epoch % 100 == 0:\n                loss = self.compute_loss(X_train, y_train)\n                print(f\"Epoch {epoch}/{epochs}, Loss: {loss:.4f}\")\n    def predict(self, X):\n\n        # 推理，返回类别标签\n        A2 = self.forward(X)\n        return (A2 > 0.5).astype(int)",
+    "follow_up": []
+  },
+  {
+    "id": "llm-notes-003",
+    "category": "llm-notes",
+    "subcategory": "手撕代码",
+    "difficulty": "L3",
+    "tags": [
+      "手撕代码",
+      "编程题"
+    ],
+    "question": "手撕Transformer Encoder、Deocder Block",
+    "answer": "Transformer Encoder Block\nimport torch\nimport torch.nn as nn\nimport torch.nn.functional as F\nclass TransformerEncoderBlock(nn.Module):\n    def __init__(self, embed_dim, num_heads, ffn_hidden_dim, dropout=0.1):\n        super(TransformerEncoderBlock, self).__init__()\n        # Multi-Head Self-Attention\n        self.self_attention = MultiHeadAttention(embed_dim, num_heads, dropout)\n        # Layer normalization\n        self.ln1 = nn.LayerNorm(embed_dim)\n        self.ln2 = nn.LayerNorm(embed_dim)\n        # Feed-Forward Network (FFN)\n        self.ffn = nn.Sequential(\n            nn.Linear(embed_dim, ffn_hidden_dim),\n            nn.ReLU(),\n            nn.Linear(ffn_hidden_dim, embed_dim),\n            nn.Dropout(dropout)\n        )\n        self.dropout = nn.Dropout(dropout)\n    def forward(self, x, mask=None):\n        # Self-Attention with residual connection\n        attention_output = self.self_attention(x, mask)\n        x = x + self.dropout(attention_output)  # Residual connection\n        x = self.ln1(x)  # Layer normalization\n        # Feed-Forward Network with residual connection\n        ffn_output = self.ffn(x)\n        x = x + self.dropout(ffn_output)  # Residual connection\n        x = self.ln2(x)  # Layer normalization\n        return x\nTransformer Decoder Block\nimport torch\nimport torch.nn as nn\nimport torch.nn.functional as F\nclass EncoderDecoderAttention(nn.Module):\n    def __init__(self, embed_dim, num_heads, dropout=0.1):\n        super(EncoderDecoderAttention, self).__init__()\n        # 这个MultiHeadAttention forward的时候直接接受QKV对应的输入\n        self.cross_attention = MultiHeadAttention(embed_dim, num_heads, dropout)\n    def forward(self, x, encoder_output, mask=None):\n        # Calculate attention based on encoder's output (cross-attention)\n        # KV：encoder_output，Q：X\n        attention_output = self.corss_attention(x, encoder_output, encoder_output, mask)\n        return attention_output\nclass TransformerDecoderBlock(nn.Module):\n    def __init__(self, embed_dim, num_heads, ffn_hidden_dim, dropout=0.1):\n        super(TransformerDecoderBlock, self).__init__()\n        # Masked Multi-Head Self-Attention\n        self.self_attention = MultiHeadAttention(embed_dim, num_heads, dropout)\n\n        # Encoder-Decoder Attention (Cross Attention)\n        self.encoder_decoder_attention = EncoderDecoderAttention(embed_dim, num_heads, dropout)\n        # Layer normalization\n        self.ln1 = nn.LayerNorm(embed_dim)\n        self.ln2 = nn.LayerNorm(embed_dim)\n        self.ln3 = nn.LayerNorm(embed_dim)\n        # Feed-Forward Network (FFN)\n        self.ffn = nn.Sequential(\n            nn.Linear(embed_dim, ffn_hidden_dim),\n            nn.ReLU(),\n            nn.Linear(ffn_hidden_dim, embed_dim),\n            nn.Dropout(dropout)\n        )\n        self.dropout = nn.Dropout(dropout)\n    def forward(self, x, encoder_output, self_attention_mask=None, cross_attention_mask=None):\n        # Self-Attention with residual connection\n        self_attention_output = self.self_attention(x, self_attention_mask)\n        x = x + self.dropout(self_attention_output)  # Residual connection\n        x = self.ln1(x)  # Layer normalization\n        # Encoder-Decoder Attention (Cross-Attention) with residual connection\n        encoder_decoder_output = self.encoder_decoder_attention(x, encoder_output, cross_attention_mask)\n        x = x + self.dropout(encoder_decoder_output)  # Residual connection\n        x = self.ln2(x)  # Layer normalization\n        # Feed-Forward Network with residual connection\n        ffn_output = self.ffn(x)\n        x = x + self.dropout(ffn_output)  # Residual connection\n        x = self.ln3(x)  # Layer normalization\n        return x",
+    "follow_up": []
+  },
+  {
+    "id": "llm-notes-004",
+    "category": "llm-notes",
+    "subcategory": "手撕代码",
+    "difficulty": "L3",
+    "tags": [
+      "手撕代码",
+      "编程题"
+    ],
+    "question": "手撕Transformer位置编码",
+    "answer": "Transformer 位置编码\nimport torch\nimport math\nimport torch.nn as nn\nclass PositionalEncoding(nn.Module):\n    def __init__(self, d_model, max_len=5000):\n        super(PositionalEncoding, self).__init__()\n        # 初始化一个位置编码的矩阵，维度是(max_len, d_model)\n        self.pe = torch.zeros(max_len, d_model)\n        self.base = 10000.0\n        # Shape: (max_len, 1)\n        position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)  \n        # Shape: (d_model//2,) \n        div_term = torch.exp(torch.arange(0, d_model, 2).float() * -(math.log(self.base) / d_model))\n        # 根据公式填充位置编码矩阵\n        self.pe[:, 0::2] = torch.sin(position * div_term)  # 偶数位置使用sin\n        self.pe[:, 1::2] = torch.cos(position * div_term)  # 奇数位置使用cos \n        self.pe = self.pe.unsqueeze(0)  # Shape: (1, max_len, d_model)\n    def forward(self, x):\n        # 获取输入张量的序列长度 (batch_size, seq_len, embed_dim)\n        seq_len = x.size(1)\n        return self.pe[:, :seq_len]",
+    "follow_up": []
+  },
+  {
+    "id": "llm-notes-005",
+    "category": "llm-notes",
+    "subcategory": "SFT与RLHF",
+    "difficulty": "L3",
+    "tags": [
+      "SFT",
+      "RLHF",
+      "对齐"
+    ],
+    "question": "什么是Reward Hacking？",
+    "answer": "Reward Hacking又叫Reward Exploition，指在强化学习（Reinforcement Learning, RL）或其他基于奖励的系统中，agent利用\n奖励函数的漏洞，以意料之外但可能不符合目标设计者意图的方式最大化奖励的现象\n•\n关键点：\n奖励最大化的偏离目标：\n◦\n强化学习的核心目标是通过奖励信号指导智能体学习策略。然而，设计不完善的奖励函数可能无法完全覆盖任务的真实目标\n◦\n智能体可能找到一种投机取巧的方式，通过偏离真实目标来获取更高奖励\n未预期行为：\n◦\nReward Hacking 经常导致智能体采取设计者未预期的行为，例如忽略主要任务、优化无关参数，甚至破坏环境\n•\n典型案例：\n游戏中的奖励欺骗： 在视频游戏任务中，RL智能体可能找到绕过游戏规则获取高分的方法，例如卡住计分系统，或无意义地重\n复某些操作以获得奖励\n机器人学习中的意外行为： 一个扫地机器人学习到奖励与覆盖面积相关，但没有惩罚破坏家具，于是采取撞击家具以“扩\n大”覆盖面积的方式获得更高奖励\n•\n解决方案：\n改进奖励函数设计：\n◦\n覆盖真实目标： 确保奖励函数尽可能全面地描述任务目标，避免遗漏重要方面\n◦\n负面奖励： 对不符合目标的行为添加惩罚\n多目标优化：\n◦\n在奖励函数中引入多个目标权重，并动态调整，以避免智能体过度优化单一目标\n安全约束：\n◦\n在智能体的行为中添加硬性约束，限制其策略范围，防止出现极端行为\n人工反馈：\n◦\n定期引入人类评估，检查智能体行为是否符合设计者预期，调整奖励函数\n对抗性测试：\n◦\n模拟不同环境和奖励分布，测试智能体是否倾向于奖励欺骗行为",
+    "follow_up": [
+      "如何设计更鲁棒的奖励函数来防止Reward Hacking？",
+      "Reward Hacking和Goodhart定律的关系？"
+    ]
+  },
+  {
+    "id": "llm-notes-006",
+    "category": "llm-notes",
+    "subcategory": "SFT与RLHF",
+    "difficulty": "L3",
+    "tags": [
+      "SFT",
+      "RLHF",
+      "对齐"
+    ],
+    "question": "Reward Model有什么优化的方法吗？",
+    "answer": "💡奖励模型的训练loss如下，\n为 (prompt, response) 分配一个标量奖励值\nr\nϕ\n\nL\n =\nRM\n−E\n[log(σ(r\n(x, y\n) −\n(x,y\n,y\n)∼D\n\nw\nl\nRM\nϕ\nw\nr\n(x, y\n)))]\nϕ\nl\n•\n减少数据长度引起的偏差\n偏好数据中存在一些固有的偏差，例如人类倾向于偏好较长、结构化比较好的响应，这样可能会误导大模型，过分强调\n数据的次要特征，从而忽视了回复的内容质量\n通过对chosen/rejected偏好对数据的长度差进行分桶，不同的bucket里面放长度差相近的偏好数据，然后平衡每组\n数据里面chosen/rejected更长的数量（比如尽量让chosen/rejected长度更长的样本数量一致，如果出现都是chosen\n的回复更长或者都是rejected的回复更长，跟容易就学偏了，只学到了长度这种不重要的特征）\n\nd = abs(∣tokenize(y\n)∣−\nw\n∣tokenize(y\n)∣)\nl\n此外，分桶的粒度也会影响效果，一般来说更细的桶范围可以更有效地减少长度偏差\n•\n提升训练的稳定性：\n◦\n奖励模型训练过程中很容易出现奖励值大范围波动导致训练不稳定，所以训练过程中引入类似L2正则化损失，约束\n奖励模型分数分布的波动性\n\nL\n =\nREG\nr\n(x, y\n) +\nϕ\nw 2\nr\n(x, y\n)\nϕ\nl 2\nL\n =\ntotal\nL\n +\nRM\nL\n\nREG\n\n•\n利用基于规则的奖励模型：\n对于类似数学、code一类的任务，有明确答案反馈（数学任务可以通过生成特定格式的回答，检测答案，code任务可\n以通过编译器运行来检测答案），那么就可以直接应用rule-based奖励函数，这样可以提高奖励模型的可靠性，一定\n程度防止reward hacking/exploition，其他任务则继续使用训练出来的RM\n•\n利用CoT降低reward hacking：\n构建偏好数据的时候可以提供最终奖励值以及引导出奖励值的思维链CoT数据，这样可以降低大模型过度利用奖励值的\n风险\n•\n模型集成缓解过优化问题：\n通过模型集成ensemble，可以降低奖励模型的方差，有助于缓解overoptimization问题\n◦\n均值集成 Mean：均值优化不是一种保守的优化技术；如果集成中的至少一个成员高估了奖励（即使其他成员准确\n估计了奖励），均值优化也无法阻止策略利用有错误的奖励模型\n\nR =\n\nR\n\nk\ni\n∑\ni\n◦\n最差例子集成 Worst-Case：主要优点是没有任何可能需要调整的超参数。然而，由于其高度保守的性质，有时可\n能会导致性能下降\n\nR =\nR\n\ni\nmin\ni\n◦\n不确定性加权集成 Uncertainty-Weighted：奖励是通过将所有模型的平均奖励与方差相结合来计算的。主要远离\n是对ensemble内奖励模型之间存在高度分歧的响应的策略进行惩罚，这有助于防止利用单个有错误的奖励模型\n\nR :=\n\nR\n −\nk\ni\n∑\ni\nλ\n\n(R\n −\nk\ni\n∑\ni\n\nR\n)\nk\ni\n∑\ni 2",
+    "follow_up": [
+      "奖励模型训练中如何处理标注者分歧？",
+      "如何评估奖励模型的质量？"
+    ]
+  },
+  {
+    "id": "llm-notes-007",
+    "category": "llm-notes",
+    "subcategory": "手撕代码",
+    "difficulty": "L3",
+    "tags": [
+      "手撕代码",
+      "编程题"
+    ],
+    "question": "RoPE旋转位置编码手撕",
+    "answer": "•\n复数实现形式\n二维情况下，对于向量 \n用复数表示的RoPE如下所示：\nq\n\nf(q\n, m) =\nm\nR\n(f(q\n, m))e\n=\nm\nm\niθ(q\n,m)\nm\n∥q\n∥e\n=\nm\ni(θ(q\n)+mθ)\nm\nqeimθ\n\nLlama3的RoPE实现代码\n# 用于预计算旋转位置嵌入（Rotary Position \nEmbedding）的频率\ndef precompute_freqs_cis(dim: int, end: \nint, theta: float = 10000.0):\n    \"\"\"\n    返回预计算的频率tensor,形状为 (end, dim // \n2),数据类型为complex64(复数)\n    \"\"\"\n    # 计算频率，使用 theta 的倒数作为基数，以 2 \n为步长从 0 到 dim 生成一个等差数列，然后取前 dim \n// 2 个元素\n    freqs = 1.0 / (theta ** \n(torch.arange(0, dim, 2)[: (dim // \n2)].float() / dim))\n    # 创建一个从 0 到 end-1 的等差数列，作为时间\n步\n    t = torch.arange(end, \ndevice=freqs.device, dtype=torch.float32)\n    # 计算时间步和频率的外积，得到每个时间步的频率\n    freqs = torch.outer(t, freqs)\n    # 将频率转换为复数形式，实部为 1，虚部为频率\n    freqs_cis = \ntorch.polar(torch.ones_like(freqs), freqs)  \n# complex64\n    return freqs_cis\ndef reshape_for_broadcast(freqs_cis, x):\n    ndim = x.ndim\n    assert 0 <= 1 < ndim\n    assert freqs_cis.shape == (x.shape[1], \nx.shape[-1])\n    shape = [d if i == 1 or i == ndim - 1 \nelse 1 for i, d in enumerate(x.shape)]\n    return freqs_cis.view(*shape)\ndef apply_rotary_emb(xq, xk, freqs_cis):\n    # 将QK转换为复数形式，并重塑为 (batch_size, \nseq_len, num_heads, head_dim // 2, 2)\n    xq_ = \ntorch.view_as_complex(xq.float().reshape(*xq\n.shape[:-1], -1, 2))\n    xk_ = \ntorch.view_as_complex(xk.float().reshape(*xk\n.shape[:-1], -1, 2))\n    freqs_cis = \nreshape_for_broadcast(freqs_cis, xq_)\n    # 将QK与旋转位置嵌入频率相乘，并将结果转换回实\n数形式\n    xq_out = torch.view_as_real(xq_ * \nfreqs_cis).flatten(3)\n    xk_out = torch.view_as_real(xk_ * \nfreqs_cis).flatten(3)\n    return xq_out.type_as(xq), \nxk_out.type_as(xk)\n代码中用到的torch函数理解\ntorch.outer:\n>>> v1 = torch.arange(1., 5.)\n>>> v2 = torch.arange(1., 4.)\n>>> torch.outer(v1, v2)\ntensor([[  1.,   2.,   3.],\n        [  2.,   4.,   6.],\n        [  3.,   6.,   9.],\n        [  4.,   8.,  12.]])      \ntorch.polar:\n>>> abs = torch.tensor([1, 2], \ndtype=torch.float64)\n>>> angle = torch.tensor([np.pi / 2, 5 * \nnp.pi / 4], dtype=torch.float64)\n>>> z = torch.polar(abs, angle)\n>>> z\ntensor([(0.0000+1.0000j), (-1.4142-\n1.4142j)], dtype=torch.complex128)\ntorch.view_as_complex:\n>>> x\ntensor([[ 1.6116, -0.5772],\n        [-1.4606, -0.9120],\n        [ 0.0786, -1.7497],\n        [-0.6561, -1.6623]])\n>>> torch.view_as_complex(x)\ntensor([(1.6116-0.5772j), (-1.4606-\n0.9120j), (0.0786-1.7497j), (-0.6561-\n1.6623j)])\ntorch.view_as_real:\n>>> x\ntensor([(0.4737-0.3839j), (-0.2098-\n0.6699j), (0.3470-0.9451j), (-0.5174-\n1.3136j)])\n>>> torch.view_as_real(x)\ntensor([[ 0.4737, -0.3839],\n        [-0.2098, -0.6699],\n        [ 0.3470, -0.9451],\n        [-0.5174, -1.3136]])",
+    "follow_up": []
+  },
+  {
+    "id": "llm-notes-008",
+    "category": "llm-notes",
+    "subcategory": "大模型架构",
+    "difficulty": "L2",
+    "tags": [
+      "Transformer",
+      "架构设计"
+    ],
+    "question": "什么是自回归语言模型和n-gram模型？",
+    "answer": "1. 自回归语言模型\n用历史信息预测下一个字符/token，然后加入历史信息中，再去预测下一个\n\nx\n ∼\ni\np(x\n ∣\ni\nx\n)\n1:i−1 1/T\n其中T≥0 是一个控制我们希望从语言模型中得到多少随机性的温度参数，加了1/T之后要重新归一化概率\n2. N-gram模型\n在一个n-gram模型中，关于\n的预测只依赖于最后\n个字符而不是整个历史：\nx\ni\nn −1\n\nx\n ∼\ni\np(x\n ∣\ni\nx\n)\ni−(n−1):i−1\n1/T",
+    "follow_up": []
+  },
+  {
+    "id": "llm-notes-009",
+    "category": "llm-notes",
+    "subcategory": "大模型架构",
+    "difficulty": "L2",
+    "tags": [
+      "Transformer",
+      "架构设计"
+    ],
+    "question": "为什么BERT在第一句前会加一个[CLS]标志? BERT输出的两个函数是什么？",
+    "answer": "•\nBERT在第一句前会加一个[CLS]标志，最后一层该位置对应的向量可以作为整句话的语义表示，从而用于下游的分类任务等。与\n文本中已有的其它词相比，这个无明显语义信息的符号会更“公平”地融合文本中各个词的语义信息，从而更好的表示整句话的\n语义。具体来说，self-attention是用文本中的其它词来增强目标词的语义表示，但是目标词本身的语义还是会占主要部分的，\n因此，经过BERT的12层，每次词的embedding融合了所有词的信息，可以去更好的表示自己的语义。而[CLS]位本身没有语\n义，经过12层，得到的是attention后所有词的加权平均，相比其他正常词，可以更好的表征句子语义。当然，也可以通过对最\n后一层所有词的embedding做pooling表征句子语义\n•\n在BERT TF源码中有两种输出\n◦\nget_pooled_out()，就是上述[CLS]的表示，输出shape是[batch size,hidden size]\n◦\nget_sequence_out()，获取的是整个句子每一个token的向量表示，输出shape是[batch_size, seq_length, \nhidden_size]，这里也包括[CLS]对应的向量",
+    "follow_up": []
+  },
+  {
+    "id": "llm-notes-010",
+    "category": "llm-notes",
+    "subcategory": "大模型架构",
+    "difficulty": "L3",
+    "tags": [
+      "Transformer",
+      "架构设计"
+    ],
+    "question": "为什么现在的LLM都是Decoder only的架构？",
+    "answer": "•\n算法层面\n◦\nDecoder-only的泛化性能更好：用next token prediction预训练的decoder-only模型在各种下游任务上zero-shot泛化性能\n最好；另外，许多工作表明decoder-only模型的few-shot（也就是上下文学习，in-context learning）泛化能力更强\n◦\n注意力满秩问题：双向注意力的注意力矩阵容易退化为低秩状态，而causal attention的注意力矩阵是下三角矩阵，必然是\n满秩的，建模能力更强\n◦\n预训练任务难度问题：纯粹的decoder-only架构 + next token prediction预训练，每个位置所能接触的信息比其他架构少，\n要预测下一个token难度更高，当模型足够大，数据足够多的时候，decoder-only模型学习通用表征的上限更高\n◦\n上下文学习为decoder-only架构带来的更好的few-shot性能：prompt和demonstration的信息可以视为对模型参数的隐式\n微调，decoder-only的架构相比encoder-decoder在in-context learning上会更有优势，因为prompt可以更加直接地作\n用于每一层的每一层，微调的信号更强\n◦\ncausal attention的隐式编码功能：打破了transformer的不变性，而带有双向attention的模型，如果不带位置编码，双向\nattention的部分token可以对换也不改变表示，对语序的区分能力天生较弱\n◦\n轨迹依赖问题：OpenAI作为开拓者深挖坑踩深，以decoder-only架构为基础摸索出了一套行之有效的训练方法和Scaling \nLaw，后来者鉴于时间和计算成本，自然不愿意做太多结构上的大改动，继续沿用decoder-only架构。在工程生态上，\ndecoder - only架构也形成了先发性优势，Megatron和flash attention等重要工具对causal attention的支持更好\n•\nInfra层面\nDecoder-Only 的进行基于 Scaling Laws 的实际训练成本低，而 Encoder-Only 压根就不适合做生成任务\n◦\n工业实现效率问题：decoder-only支持一直复用KV-Cache，多轮对话更友好，因为每个token的表示只和它之前的输入有\n关，而encoder - decoder和PrefixLM就难以做到\n◦\n类似 T5 的 Encoder-Decoder 架构很难支持 PP Pipeline Parallel，那么，为什么 PP 如此重要呢？核心点在于，PP 的通信\n代价最低并且容易被 overlap，而 TP Tensor Parallel 的带宽通信成本最高，跨机的 TP 会严重影响训练速度。现如今 LLM 预\n训练几乎都在万卡集群上训练，而 PP 是让 LLM 可以达到千亿集群以上的一个最重要的特性。但是！进行 PP 的一个重要特\n性为：需要一个 规整对称的、线性顺序的网络结构，Decoder-Only 正好满足。T5 这种架构本身就不是均匀对称的，而且 \nEncoder 输出要发给每个 Decoder，导致 PP 时，各个 Stage 之间会产生大量的、非对称的、间隔跨多个 Stage 的数据依\n赖，（其实 Megatron-LM 是支持 T5 做 PP 的，但是效果很糟糕），这样约束了 T5 的所有 Layer 都必须放在每一个 GPU \n上，将 DP 开到很大的代价是巨大的通信成本，训练效率低下。所以，T5 很难 scale up 到超过 100B 的量级",
+    "follow_up": [
+      "Encoder-only架构（如BERT）适合什么任务？",
+      "Encoder-Decoder架构还有应用场景吗？"
+    ]
+  },
+  {
+    "id": "llm-notes-011",
+    "category": "llm-notes",
+    "subcategory": "大模型架构",
+    "difficulty": "L3",
+    "tags": [
+      "Transformer",
+      "架构设计"
+    ],
+    "question": "什么是FIM(Fill in the Middle)？",
+    "answer": "论文Efficient Training of Language Models to Fill in the Middle中提出了FIM方法，通过简单数据转换使自回归语言模型具备填\n充中间文本能力\n如果有一个填空题：To be or not to be, _ _ _ question Encoder模型主导的时代，注意力是双向的，所以可以非常\n方便的填充中间 mask 的内容。Decoder-only模型，token只能从左往右生成，就没法填充中间的内容了。但是填充中间内容的需\n求一直是存在的，比如有一段代码，想在函数名和函数体中间生成注释，Decoder-only模型就无法做到\nFIM的核心思想：通过对训练数据的简单修改，在不改变模型架构的情况下，casual自回归语言模型能学习填充中间文本，且不影\n响其正常的从左到右生成能力\n会将原始文本划分为prefix、suffix和middle三部分，上面的例子就可以表示成如下的格式：\n<PRE>To be or not to be, <SUF> question<MID>This is a<EOS> \n<PRE> 代表前缀，<SUF> 代表后缀，<MID> 代表填充开始，<EOS> 表示填充结束，训练的时候用上面的样本，预测的时候则\n输入到<MID> 为止，然后进行预测。同时论文中也发现这样的FIM机制堆原来的模型性能几乎没有影响：\n\nFIM数据的casual attention pattern：",
+    "follow_up": []
+  },
+  {
+    "id": "llm-notes-012",
+    "category": "llm-notes",
+    "subcategory": "大模型架构",
+    "difficulty": "L3",
+    "tags": [
+      "Transformer",
+      "架构设计"
+    ],
+    "question": "LLM的涌现能力的两个技术体现：in-context learning，COT",
+    "answer": "模型在训练过程中能够生成出令人惊喜、创造性和新颖的内容或行为\n1. 任务的评价指标不够平滑：因为很多任务的评价指标不够平滑，导致我们现在看到的涌现现象。如果评价指标要求很严格，要求\n一字不错才算对，那么Emoji_movie任务我们就会看到涌现现象的出现。但是，如果我们把问题形式换成多选题，就是给出几个\n候选答案，让LLM选，那么随着模型不断增大，任务效果在持续稳定变好，但涌现现象消失，如上图图右所示。这说明评价指标\n不够平滑，起码是一部分任务看到涌现现象的原因\n2. 复杂任务 vs 子任务：展现出涌现现象的任务有一个共性，就是任务往往是由多个子任务构成的复杂任务。也就是说，最终任务\n过于复杂，如果仔细分析，可以看出它由多个子任务构成，这时候，子任务效果往往随着模型增大，符合 Scaling Law，而最终\n任务则体现为涌现现象\n3. 用 Grokking （顿悟）来解释涌现：对于某个任务T，尽管我们看到的预训练数据总量是巨大的，但是与T相关的训练数据其实数\n量很少。当我们推大模型规模的时候，往往会伴随着增加预训练数据的数据量操作，这样，当模型规模达到某个点的时候，与任\n务T相关的数据量，突然就达到了最小要求临界点，于是我们就看到了这个任务产生了Grokking现象\n尽管涌现能力为模型带来了创造性和独特性，但也需要注意其生成的内容可能存在偏差、错误或不完整性。因此，在应用和使用\n涌现能力强的模型时，需要谨慎评估和验证生成的",
+    "follow_up": [
+      "如何区分真正的涌现能力与评价指标的不平滑性？",
+      "In-context learning的上下文长度对涌现的影响？"
+    ]
+  },
+  {
+    "id": "llm-notes-013",
+    "category": "llm-notes",
+    "subcategory": "大模型架构",
+    "difficulty": "L3",
+    "tags": [
+      "Transformer",
+      "架构设计"
+    ],
+    "question": "LLMs复读机问题",
+    "answer": "生成文本时过度依赖输入文本的复制，而缺乏创造性和独特性。当面对一个问题或指令时，模型可能会简单地复制输入文本的一部\n分或全部内容，并将其作为生成的输出，而不是提供有意义或新颖的回应\n1. 数据偏差：大型语言模型通常是通过预训练阶段使用大规模无标签数据进行训练的。如果训练数据中存在大量的重复文本或者某\n些特定的句子或短语出现频率较高，模型在生成文本时可能会倾向于复制这些常见的模式\n2. 训练目标的限制：大型语言模型的训练通常是基于自监督学习的方法，通过预测下一个词或掩盖词来学习语言模型。这样的训练\n目标可能使得模型更倾向于生成与输入相似的文本，导致复读机问题的出现\n3. 缺乏多样性的训练数据：虽然大型语言模型可以处理大规模的数据，但如果训练数据中缺乏多样性的语言表达和语境，模型可能\n无法学习到足够的多样性和创造性，导致复读机问题的出现\n4. 模型结构和参数设置：大型语言模型的结构和参数设置也可能对复读机问题产生影响。例如，模型的注意力机制和生成策略可能\n导致模型更倾向于复制输入的文本\n解决方法：\n1. 多样性训练数据：在训练阶段，使用多样性的语料库来训练模型，避免数据偏差和重复文本的问题。这可以包括从不同领域、不\n同来源和不同风格的文本中获取数据\n2. 引入噪声：在生成文本时，引入一些随机性或噪声，例如通过采样不同的词或短语，或者引入随机的变换操作，以增加生成文本\n的多样性。这可以通过在生成过程中对模型的输出进行采样或添加随机性来实现\n3. 温度参数调整：温度参数是用来控制生成文本的多样性的一个参数。通过调整温度参数的值，可以控制生成文本的独创性和多样\n性。较高的温度值会增加随机性，从而减少复读机问题的出现\n4. Beam搜索调整：在生成文本时，可以调整Beam搜索算法的参数。Beam搜索是一种常用的生成策略，它在生成过程中维护了一\n个候选序列的集合。通过调整Beam大小和搜索宽度，可以控制生成文本的多样性和创造性\n5. 后处理和过滤：对生成的文本进行后处理和过滤，去除重复的句子或短语，以提高生成文本的质量和多样性。可以使用文本相似\n度计算方法或规则来检测和去除重复的文本\n6. 人工干预和控制：对于关键任务或敏感场景，可以引入人工干预和控制机制，对生成的文本进行审查和筛选，确保生成结果的准\n确性和多样性",
+    "follow_up": [
+      "如何从数据预处理角度解决复读机问题？",
+      "repetition penalty的具体实现原理？"
+    ]
+  },
+  {
+    "id": "llm-notes-014",
+    "category": "llm-notes",
+    "subcategory": "SFT与RLHF",
+    "difficulty": "L4",
+    "tags": [
+      "SFT",
+      "RLHF",
+      "对齐"
+    ],
+    "question": "什么是Self-consistency和Best-of-N？",
+    "answer": "两种方法都是 Aggregation-based test-time compute method，即在大模型在推理阶段通过输出多个回答进行聚集的出最终输\n出答案\n•\nSelf-consistency：最早出现在论文 SELF-CONSISTENCY IMPROVES CHAIN OF THOUGHT REASONING IN LANGUAGE \nMODELS 中，通过让大模型输出多个CoT推理路径，得到多个答案，然后通过多数投票的方式选出最终答案\n\n•\nBest-of-N：通过让大模型输出N个回答，然后通过不论是Verifier、ORM还是PRM（PRM可以给出步骤奖励加权和作为整个回\n答的分数）给出每个回答的分数，然后选择其中最高的（Best）作为最后的回答\n加载失败",
+    "follow_up": []
+  },
+  {
+    "id": "llm-notes-015",
+    "category": "llm-notes",
+    "subcategory": "SFT与RLHF",
+    "difficulty": "L4",
+    "tags": [
+      "SFT",
+      "RLHF",
+      "对齐"
+    ],
+    "question": "什么是对齐税 Alignment Tax？如何缓解？",
+    "answer": "大模型在预训练过程中获得了广泛的能力，但在RLHF框架下对大语言模型进行对齐时，可能会导致模型遗忘预训练获得的能力，这\n就是对齐税 Alignment Tax，即 RLHF 虽然有助于对齐人类偏好，但也可能导致模型在某些 NLP 基准上的性能下降\n解决方法：\n•\nPPO-ptx：PPO-ptx就是在原本的PPO优化目标（带KL行为约束的最大化累积奖励）基础上，增加了一项当前policy在pretrain\n数据集上的优化目标，或者说加了在pertain数据集上的预训练loss，即ptx loss：\n\nobjective(ϕ) = E\n r\n(x, y) −β log π\n(y∣x)/π\n(y∣x)\n+\n(x,y)∼D\n\nπ\n\nϕ\nRL [ θ\n( ϕ\nRL\nSFT\n)]\nγE\n log(π\n(x))\nx∼D\n\npretrain [\nϕ\nRL\n]\n•\nModel Average 模型平均：在预训练和RLHF后的模型权重之间进行插值，平衡训练前后的模型参数，减轻预训练阶段能力遗忘\n•\nHeterogeneous Model Averaging 异构模型平均：基于模型平均的基础上，进一步考虑在模型的不同层之间进行不同比例的权\n重平均，将Transformer模型分为K个部分，并为每个部分分配不同的平均比例，优化这些比例以最大化对齐性能，同时尽量减\n少对齐税",
+    "follow_up": [
+      "对齐税和灾难性遗忘的关系？",
+      "PPO-ptx中的预训练loss权重如何设置？"
+    ]
+  },
+  {
+    "id": "llm-notes-016",
+    "category": "llm-notes",
+    "subcategory": "大模型综合",
+    "difficulty": "L3",
+    "tags": [
+      "大模型",
+      "面试"
+    ],
+    "question": "如何提升合成数据的多样性",
+    "answer": "AttrPrompt [1]\n一句话总结：明确告诉LLM，你想要生成的文本在哪些维度（Attribute）上、有怎样的 具体要求（Value）。\n做法\n1. 向ChatGPT提问，询问在生成此类数据时，需要考虑哪些Attribute；\n2. 人工筛选，保留必要的Attribute；\n3. 再向ChatGPT提问，让它给出每个Attribute的Value集合；\n4. 再次人工筛选，保留必要的Value，并且去掉那些可能带来歧义的Value。\n核心代码\n•\n获得每条数据 的Attribute\n    if args.attribute == 'similar': # find the similar topics\n        args.prompt = [re.sub(\"_\", \" \", f\"Give 5 most relevant classes related to {x} {args.domain} \non {args.data_source} from the classes: {json.dumps(label_names)}. Write each class in a line. Do \nnot include {x}.\") for x in label_names]\n\n        print(f\"Generate a {args.domain} using model {model}, prompt: {args.prompt}\")\n    else:\n        similar_keywords = load_attributes(attr_name = args.attribute, model = args.model_name, \ndataset = args.dataset, method = args.model_type, classes = label_names)\n        args.prompt = [re.sub(\"_\", \" \", f\"List {args.n_sample} diverse {args.attribute} related to \n{label_names[i]} on {args.data_source}. These {args.attribute} should be unrelated to  \n{similar_keywords[x]}.\") for (i,x) in enumerate(label_names)]\n    msg_lst = [\n                [{\"role\": \"user\", \"content\": p}] for p in args.prompt\n            ]\n•\n过滤掉Attribute低的数据\n    attributes = load_attributes(attr_name = args.attribute, model = args.model_name, dataset = \nargs.dataset, method = args.model_type, classes = label_names)\n    similar_keywords = load_attributes(attr_name = 'similar', model = args.model_name, dataset = \nargs.dataset, method = args.model_type, classes = label_names)\n    i = 0\n    max_reject = 5\n    for c in tqdm(label_names):\n        i += 1        \n        similar_keyword = \",\".join(similar_keywords[c])\n        args.prompt = [re.sub(\"_\", \" \", f\"Consider {x}. Is it relevant to the following categories: \n{similar_keyword}? Return 1 for yes and 0 for no.\") for x in attributes[c]]\n        \n        print(f\"Consider {attributes[c][0]}. Is it relevant to the following categories: \n{similar_keyword}? Return 1 for yes (related to any of these categories) and 0 for no. You only need \nto return one number.\")\n        n_reject = 0\n        args.prompt = split_list(args.prompt, 25)\n        for prompt in args.prompt:\n            msg_lst = [\n                        [{\"role\": \"user\", \"content\": p}] for p in prompt\n                    ] \nKMQ [2]\n一句话总结：核心是基于多样性的数据选择，通过反馈循环的迭代实现学习行为的一致性。\n做法\n•\n系统分析了各种聚类和采样方法，发现k-means聚类在选择最优多样化的指令数据子集方面特别有效，尤其是在结合质量采样步\n骤时。\n•\n首先对固定的数据子集进行采样，这里最初使用k-means方法，然后结合质量采样提出改进的KMQ算法，在确保选择的子集具有\n高度的多样性后，对模型进行微调。\n•\n考虑到采样和微调之间没有信息交换，通过早期训练反馈不断调整聚类的权重，以优化数据子集的选择。\nEntiGraph [3]\n一句话总结：从有限的文本中提取出关键实体和它们之间的关系，然后基于这些信息合成出大量的新文本。这个过程可以类比为，\n我们先从教科书中提取出知识点，然后用这些知识点编写出各种各样的习题和例子。\n做法\n1. 实体抽取：从原始文本中提取出所有的关键实体\n2. 单实体描述：针对每个提取出的实体，生成详细的描述文本。这个过程同样是通过设计提示词来引导GPT-4完成的。\n3. 实体关系分析：分析不同实体之间的关系，并生成相关的文本。这一步骤不仅考虑实体对，还会考虑三个实体之间的关系。\n\nEvol-Instruct [4]\n一句话总结：核心在于指令数据演化。它通过对初始指令集进行升级和演化，生成更多样化的指令，从而提高模型对不同类型指令\n的处理能力。\n做法\n1. 收集初始指令集：作为演化的基础，初始指令集应包含来自不同领域和任务、具有不同复杂度和难度级别的指令。这些指令可以\n是简单的问答、翻译任务，也可以是复杂的推理、总结任务。\n2. 指令数据演化：通过对初始指令集进行深度演化和广度演化，生成更多样化的指令。深度演化主要包括添加约束、深化、具体\n化、增加推理步骤和复杂化输入等操作。\n3. 淘汰低效指令：在演化过程中，会产生一些没有提供信息增益、难以生成响应或明显复制了演化提示词汇的指令。这些指令被称\n为低效指令，需要通过淘汰演化过程进行识别和过滤，以确保指令集的质量。\n4. 合并与微调：将演化的指令数据与初始指令集合并，形成最终的微调数据集。然后，在LLM上进行微调训练，以提高模型对复杂\n指令的处理能力。\n\n核心代码\n•\n深度指令进化\nbase_instruction = \"I want you act as a Prompt Rewriter.\\r\\n \\\n                                        Your objective is to rewrite a given prompt into a more \ncomplex version to make those famous AI systems (e.g., chatgpt and GPT4) a bit harder to handle.\\r\\n \n\\\n                                        But the rewritten prompt must be reasonable and must be \nunderstood and responded by humans.\\r\\n \\\n                                        Your rewriting cannot omit the non-text parts such as the \ntable and code in #The Given Prompt#:. Also, please do not omit the input in #The Given Prompt#. \n\\r\\n \\\n                                        You SHOULD complicate the given prompt using the following \nmethod: \\r\\n\\\n                                        {} \\r\\n\\\n                                        You should try your best not to make the #Rewritten Prompt# \nbecome verbose, #Rewritten Prompt# can only add 10 to 20 words into #The Given Prompt#. \\r\\n\\\n                                        '#The Given Prompt#', '#Rewritten Prompt#', 'given prompt' \nand 'rewritten prompt' are not allowed to appear in #Rewritten Prompt#\\r\\n\"\n\ndef createConstraintsPrompt(instruction):\n        prompt = base_instruction.format(\"Please add one more constraints/requirements into #The \nGiven Prompt#'\")\n        prompt += \"#The Given Prompt#: \\r\\n {} \\r\\n\".format(instruction)\n        prompt += \"#Rewritten Prompt#:\\r\\n\"\n        return prompt\ndef createDeepenPrompt(instruction):\n        prompt = base_instruction.format(\"If #The Given Prompt# contains inquiries about certain \nissues, the depth and breadth of the inquiry can be increased.\")\n        prompt += \"#The Given Prompt#: \\r\\n {} \\r\\n\".format(instruction)\n        prompt += \"#Rewritten Prompt#:\\r\\n\"\n        return prompt\ndef createConcretizingPrompt(instruction):\n        prompt = base_instruction.format(\"Please replace general concepts with more specific \nconcepts.\")\n        prompt += \"#The Given Prompt#: \\r\\n {} \\r\\n\".format(instruction)\n        prompt += \"#Rewritten Prompt#:\\r\\n\"\n        return prompt\ndef createReasoningPrompt(instruction):\n        prompt = base_instruction.format(\"If #The Given Prompt# can be solved with just a few simple \nthinking processes, you can rewrite it to explicitly request multiple-step reasoning.\")\n        prompt += \"#The Given Prompt#: \\r\\n {} \\r\\n\".format(instruction)\n        prompt += \"#Rewritten Prompt#:\\r\\n\"\n        return prompt\n•\n宽度指令进化\nbase_instruction = \"I want you act as a Prompt Creator.\\r\\n\\\nYour goal is to draw inspiration from the #Given Prompt# to create a brand new prompt.\\r\\n\\\nThis new prompt should belong to the same domain as the #Given Prompt# but be even more rare.\\r\\n\\\nThe LENGTH and complexity of the #Created Prompt# should be similar to that of the #Given \nPrompt#.\\r\\n\\\nThe #Created Prompt# must be reasonable and must be understood and responded by humans.\\r\\n\\\n'#Given Prompt#', '#Created Prompt#', 'given prompt' and 'created prompt' are not allowed to appear \nin #Created Prompt#\\r\\n\"\ndef createBreadthPrompt(instruction):\n        prompt = base_instruction\n        prompt += \"#Given Prompt#: \\r\\n {} \\r\\n\".format(instruction)\n        prompt += \"#Created Prompt#:\\r\\n\"\n        return prompt\nQuad\n一句话总结：利用数据影响来评估数据质量，并通过簇聚类和多臂赌博机方法来确保数据多样性。\n做法\n簇聚类：Quad首先将数据集分成多个簇，使得同一簇内的数据实例相似，不同簇之间的数据实例具有多样性。\n多臂赌博机：每个簇被视为一个赌博机的臂，通过选择臂来抽取样本并计算影响分数，从而在确保高质量数据的同时，也保证了数\n据的多样性。\n加速计算：为了更准确地评估单个数据点对整体模型的影响，Quad扩展了从MLP层到整个层的加速iHV P计算方法。\n\n参考文献\n[1] Large Language Model as Attributed Training Data Generator: A Tale of Diversity and Bias.\n[2] Diversify and Conquer: Diversity-Centric Data Selection with Iterative Refinement.\n[3] Synthetic continued pretraining.\n[4] WizardLM: Empowering Large Language Models to Follow Complex Instructions.\n[5] Harnessing Diversity for Important Data Selection in Pretraining Large Language Models.",
+    "follow_up": []
+  },
+  {
+    "id": "llm-notes-017",
+    "category": "llm-notes",
+    "subcategory": "LoRA与微调",
+    "difficulty": "L3",
+    "tags": [
+      "LoRA",
+      "微调",
+      "参数高效"
+    ],
+    "question": "介绍Lora及其变体的特点",
+    "answer": "此问题在原始文档中包含图片/公式说明，建议参考原文档。\n\n核心要点：介绍Lora及其变体的特点",
+    "follow_up": []
+  },
+  {
+    "id": "llm-notes-018",
+    "category": "llm-notes",
+    "subcategory": "大模型架构",
+    "difficulty": "L3",
+    "tags": [
+      "Transformer",
+      "架构设计"
+    ],
+    "question": "讲讲attention的各个变体",
+    "answer": "此问题在原始文档中包含图片/公式说明，建议参考原文档。\n\n核心要点：讲讲attention的各个变体",
+    "follow_up": []
+  },
+  {
+    "id": "llm-notes-019",
+    "category": "llm-notes",
+    "subcategory": "大模型应用",
+    "difficulty": "L3",
+    "tags": [
+      "RAG",
+      "MoE",
+      "应用"
+    ],
+    "question": "讲讲工业界RAG具体如何优化？",
+    "answer": "工业界关注什么\n•\n对于内容供给，工业界关注query改写、意图分流、向量召回、重排、大模型和搜索引擎的交互方式。\n•\n对于归纳总结能力，工业界更加关注内容全面性，生成内容格式，生成效果稳定性。\n检索\n1. 通过生成与用户query 相关的伪文档来扩展 query，就是Query2Doc [1]。\n2. 通过生成伪文档，并使用无监督检索器对其进行编码，并在其嵌入空间中进行搜索，就是HyDE [2]。\n3. 将 prompt 与LLMs结合作为一个无需微调的 query 生成器，仅依赖目标任务中的一些监督示例，就是PROMPTAGATOR [3]。\n4. 鼓励 LLM 从具体实例中退一步，参与对底层一般概念或原则的推理，这就是StepBack-prompt [4]。\n生成\n1. LLM对文本的位置存在bias，那就根据文本质量和查询时效性对召回的材料做重排。\n2. 通过触发，检测，缓解三步走解决生成结果前后矛盾，局部消除矛盾点，就是gLM [5]。\n3. 额外设计了一个NLI模型对检索的信息做噪声识别，并在RAG的微调阶段，同时加入正向相关的检索结果以及不相关的噪声信息\n做sft微调，就是RALM [6]。\n4. 通过递归地向量化、聚类和摘要文本，自下而上构建出一个包含不同级别摘要的树状结构，就是RAPTOR [7]。\n5. 分别设计了抽取和生成两种压缩器，对RAG召回文档进行进一步压缩，这就是RECOMP [8]。\n6. 利用LLM（如LLaMA）对每个文档和query的组合计算QLM分数，根据QLM分数进行重排序，这就是zero shot QLM [9]。\n7. 提出在softmax分母中添加了一个1，大大减少注意力头生成的不必要的噪声，就是softmax1 [10]。\n\n微调\n1. SFT训练的过程中增加负例文档，从而消除不相关文档的干扰，增强鲁棒性，就是RAFT [11]。\n2. 通过编码器解码器架构 LM 为预训练的检索器提供监控信号，就是AAR [12]。\n3. 在训练阶段，使用冻结的LLM来监督提示检索器的调整，其中LLM和检索器都将提示输入对作为输入，并且我们使用LLM给出的\n任务分数来监督对比学习 检索器的，就是UPRISE [13]。\n4. 在第一个“上下文提取阶段”，PRCA 模块针对领域抽象摘要任务进行预训练。 第二个“奖励驱动阶段”展示了检索到的 Top-K \n文档与 PRCA 之间的交互。 就是PRCA [14]。\n参考文献\n[1] Query2doc: Query Expansion with Large Language Models.\n[2] Precise Zero-Shot Dense Retrieval without Relevance Labels.\n[3] Promptagator: Few-shot Dense Retrieval From 8 Examples\n[4] TAKE A STEP BACK: EVOKING REASONING VIA ABSTRACTION IN LARGE LANGUAGE MODELS.\n[5] Self-contradictory Hallucinations of Large Language Models: Evaluation, Detection and Mitigation.\n[6] Making Retrieval-Augmented Language Models Robust to Irrelevant Context | Semantic Scholar.\n[7] RAPTOR: Recursive Abstractive Processing for Tree-Organized Retrieval.\n[8] RECOMP: Improving Retrieval-Augmented LMs with Compression and Selective Augmentation.\n[9] Open-source Large Language Models are Strong Zero-shot Query Likelihood Models for Document Ranking | Semantic \nScholar.\n[10] Attention Is Off By One.\n[11] RAFT: Adapting Language Model to Domain Specific RAG.\n[12] Augmentation-Adapted Retriever Improves Generalization of Language Models as Generic Plug-In.\n[13] UPRISE: Universal Prompt Retrieval for Improving Zero-Shot Evaluation.\n[14] PRCA: Fitting Black-Box Large Language Models for Retrieval QuestionAnswering via Pluggable Reward-Driven \nContextual Adapter.",
+    "follow_up": [
+      "RAG中如何处理多轮对话的上下文？",
+      "向量检索和全文检索在RAG中如何结合？"
+    ]
+  },
+  {
+    "id": "llm-notes-020",
+    "category": "llm-notes",
+    "subcategory": "大模型应用",
+    "difficulty": "L3",
+    "tags": [
+      "RAG",
+      "MoE",
+      "应用"
+    ],
+    "question": "LLM和搜广推的MoE是一个东西吗",
+    "answer": "结论：LLM所谓的MoE 和搜推里的MoE 不尽相同。LLM用的这个技术准确点应该叫做SMoE ，而搜推中通常叫MMoE 。\n搜推的MoE：搜推的MoE 更多的是用在多任务学习中，或者说叫MMoE ，是sample-level 的。每个专家都是一个独立的网络\n并拥有特定的功能，各个专家都会计算最后做聚合，进行多目标预告（广告和）。\nLLM的MoE：LLM的expert 都是自动学出来的，它是token-level 的。各个Expert 之间没有实质区别，通过gate 在稀\n疏MoE层中决定哪些token 被发送到哪个expert中，本质上只激活了LLM中的部分expert 。\n观点：LLM的SMoE更偏向Sparseness ，而不是Expertise ，它和搜广推在目的上有着本质的区别。\n个人看法：LLM里的MoE应该也是可以做成sample-level 的，比如先进行classifier 路由，将sample 发送到对应的\nLora 模型，然后在调用该topic model 进行输出，这样也同样达到了Sparseness 的目的。或者分阶段，第一步进行\nRoute ，第二步训练Expert （Multi-Lora）。基于前两步对sample 进行多专家聚合，这样也可以达到了Expertise 的效\n果。",
+    "follow_up": [
+      "DeepSeek-MoE的expert routing策略是什么？",
+      "MoE模型在推理时的负载均衡问题如何解决？"
+    ]
+  },
+  {
+    "id": "llm-notes-021",
+    "category": "llm-notes",
+    "subcategory": "手撕代码",
+    "difficulty": "L3",
+    "tags": [
+      "手撕代码",
+      "编程题"
+    ],
+    "question": "手撕Normalization",
+    "answer": "要求手撕RMSNorm 和LayerNorm ，一般要求用torch实现。\n代码实现：\nimport torch\nfrom torch import nn\n\n \nclass LN(nn.Module):\n    # 初始化\n    def __init__(self, normalized_shape,  # 在哪个维度上做LN\n                 eps:float = 1e-5, # 防止分母为0\n                 elementwise_affine:bool = True):  # 是否使用可学习的缩放因子和偏移因子\n        super(LN, self).__init__()\n        # 需要对哪个维度的特征做LN, torch.size查看维度\n        self.normalized_shape = normalized_shape  # [c,w*h]\n        self.eps = eps\n        self.elementwise_affine = elementwise_affine\n        # 构造可训练的缩放因子和偏置\n        if self.elementwise_affine:  \n            self.gain = nn.Parameter(torch.ones(normalized_shape))  # [c,w*h]\n            self.bias = nn.Parameter(torch.zeros(normalized_shape))  # [c,w*h]\n \n    # 前向传播\n    def forward(self, x: torch.Tensor): # [b,c,w*h]\n        # 需要做LN的维度和输入特征图对应维度的shape相同\n        assert self.normalized_shape == x.shape[-len(self.normalized_shape):]  # [-2:]\n        # 需要做LN的维度索引\n        dims = [-(i+1) for i in range(len(self.normalized_shape))]  # [b,c,w*h]维度上取[-1,-2]维度，即\n[c,w*h]\n        # 计算特征图对应维度的均值和方差\n        mean = x.mean(dim=dims, keepdims=True)  # [b,1,1]\n        mean_x2 = (x**2).mean(dim=dims, keepdims=True)  # [b,1,1]\n        var = mean_x2 - mean**2  # [b,c,1,1]\n        x_norm = (x-mean) / torch.sqrt(var+self.eps)  # [b,c,w*h]\n        # 线性变换\n        if self.elementwise_affine:\n            x_norm = self.gain * x_norm + self.bias  # [b,c,w*h]\n        return x_norm\n \nif __name__ == '__main__':\n \n    x = torch.linspace(0, 23, 24, dtype=torch.float32)  # 构造输入层\n    x = x.reshape([2,3,2*2])  # [b,c,w*h]\n    # 实例化\n    ln = LN(x.shape[1:])\n    # 前向传播\n    x = ln(x)\n    print(x.shape)\nimport torch\nimport torch.nn as nn\nclass RMSNorm(nn.Moudule):\n    def __init__(self, dim: int, eps: float = 1e-6):\n        super().__init__()\n        self.eps = eps\n        self.weight = nn.Parameter(torch.ones(dim))\n    \n    def _norm(self, x: torch.Tensor):\n        return x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + self.eps)\n    \n    def forward(self, x: torch.Tensor):\n        return self.weight * self._norm(x.float()).type_as(x)",
+    "follow_up": []
+  },
+  {
+    "id": "llm-notes-022",
+    "category": "llm-notes",
+    "subcategory": "手撕代码",
+    "difficulty": "L3",
+    "tags": [
+      "手撕代码",
+      "编程题"
+    ],
+    "question": "手撕在MHA中加入KV Cache",
+    "answer": "在写完MHA 后，遇到过要求在代码中加入KV Cache 的情况。\n代码实现：\nimport torch\nimport torch.nn as nn\nimport math\nimport torch.nn.functional as F\nfrom typing import *\nclass Attention(nn.Module):\n    def __init__(self, args):\n        # 此处省略了和 KV cache 无关的初始化代码\n        self.cache_k = torch.zeros(\n            (args.max_batch_size, args.max_seq_len, self.n_local_heads, self.head_dim)\n        ).cuda()\n        self.cache_v = torch.zeros(\n            (args.max_batch_size, args.max_seq_len, self.n_local_heads, self.head_dim)\n        ).cuda()\n    def forward(self, x: torch.Tensor, start_pos: int, freqs_cis: torch.Tensor, mask: \nOptional[torch.Tensor]):\n        bsz, seqlen, _ = x.shape\n        xq, xk, xv = self.wq(x), self.wk(x), self.wv(x)\n        xq = xq.view(bsz, seqlen, self.n_local_heads, self.head_dim)\n        xk = xk.view(bsz, seqlen, self.n_local_heads, self.head_dim)\n        xv = xv.view(bsz, seqlen, self.n_local_heads, self.head_dim)\n        xq, xk = apply_rotary_emb(xq, xk, freqs_cis=freqs_cis)\n        self.cache_k = self.cache_k.to(xq)\n        self.cache_v = self.cache_v.to(xq)\n        self.cache_k[:bsz, start_pos : start_pos + seqlen] = xk\n        self.cache_v[:bsz, start_pos : start_pos + seqlen] = xv\n        keys = self.cache_k[:bsz, : start_pos + seqlen]\n        values = self.cache_v[:bsz, : start_pos + seqlen]\n        xq = xq.transpose(1, 2)\n        keys = keys.transpose(1, 2)\n        values = values.transpose(1, 2)\n        scores = torch.matmul(xq, keys.transpose(2, 3)) / math.sqrt(self.head_dim)\n        if mask is not None:\n            scores = scores + mask  # (bs, n_local_heads, slen, cache_len + slen)\n        scores = F.softmax(scores.float(), dim=-1).type_as(xq)\n        output = torch.matmul(scores, values)  # (bs, n_local_heads, slen, head_dim)\n        output = output.transpose(\n            1, 2\n        ).contiguous().view(bsz, seqlen, -1)\n        return self.wo(output)",
+    "follow_up": []
+  },
+  {
+    "id": "llm-notes-023",
+    "category": "llm-notes",
+    "subcategory": "手撕代码",
+    "difficulty": "L3",
+    "tags": [
+      "手撕代码",
+      "编程题"
+    ],
+    "question": "手撕线性回归（Minimax必考题）",
+    "answer": "要求用numpy手撕一个线性回归，可以用多种方法来做，可以使用SDG和直接求解W的方法来做。\n\n代码实现：\n#minimax一面code\nimport numpy as np\n# 生成随机数据\nnp.random.seed(0)\nX = 2 * np.random.rand(100, 2)  # 特征数据\ny = 4 + 3 * X + np.random.randn(100, 1)  # 输出数据，添加了噪声\n# 第一种，直接求出w\ndef linear_regression(X, y):\n    ones = np.ones((X.shape[0], 1))\n    X_b = np.concatenate([ones, X], axis=1)  # 添加x0=1的列\n    theta_best = np.linalg.inv(X_b.T.dot(X_b)).dot(X_b.T).dot(y)\n    return theta_best\ntheta_best = linear_regression(X, y)\nprint(\"最佳拟合参数:\", theta_best)\n# 第二种，使用SGD\ndef compute_cost(X, y, theta):\n    m = len(y)\n    predictions = X.dot(theta)\n    cost = (1 / (2 * m)) * np.sum(np.square(predictions - y))\n    return cost\ndef gradient_descent(X, y, theta, alpha, num_iters):\n    m = len(y)\n    J_history = np.zeros(num_iters)\n    \n    for i in range(num_iters):\n        predictions = X.dot(theta)\n        error = np.dot(X.transpose(), (predictions - y))\n        descent = alpha * (1 / m) * error\n        theta -= descent\n        J_history[i] = compute_cost(X, y, theta)\n        \n    return theta, J_history\n# 初始化参数\ntheta = np.random.randn(3, 2)\n# 设置超参数\nalpha = 0.01\nnum_iters = 1000\n# 添加x0=1的列\nones = np.ones((X.shape[0], 1))\nX_b = np.concatenate([ones, X], axis=1)\n# 梯度下降\ntheta, _ = gradient_descent(X_b, y, theta, alpha, num_iters)\nprint(\"梯度下降后的参数:\", theta)\n# print(\"预测值:\", X_b.dot(theta))",
+    "follow_up": []
+  },
+  {
+    "id": "llm-notes-024",
+    "category": "llm-notes",
+    "subcategory": "手撕代码",
+    "difficulty": "L3",
+    "tags": [
+      "手撕代码",
+      "编程题"
+    ],
+    "question": "手撕 K-Means聚类",
+    "answer": "实现K-Means 聚类，要求包含Fit和Predict两个函数。\n\n代码实现：\nimport numpy as np\n \nclass KMeans:\n    def __init__(self, k=3, max_iters=100, tol=1e-4):\n        self.k = k\n        self.max_iters = max_iters\n        self.tol = tol\n    def fit(self, X):\n        # 初始化质心\n        indices = np.random.choice(X.shape[0], self.k, replace=False)\n        centroids = X[indices]\n        for _ in range(self.max_iters):\n            # 将每个点分配给最近的质心\n            clusters = [[] for _ in range(self.k)]\n            for features in X:\n                distances = [np.linalg.norm(features - centroid) for centroid in centroids]\n                closest_cluster = np.argmin(distances)\n                clusters[closest_cluster].append(features)\n            # 计算新的质心\n            new_centroids = np.array([np.mean(cluster, axis=0) for cluster in clusters if cluster])\n            # 检查质心是否变化\n            if np.allclose(centroids, new_centroids, atol=self.tol):\n                break\n            centroids = new_centroids\n        self.centroids = centroids\n        self.clusters = clusters\n    def predict(self, X):\n        y_pred = [np.argmin([np.linalg.norm(x - centroid) for centroid in self.centroids]) for x in \nX]\n        return np.array(y_pred)\n# 示例使用\nif __name__ == \"__main__\":\n    # 生成一些随机数据\n    from sklearn.datasets import make_blobs\n    X, _ = make_blobs(n_samples=300, centers=4, cluster_std=0.60, random_state=0)\n \n    # 创建KMeans实例并拟合数据\n    kmeans = KMeans(k=4)\n    kmeans.fit(X)\n \n    # 预测每个点的簇标签\n    y_pred = kmeans.predict(X)\n \n    # 打印质心\n    print(\"Centroids:\")\n    print(kmeans.centroids)\n \n    # 你可以使用matplotlib来可视化结果\n    import matplotlib.pyplot as plt\n    plt.scatter(X[:, 0], X[:, 1], c=y_pred, cmap='viridis', marker='o', edgecolor='k')\n    plt.scatter(kmeans.centroids[:, 0], kmeans.centroids[:, 1], c='red', s=200, alpha=0.75)\n    plt.show()",
+    "follow_up": []
+  },
+  {
+    "id": "llm-notes-025",
+    "category": "llm-notes",
+    "subcategory": "SFT与RLHF",
+    "difficulty": "L3",
+    "tags": [
+      "SFT",
+      "RLHF",
+      "对齐"
+    ],
+    "question": "SFT的局限？",
+    "answer": "•\nsft无法负反馈\n\nsft只知道 next_token 出什么是正确的，而不知道 next_token 出什么是错误的，sft 一直在通过“孤立”来降低错误 token 的出现\n概率。\n越是在 sft 阶段告诉它什么是错误的，它越是容易提高错误 token 的概率。\n站在模型的角度来思考，这个现象非常合理：“训练者不断让我提高 Prob( E | ABCD ) 的概率，那我举一反三，顺带提高一下 Prob( \nE | ACD ) 的概率是不是也合理？训练者是不是应该表扬我？”。\n当B 这个 token，恰好是“not”，恰好是“不”，就会诱导模型产生严重的幻觉。\n•\nsft不具有向后看的能力\n在 sft 的训练过程中，每一个 token 都只看得见前面的 token。还是那个经典例子，“台湾不是中国的，这个观点是严重错误的”。\n无论你用什么炼丹技巧来做 sft，Prob(中国 | 台湾不是) 的概率都是在增加的，模型无法利用“后半个句子在否定前半句子”这个重\n要信息。\n在做rlhf时，reward 反向衰减传递的时候，把最大的奖励赏赐给“错误 ”这个 token，而“中国 ”这个 token 可能并不会得到很多\n的 reward。",
+    "follow_up": [
+      "为什么SFT不能学习负样本？详解交叉熵的特性",
+      "如何平衡SFT和RLHF的关系？"
+    ]
+  },
+  {
+    "id": "llm-notes-026",
+    "category": "llm-notes",
+    "subcategory": "SFT与RLHF",
+    "difficulty": "L4",
+    "tags": [
+      "SFT",
+      "RLHF",
+      "对齐"
+    ],
+    "question": "SFT中的loss是怎么做计算的？",
+    "answer": "与pretrain不同，sft计算只需要计算response部分与label的交叉熵损失。计算的具体流程如下（来源Megatron源码）：\n1）get_batch: 获取tokens, labels, loss_mask, attention_mask, position_ids\ndef get_batch(data_iterator):\n    \"\"\"Generate a batch\"\"\"\n    args = get_args()\n    tokenizer = get_tokenizer()\n    # Items and their type.\n    keys = [\"text\", \"loss_mask\"]\n    datatype = torch.int64\n    # Broadcast data.\n    if data_iterator is not None:\n        data = next(data_iterator)\n    else:\n        data = None\n    data_b = tensor_parallel.broadcast_data(keys, data, datatype)\n    # Unpack.\n    tokens_ = data_b[\"text\"].long()\n    labels = tokens_[:, 1:].contiguous()\n    tokens = tokens_[:, :-1].contiguous()\n    loss_mask = data_b[\"loss_mask\"].long()[:, 1:].contiguous()\n    # Get the masks and position ids.\n    attention_mask, _, position_ids = get_ltor_masks_and_position_ids(\n        tokens,\n        tokenizer.eod,\n        args.reset_position_ids,\n        args.reset_attention_mask,\n        args.eod_mask_loss,\n    )\n    return tokens, labels, loss_mask, attention_mask, position_ids\n2) model forward: 获取output_tensor\n3) loss_func: 计算loss\n\n```\nloss_mask用于mask掉prompt部分的loss\noutput_tensor为模型输出的结果\n```\ndef loss_func(loss_mask, output_tensor):\n    \n    losses = output_tensor.float()\n    loss_mask = loss_mask.view(-1).float()\n    loss = torch.sum(losses.view(-1) * loss_mask) / loss_mask.sum()\n    # Reduce loss for logging.\n    averaged_loss = average_losses_across_data_parallel_group([loss])\n    return loss, {'lm loss': averaged_loss[0]}\ndef average_losses_across_data_parallel_group(losses):\n    \"\"\"Reduce a tensor of losses across all GPUs.\"\"\"\n    averaged_losses = torch.cat(\n        [loss.clone().detach().view(1) for loss in losses])\n    torch.distributed.all_reduce(averaged_losses,\n                                 group=mpu.get_data_parallel_group())\n    averaged_losses = averaged_losses / \\\n        torch.distributed.get_world_size(group=mpu.get_data_parallel_group())\n    return averaged_losses",
+    "follow_up": [
+      "loss_mask在SFT中的作用是什么？",
+      "SFT和pretrain的loss计算有什么本质区别？"
+    ]
+  },
+  {
+    "id": "llm-notes-027",
+    "category": "llm-notes",
+    "subcategory": "SFT与RLHF",
+    "difficulty": "L4",
+    "tags": [
+      "SFT",
+      "RLHF",
+      "对齐"
+    ],
+    "question": "SFT阶段怎么做数据packing？",
+    "answer": "处理变长数据，如果一个micro-batch一条数据，容易造成资源浪费。\n使用背包问题的贪心解法作packing",
+    "follow_up": []
+  },
+  {
+    "id": "llm-notes-028",
+    "category": "llm-notes",
+    "subcategory": "SFT与RLHF",
+    "difficulty": "L4",
+    "tags": [
+      "SFT",
+      "RLHF",
+      "对齐"
+    ],
+    "question": "作packing可能有什么坏处？",
+    "answer": "1. 削弱了模型对难的短query和短答案的拟合。\na. 在无sft packing得情况下，假设batch_size= 1，那么如果有个短query和短答案在这个batch里，其余补充padding，那么这\n个batch的gradient全是这个短文本的gradient，模型对这个query的拟合能力会变强。但是如果SFT packing以后，多个短\n文本在一个样本中，这个batch的gradient会被稀释，短文本的拟合就不会特别强。\n2. 对多轮对话有影响。\na. 目前没有使用Block Attention的微调框架对于Packing的实现方式往往是在两个conversation之间用Padding Token或者是\nEOS Token进行隔断，这种方式无法避免Seq和Seq之间的影响，并且，这种数据格式和多轮对话的数据格式是一致的。\nb. 如果在多轮对话中使用EOS Token作为当前轮对话结束的标识，那么我们就会发现，模型仅能依赖BOS Token来作为当前\nSeq的标识符（即BOS Token前面的是历史Seq，BOS Token后面的才是模型需要的历史信息），实际上这一点对于现在的\nLLM通常来说是难以做到的，因为在没有Block Attention的情况下，Seq和Seq之间的Attention系数会导致模型总是无法避\n免的依赖于之前的Seq的内容，因此，如果一个数据集中既出现了多轮对话又使用了Packing的技术，会导致模型无法区分历\n史对话和当前对话。如果强行使用Packing技术，那么甚至会存在算力浪费",
+    "follow_up": []
+  },
+  {
+    "id": "llm-notes-029",
+    "category": "llm-notes",
+    "subcategory": "SFT与RLHF",
+    "difficulty": "L4",
+    "tags": [
+      "SFT",
+      "RLHF",
+      "对齐"
+    ],
+    "question": "有一个非常完备的sft指令集，你只能选择1w条，你如何选择数据来使模型的能力更加提",
+    "answer": "升+完备？\n•\n每条数据指令的质量+多样性筛选\n•\n涵盖尽可能多的任务，其中推理和code类可以占比稍大\n•\n多语言\n•\n指令难度筛选\n•\n指令长度筛选，长度总体分布均匀\n\n•\n根据任务目标添加相关任务类型的数据",
+    "follow_up": []
+  },
+  {
+    "id": "llm-notes-030",
+    "category": "llm-notes",
+    "subcategory": "SFT与RLHF",
+    "difficulty": "L4",
+    "tags": [
+      "SFT",
+      "RLHF",
+      "对齐"
+    ],
+    "question": "以跳过sft阶段直接进行RLHF么？",
+    "answer": "sft可以类比的是RL中的模仿学习，RLHF就是在此基础上纯跟环境交互的RL。那么和LLM对齐阶段相似的过程有两个，第一是\nalpha-go，第二个是自动驾驶。它们两个现实中的人工智能技术，开始的时候都是先做模仿学习，第二步进行跟环境交互的强化学\n习。他们都有个共同特点，就是环境复杂，模型如果纯进行RL的话，搜索空间过于庞大，消耗资源较多。尽管alpha-go后续有zero-\nalpha-go算法，但是建立的基础是reward model是客观的，且不计成本的进行空间搜索。在LLM环境下，由于不存在天然的\nreward model，所以建立reward model的人工成本较大，所以不适合不计成本的空间搜索。所以利用sft首先做模仿学习缩小搜索\n空间，再利用RLHF进行进一步对齐是必要的。",
+    "follow_up": []
+  },
+  {
+    "id": "llm-notes-031",
+    "category": "llm-notes",
+    "subcategory": "SFT与RLHF",
+    "difficulty": "L4",
+    "tags": [
+      "SFT",
+      "RLHF",
+      "对齐"
+    ],
+    "question": "模型在SFT后会出现“复读机”情况该如何debug，以及出现的原因是什么？",
+    "answer": "•\npretrain模型能力不强\n•\n复读的那部分数据不能给予更多的信息，所以模型attention时候会跳过这部分信息依然从之前的context后进行预测。也就是\n<context> -> 复读数据 & <context, 复读数据> -> 复读数据。之前的做法一般会搞一个复读的penalty阻止这一现象，现在几乎没\n用了。\n•\npre train阶段：1）模型承载能力（模型大小，模型结构），2）数据多样性\n•\n补充：确实sft数据训练过少的情况也会导致复读，本质还是模型一般学不会何时停止输出结果，因为pre-train的时候一般是\npacking，那么基本不太会学会输出<eos>，所以pre-train模型一般都是会复读的。\n参考链接：https://zhuanlan.zhihu.com/p/692962369",
+    "follow_up": []
+  },
+  {
+    "id": "llm-notes-032",
+    "category": "llm-notes",
+    "subcategory": "SFT与RLHF",
+    "difficulty": "L3",
+    "tags": [
+      "SFT",
+      "RLHF",
+      "对齐"
+    ],
+    "question": "为什么RLHF在多轮对话和数学推理上有用？",
+    "answer": "随着多轮对话的进行，模型解码时每一步推理的attention都会因为序列长度变大而可能被“稀释”，强化学习在每一轮交互中的奖\n惩可以达到“纠偏”的作用，降低这种“稀释”对good case的影响，尤其是针对数学和代码类这种标准答案相对唯一但题目又可灵\n活多变的交互， 交互粒度越细，good与bad界限越清晰， 强化学习相对sft的提升就越明显。\n目前看的话，stepDPO 对我接触的业务数据似乎更有用。",
+    "follow_up": []
+  },
+  {
+    "id": "llm-notes-033",
+    "category": "llm-notes",
+    "subcategory": "SFT与RLHF",
+    "difficulty": "L3",
+    "tags": [
+      "SFT",
+      "RLHF",
+      "对齐"
+    ],
+    "question": "RLHF 最近的新算法有哪些，介绍几个？",
+    "answer": "参考链接：https://zhuanlan.zhihu.com/p/710021282\n大厂面试官问RLHF及变体时，如何优雅地装杯\n1. 如果数据集是人类标注的，就是RLHF\n2. 如果是gpt，PaLM2等模型标注的，就是RLAIF\n3. RL技术中，典型的是PPO（缺点是训练不太稳定，效率低，资源消耗大）\n4. 使用一种好的方法来计算 baseline 是丢掉 Critic 网络的关键，就是GRPO\n5. 我们可以丢掉 Critic（教练），Actor 不再需要受到 Critic 的指导，而是直接去对齐 RM，就是ReMax\n6. 后面出现了非RL的技术，典型的就是DPO（直接构造偏好数据集进行优化）\n7. 然后有一些工作觉得SFT+RLHF不是end2end，索性直接在SFT上加一个alignment的loss，这个典型的就是ORPO\n8. 还有一部分工作觉得DPO训练的pair-wise（x,y_w,yl）的数据集获取很困难，于是有了point-wise(x,y,label)的方法，典型的是\nKTO\n9. 还有一些就是优化Alignment的输出长度的，加了一个类似正则化项的限制DPOP\n10. 最近又出现了一种step-wise的优化方法(例如Step-DPO)，直接对reasoning的过程进行优化限制(step-level)，而不是等模型输\n出完了再进行优化(Instance-level)\n11. 有人觉得reward model无法优化general perference（不可传递性偏好，比如a>b,b>c, c>a的情况）于是有了DNO，SPO（引\n入了纳什均衡，Nash equilibrium）\n12. 有的人觉得DPO优化的是单轮，因此对多轮的偏好优化做了拓展（multi-turn DPO）\n\n13. 方法超不过你，就直接合成数据，用MCTS（exploration and exploitation保证多样性和质量）等方式造完数据，直接DPO开\n始训练就完了，完美的数据闭环",
+    "follow_up": []
+  },
+  {
+    "id": "llm-notes-034",
+    "category": "llm-notes",
+    "subcategory": "SFT与RLHF",
+    "difficulty": "L4",
+    "tags": [
+      "SFT",
+      "RLHF",
+      "对齐"
+    ],
+    "question": "Reward Model常见的hacking有哪些？",
+    "answer": "参考链接：https://www.zhihu.com/question/662061754/answer/3573741988\n1. 长度hacking：RM如果数据有限会极端偏好更长的回答\n2. 风格hacking：对于markdown或者latex等高阶格式的偏爱\n3. CoT的hacking：对于CoT范式本身的偏爱而非CoT对于解答用户问题的促进作用\n此外，事实类问题（均存在概率分布的原子知识应该相信谁），安全性问题（处于边界的问题是应该拒答，正答还是指令遵循）等\n任务对于RM过于困难也可能导致RM效果差。",
+    "follow_up": []
+  },
+  {
+    "id": "llm-notes-035",
+    "category": "llm-notes",
+    "subcategory": "SFT与RLHF",
+    "difficulty": "L4",
+    "tags": [
+      "SFT",
+      "RLHF",
+      "对齐"
+    ],
+    "question": "什么任务适合上RLHF，什么任务sft效果更好？",
+    "answer": "•\nRLHF适合解决Reward比较明确的复杂问题，典型的是数理化、Coding等有标准答案的学科\n•\n对于文创、角色扮演等一般依赖于长文本能力，需要做好预训练和sft，偶尔会做DPO训练。",
+    "follow_up": []
+  },
+  {
+    "id": "llm-notes-036",
+    "category": "llm-notes",
+    "subcategory": "LoRA与微调",
+    "difficulty": "L3",
+    "tags": [
+      "LoRA",
+      "微调",
+      "参数高效"
+    ],
+    "question": "LORA 介绍，秩的数学含义，怎么计算矩阵的秩？",
+    "answer": "•\n秩是指矩阵中线性无关的行或列的最大数目\n•\n具体地说：\n◦\n线性独立性：矩阵的秩是矩阵中线性独立行或列的数量。如果矩阵的某些行或列可以通过其他行或列的线性组合来表示，那\n么这些行或列就不是线性独立的。\n◦\n维度：矩阵的秩可以告诉我们矩阵的列空间或行空间的维度。秩越高，矩阵的列空间或行空间的维度就越大。\n◦\n解的个数：在线性方程组中，矩阵的秩可以决定方程组解的个数。如果增广矩阵的秩等于系数矩阵的秩，并且等于变量的个\n数，那么方程组有唯一解；如果增广矩阵的秩小于系数矩阵的秩，那么方程组无解；如果增广矩阵的秩小于变量的个数，那\n么方程组有无穷多解。\n◦\n矩阵的逆：如果矩阵是方阵，那么只有当矩阵的秩等于其阶数时，矩阵才是可逆的。\n•\n计算方式\n◦\n通过初等行变换将矩阵转换为阶梯形或行最简形，然后计算非零行的数量",
+    "follow_up": []
+  },
+  {
+    "id": "llm-notes-037",
+    "category": "llm-notes",
+    "subcategory": "LoRA与微调",
+    "difficulty": "L3",
+    "tags": [
+      "LoRA",
+      "微调",
+      "参数高效"
+    ],
+    "question": "Lora 相比全参数微调可以节省多少计算量和显存？",
+    "answer": "•\n为什么 Lora 有效？\na. deep model 的本征维度很小 （https://papers.cool/arxiv/2110.07867)\nb. 使用低秩矩阵分解来近似表示全量矩阵在特定任务上的参数变化\n•\nhttps://spaces.ac.cn/archives/9590",
+    "follow_up": []
+  },
+  {
+    "id": "llm-notes-038",
+    "category": "llm-notes",
+    "subcategory": "LoRA与微调",
+    "difficulty": "L3",
+    "tags": [
+      "LoRA",
+      "微调",
+      "参数高效"
+    ],
+    "question": "知道Lora中的scale吗？",
+    "answer": "h = W\nx +\n∆Wx = W\nx +\nBAx\n通过 \n缩放 \n， \n是r的一个常数。调整 α 大致等同于调整学习率。因此，我们简单地将 α 设置为我们首先尝试的r值，并且不\n再对其进行调优。\nr\nα\n∆W\nα",
+    "follow_up": []
+  },
+  {
+    "id": "llm-notes-039",
+    "category": "llm-notes",
+    "subcategory": "LoRA与微调",
+    "difficulty": "L3",
+    "tags": [
+      "LoRA",
+      "微调",
+      "参数高效"
+    ],
+    "question": "Lora是否能降低计算量？",
+    "answer": "梯度分析\n\n其他原因：\n1、只更新了部分参数：比如LoRA原论文就选择只更新Self Attention的参数，实际使用时我们还可以选择只更新部分层的参数；\n2、减少了通信时间：由于更新的参数量变少了，所以（尤其是多卡训练时）要传输的数据量也变少了，从而减少了传输时间；\n3、采用了各种低精度加速技术，如FP16、FP8或者INT8量化等。",
+    "follow_up": []
+  },
+  {
+    "id": "llm-notes-040",
+    "category": "llm-notes",
+    "subcategory": "LoRA与微调",
+    "difficulty": "L3",
+    "tags": [
+      "LoRA",
+      "微调",
+      "参数高效"
+    ],
+    "question": "LongLora是怎么做的？",
+    "answer": "LoRA在遇到超长上下文的查询时，提升效果不够明显，并且会带来模型困惑度增加的问题。\n\n首先将模型的输入分为几组，并在每个组中分别进行注意力计算，同时在每个组中，将原有的token移动组大小的一半来保证相邻\n注意力头之间的信息交互",
+    "follow_up": []
+  },
+  {
+    "id": "llm-notes-041",
+    "category": "llm-notes",
+    "subcategory": "大模型综合",
+    "difficulty": "L3",
+    "tags": [
+      "大模型",
+      "面试"
+    ],
+    "question": "大模型出现幻觉的原因",
+    "answer": "在输出答案的时候是逐个Token输出，当输出长度较长的时候，中间某些Token出错是一定会发生的，但即使LLM后来知道前面输出\n的Token错了，它也得将错就错往下继续编（这也是大模型幻觉的来源之一，为了看上去逻辑合理，LLM得用100个错误来掩盖前面\n的第一个错误），因为落Token无悔，没有机制让它去修正前面的错误",
+    "follow_up": [
+      "如何评估幻觉的严重程度？",
+      "RAG是否能有效减少幻觉？原理是什么？"
+    ]
+  },
+  {
+    "id": "llm-notes-042",
+    "category": "llm-notes",
+    "subcategory": "大模型综合",
+    "difficulty": "L3",
+    "tags": [
+      "大模型",
+      "面试"
+    ],
+    "question": "讲讲你了解的scaling law有哪些？",
+    "answer": "🌟目前关于LLM的Scaling Law研究主要集中在模型性能与规模（参数、数据、计算量）之间的关系、涌现能力的发现、推理\n优化以及实际应用中的挑战等方面。\n基础Scaling Law研究 [1]\n•\nKaplan等人的经典理论：2020年提出的Scaling Law指出，模型性能（如测试损失）随参数数量、数据集大小和计算量的指数增\n长呈线性提升，且三者需协同扩展以避免瓶颈。例如，模型参数增加约8倍时，训练数据需增加约5倍以维持性能提升。\n•\n幂律关系的验证：研究发现，测试损失与模型规模之间遵循逆幂律关系，即损失随规模增大而平滑下降，但提升速度逐渐放缓。\n这一现象在多个数据集上被复现，成为预训练扩展的理论基础。\n强化Scaling Law研究 [2]\n•\n过优化Goodhart’s law：模型可能过度拟合代理奖励函数，导致在真实评估指标上的性能下降，即Reward Hacking。这符合\nGoodhart定律——“当指标成为目标时，它就不再是一个好指标”。论文通过合成实验验证了这一现象：随着模型在代理奖励上\n的得分提升，其在“黄金标准”奖励模型（代表真实偏好）上的得分先上升后下降，呈现“驼峰型”曲线。\n•\n直接对齐算法的隐式过度优化：\n◦\nKL散度与性能的非线性关系：不同KL约束下，模型性能（如GPT-4评估的胜率）随训练步长增加先升后降，且小模型更易陷\n入过度优化。\n◦\n模型规模的影响：大模型在KL与性能的权衡中表现更优，表明模型容量越高，对隐式奖励的泛化能力越强。\n微调Scaling Law研究 [3]\n•\n幂律联合缩放法则：\n◦\n微调性能遵循幂律乘法联合缩放法则，即模型性能与微调数据量、模型大小、预训练数据量等因素呈幂律关系。例如，测试\nPPL随模型参数和微调数据量的增加而平滑下降，但提升速度逐渐放缓。\n◦\n当模型大小（如从 1B 到 16B）与微调数据量协同扩展时，性能提升显著，但参数高效调优（PET）方法的参数量扩展对性能\n提升作用有限\n•\n模型规模 > 预训练数据规模：模型大小的扩展比预训练数据量的扩展更有效，且发现预训练数据量的影响仅在模型规模较小时显\n著，而对大模型的微调增益有限。\n•\nPEFT的适用性：\n◦\nPEFT在数据量较少时表现更优，而全模型调优（FMT）需要更多数据但最终效果更好13。\n◦\nLoRA 的稳定性优于 Prompt Tuning：LoRA 在数据量增加时表现更稳定，而 Prompt Tuning 可能出现逆向扩展（性能随参\n数增加而下降）。\n◦\nPEFT 方法的泛化能力更强，因其冻结了大部分预训练参数，保留基础模型的知识。\n•\n任务与数据的依赖：最优微调方法高度依赖任务类型和微调数据量。例如：\n◦\n数据量少（几千样本）：优先选择 PET（如 LoRA 或 Prompt Tuning）。\n◦\n数据量中等（数万样本）：LoRA 更稳定。\n◦\n数据量极大（百万级）：FMT 效果更优。\n推理Scaling Law研究 [4]\n\n•\n慢思考策略：通过额外计算资源（如多次采样、树搜索）提升推理质量，例如宽度扩展（BoN、MCTS）和生成-选择机制。研究\n发现，推理路径长度增加会导致信息损失（雪球误差效应），需平衡生成与选择步骤的效率和准确性。\n•\n推理成本与效率：随着模型规模扩大，推理成本急剧上升，行业开始转向优化推理阶段而非单纯扩展预训练。\n批大小Scaling Law研究 [5]\n•\n激增现象：Adam类优化器的最优学习率随Batch Size的增加呈现先上升后下降的非单调趋势，类似“浪潮”形态。例如，当\nBatch Size较小时，增大Batch Size可提升学习率；但超过临界值（由噪声水平 Bnoise决定）后，学习率反而需降低以维持收敛\n稳定性。\n•\n与SGD优化器的对比：\n◦\nSGD的最优学习率随Batch Size线性或平方根缩放（如 η∝B或 η∝B），主要基于梯度噪声方差的分析。\n◦\nAdam的激增现象源于其自适应学习率机制和符号更新策略，导致其优化路径对Batch Size的敏感度更高。\n•\n训练过程中的动态变化：随着训练进行，BnoiseBnoise 逐渐增大，导致激增现象的峰值向更大的Batch Size方向移动。这表明\n不同训练阶段需动态调整学习率与Batch Size的配比。\n蒸馏Scaling Law研究 [6]\n•\n蒸馏性能的可预测性：学生模型的交叉熵损失 \n可通过教师模型的交叉熵损失 \n、学生参数 \n和训练 token 数 \n的幂\n律关系预测：\nL\n\nS\nL\n\nT\nN\n\nS\nD\n\nS\n\nL\n =\nS\nα ⋅L\n +\nT\nβ\nγ ⋅N\n +\nS\n−δ\nϵ ⋅D\n\nS\n−ζ\n•\n能力差距现象：教师与学生之间的性能差距不仅由模型大小决定，更源于两者在假设空间和优化能力上的差异。过强的教师可能\n导致学生模型表现下降，需通过调整资源分配缓解。\n•\n弱学生超越教师的可能性：在特定配置下（如 \n），学生模型可通过蒸馏优化实现性能反超教师（即“弱到强泛\n化”）。\nL\n >\nS\n2.3\n•\n教师模型的影响：教师性能由 \n 决定，其交叉熵损失通过幂律影响学生性能。教师的训练成本需纳入整体计\n算预算考虑。\nL\n =\nT\nL\n(N\n, D\n)\nT\nT\nT\n•\n最优蒸馏条件：\na. 已有教师模型：优先选择蒸馏，其计算效率优于监督预训练，直至学生模型规模超过阈值。\nb. 需训练教师模型：若教师仅用于单次蒸馏，监督学习更优；教师可复用蒸馏更高效。\n•\nIsoFLOP 配置实验：在固定计算预算下，调整学生参数  \n与训练数据量  \n 的配比，验证了学生模型在多种规模下遵循幂律\n扩展。\nN\n\nS\nD\n\nS",
+    "follow_up": [
+      "Chinchilla scaling law和Kaplan scaling law的区别？",
+      "如何根据scaling law决定最优的计算资源分配？"
+    ]
+  },
+  {
+    "id": "llm-notes-043",
+    "category": "llm-notes",
+    "subcategory": "大模型综合",
+    "difficulty": "L3",
+    "tags": [
+      "大模型",
+      "面试"
+    ],
+    "question": "LLM数据合成工作有哪些？",
+    "answer": "数学推理\n1. MuggleMath: Assessing the Impact of Query and Response Augmentation on Math Reasoning\n•\n通过对原有问题进行改写，并通过对改写后的新问题采样不同的回答，获得新的增强数据集。\n2. Distilling LLMs' Decomposition Abilities into Compact Language Models\n•\n提出了一个基于GSM8K数据集的AI生成数学问题子问题分解基准，通过微调和离线强化学习方法在小型模型中蒸馏复杂问题的分\n解能力，并探索了利用模型自身反馈提升推理性能的潜在路径。\n3. MathGenie: Generating Synthetic Data with Question Back-translation for Enhancing Mathematical Reasoning of \nLLMs\n•\n通过迭代解决方案增强、问题回译和验证过滤生成多样可靠的数学问题及代码集成解决方案，并基于此数据微调预训练模型，获\n得高性能的MathGenieLM系列模型。\n4. MetaMath: Bootstrap Your Own Mathematical Questions for Large Language Models\n•\n通过重写技术（答案增强、问题改写、逆向问题增强）来增加训练数据集中的数学问题多样性，并在新的数据集MetaMathQA上\n微调模型。\n5. WizardMath: Empowering Mathematical Reasoning for Large Language Models via Reinforced Evol-Instruct\n\n•\n从上行演化和下行演化角度出发，合成具有各种复杂性和多样性的数学指令，以增强大语言模型的数学能力。\n6. JiuZhang3.0: Efficiently Improving Mathematical Reasoning by Training Small Data Synthesis Models\n•\n提出一种低成本知识蒸馏数据集构建方法，通过教育阶段提示词和梯度相似性筛选高价值文本，利用GPT-4生成数据训练小模型\nDeepSeekMath-7B合成高质量数学问题，并预训练JiuZhang3.0模型。\n7. Unleashing Reasoning Capability of LLMs via Scalable Question Synthesis from Scratch\n•\n首先通过QFT和QPO训练出一个问题生成器，然后利用这些生成器进行开放式问题采样，并对生成的问题进行进一步筛选，最终\n基于筛选出的高质量问题生成相应的解答。\n8. Augmenting Math Word Problems via Iterative Question Composing \n•\n通过整合预处理的高质量网络数据与多策略增强合成数据（包括GPT-4提示生成、迭代问题组合和拒绝采样），并基于此微调多\n个基础模型，显著提升数学推理能力。\n代码生成\n1. Self-play with Execution Feedback: Improving Instruction-following Capabilities of Large Language Models\n•\n通过自我指导和执行反馈来自动化地生成和验证指令遵循训练数据，进而通过SFT或基于人类反馈的RLHF来提升LLMs的性能。\n2. AutoCoder: Enhancing Code Large Language Model with AIEV-Instruct \n•\n通过双代理交互模拟编程测试流程生成高质量代码数据集，结合教学与自学习阶段减少闭源模型依赖，并训练出AutoCoder系列\n模型。\n3. CodeRL: Mastering Code Generation through Pretrained Models and Deep Reinforcement Learning\n•\n通过强化学习的actor-critic架构（利用预训练模型生成代码样本并由错误预测器评估），结合推理阶段的单元测试信号优化与程\n序修复机制，显著提升程序合成能力。\n4. Genetic Instruct: Scaling up Synthetic Generation of Coding Instructions for Large Language Models\n•\n基于进化算法的交叉变异操作和LLM驱动的适应度评估，从少量初始样本生成高质量编码指令数据集，并以此训练开源模型。\n5. WizardCoder: Empowering Code Large Language Models with Evol-Instruct \n•\n提出代码专用Evol-Instruct方法，通过进化提示优化和代码调试约束生成复杂指令数据，微调StarCoder得到WizardCoder模\n型。\n6. Magicoder: Empowering Code Generation with OSS-Instruct \n•\n通过开源代码片段启发生成多样化、高真实性的代码指令数据，结合Evol-Instruct微调得到Magicoder系列模型。\n7. SelfCodeAlign: Self-Alignment for Code Generation\n•\n通过从开源代码库提取编程概念生成多样化任务，结合自生成响应与测试用例验证构建高质量指令数据，无需人工标注或蒸馏闭\n源模型，训练出完全透明的StarCoder2-Instruct模型。",
+    "follow_up": []
+  },
+  {
+    "id": "llm-notes-044",
+    "category": "llm-notes",
+    "subcategory": "大模型综合",
+    "difficulty": "L3",
+    "tags": [
+      "大模型",
+      "面试"
+    ],
+    "question": "大模型的困惑度（PPL）是什么？",
+    "answer": "困惑度（Perplexity, PPL）用于衡量语言模型的好坏。模型 Model 在预训练测试集数据 \n上的困惑度越\n低，说明模型对下一个单词的预测越准确，模型性能越好，生成文本的流畅性和一致性越高：\nT = w\n, w\n, … , w\n{\nN}\n                     \n\nPerplexity(Model) = exp\n−\n\nlog P w\n ∣w\n, … , w\n\n(\nN\ni=1\n∑\nN\n(\ni\ni−1))\n其中\n是测试数据的 token 总数， \n是模型对第\n个 token 的预测概率  \nN\nP (w\n∣w\n, ⋯, w\n)\ni\ni−1\ni\n可以看到上述公式括号中的式子实际上就是预训练使用的交叉熵 Loss，所以 PPL 的计算也可以写成下式：\n\nPPL(Model) = exp(L)\n利用transformers 库简单计算逻辑如下，更详细的代码见：https://huggingface.co/docs/transformers/perplexity\nfrom transformers import AutoModelForCausalLM, AutoTokenizer\nimport torch\nmodel = AutoModelForCausalLM.from_pretrained(\"gpt2\")\ntokenizer = AutoTokenizer.from_pretrained(\"gpt2\")\n\ntext = \"I am RZ, a LLMer and a RLer.\"\ninputs = tokenizer(text, return_tensors=\"pt\")\nwith torch.no_grad():\n    outputs = model(**inputs, labels=inputs[\"input_ids\"])\n    loss = outputs.loss\n    ppl = torch.exp(loss).item()\nprint(f\"Perplexity: {ppl}\")\n对于长文本来说则需要进行分块处理：\nmax_length = model.config.n_positions\nstride = 512  # 滑动窗口步长\ntotal_loss = 0\ntotal_count = 0\nfor i in range(0, len(input_ids), stride):\n    chunk = input_ids[:, i:i+max_length]\n    with torch.no_grad():\n        outputs = model(chunk, labels=chunk)\n    loss = outputs.loss\n    total_loss += loss.item() * chunk.size(1)\n    total_count += chunk.size(1)\nppl = torch.exp(total_loss / total_count).item()\n在训练过程中监控验证集的PPL变化，可动态调整学习率或提前终止训练，也可以监控预训练多任务、多领域数据的训练情况（比\n如从每个数据集随机抽样出200个左右的样本，作为PPL监控的样本）。但是PPL指标依赖测试数据的分布，若数据与训练集差异\n大，PPL可能失真。而且全局平均值可能掩盖局部生成错误（如逻辑矛盾）。\nPPL与BLEU、ROUGE的区别？\nPPL基于概率评估，BLEU/ROUGE基于n-gram重叠率。PPL 反映模型内部置信度，其他两个衡量的是生成文本与参考文本的相似度",
+    "follow_up": [
+      "PPL和交叉熵Loss的关系？",
+      "为什么PPL比accuracy更适合评估语言模型？"
+    ]
+  },
+  {
+    "id": "llm-notes-045",
+    "category": "llm-notes",
+    "subcategory": "大模型综合",
+    "difficulty": "L3",
+    "tags": [
+      "大模型",
+      "面试"
+    ],
+    "question": "对于大模型复杂推理任务，有哪些主流方法",
+    "answer": "💡复杂推理任务是LLM目前讨论的最多的基础能力，试图通过增强LLM的复杂推理能力来幻觉LLM的幻觉问题，同时赋予LLM\n更多的可能性。\n一、 Prompt Engineering\n\n一句话总结：仅仅通过prompt最大化地激发出LLM的知识，从而获得更好的推理结果。\n1. COT\nChain-of-Thought（CoT） 是一种让LLM通过分步推理生成答案的技术。其核心是模仿人类思考过程，将复杂问题拆解为多个中间\n步骤，逐步推导出最终答案，而非直接输出结果。\n在实现上，可以分为zero shot（let's step by step）和few shot（给予多个无偏示例，展示如何分步解决问题）。\n•\n示例\n💡问题：28名学生需要乘车，每辆车坐6人，至少需要几辆车？\nCoT回答：28 ÷ 6 = 4余4 → 需要4辆车坐满，剩余4人需1辆车 → 共5辆。\n•\n优缺点\n优点：\n•\n降低单步错误率，增强答案可靠性。\n•\n推理过程透明化，便于验证逻辑是否合理。\n•\nCoT生成的推理链可作为高质量数据，用于微调模型。\n缺点：\n•\n模型需要逐句输出推理过程，消耗更多计算资源和时间，影\n响实时性。\n•\n少样本CoT依赖提供的示例质量，若示例存在偏差或错误，\n模型可能模仿错误模式。\n\n•\n对无需复杂推理的问题（如事实问答），分步解释反而降低\n效率。\n2. ToT\nTree of Thought（ToT） 是一种更复杂的推理框架，通过多路径探索和动态决策提升LLM解决复杂问题的能力。其核心是将单一线\n性CoT扩展为树状结构，允许模型在推理过程中生成多个可能的路径，并基于反馈选择最优路径。\n•\n关键实现方式\n💡节点生成：将问题分解为多个中间步骤（节点），每个节点代表一种可能的推理方向。\n评估与剪枝：对每个节点进行评分（如正确性、效率），淘汰低质量分支以节省资源。\n深度优先/广度优先搜索：按需选择搜索策略，平衡计算成本与答案质量。\n3. SC\nSelf-Consistency（SC） 是一种基于CoT的增强推理方法，旨在通过生成多条推理路径并选择最一致的答案，提升LLM在复杂任务\n中的准确性和鲁棒性。其核心思想是：单一推理路径可能因随机性出错，但多条独立路径的统计共识更可能接近正确答案。\n•\n核心实现\n💡生成多样性：通过调整Temperature或随机种子，让模型对同一问题生成多条不同的推理路径（即不同的“思维链”）。\n答案聚合：从所有生成的路径中提取最终答案，通过多数投票（Majority Voting） 或 加权评分 选择出现频率最高的答\n案。\n•\n实现细节\n💡路径数量：通常取5~40条，需权衡成本与精度（N越大效果越好，但成本线性增长）。\n温度参数：适当调高温度（如0.7~1.0）以增加生成多样性，但过高可能导致逻辑混乱。\n答案对齐：需设计规则处理格式差异（如“五辆”和“5”需归一化为同一答案）。\n4. PAL\nProgram-Aided Language Models (PAL) 是一种通过生成可执行程序代码来解决复杂问题的LLM增强方法。其核心思想是让模型\n将自然语言问题转化为代码（如Python），并通过执行代码获得精确答案，而非依赖模型直接计算或推理。这种方法尤其擅长数\n学、逻辑和符号推理任务，结合了语言模型的灵活性与代码执行的准确性。\n•\n核心实现\n💡代码即中间表示：模型将问题拆解为可编程逻辑，生成代码片段（如计算、循环、条件判断）。\n外部执行验证：生成的代码由外部解释器（如Python解释器）执行，确保计算结果的数学正确性。\n二、 Training\n1. SFT\n通过在特定的推理数据集上进行SFT，能让模型更精确地掌握某类推理任务。\n常用的推理数据集包括：\n💡•\nGSM8K：中小学数学题集。\n•\nMATH：涵盖高中及竞赛数学题，考察较高难度的数学推理。\n•\nLogiQA：考察抽象的逻辑推理与阅读理解能力。\n\n•\nARC：覆盖若干领域的常识与推断题。\n如果数据质量高且包含足够多的推理示例，模型在该领域的推理能力会显著增强。不过，这也带来泛化性、跨领域迁移等问题。\n2. RLHF\n•\n核心流程\n💡1. 使用语言模型生成回答；\n2. 人类标注者对回答进行评分或排序；\n3. 训练一个Reward Model来模拟人类对回答优劣的判断；\n4. 用 PPO 等强化学习算法，让模型在每次生成回答后，根据「奖励」进行参数更新，倾向输出更符合人类需求和逻辑的\n内容。\n3. Critic Models\n有些研究会在主模型之外，再训练一个Critic Models来检查主模型的推理步骤，一旦发现不合理之处，就提出警示或要求修正，进\n而将这类评价结果反馈到训练或推断过程中，实现对主模型推理质量的改进。\n•\n核心思路\n💡有一个主模型（或者说「生成模型」）进行推理、回答。\n有一个次级模型（或者说「批判模型」或「验证器」）对主模型的理由链、过程正确性或最终输出进行打分或判断。\n以此打分或判断为依据来改进主模型：比如过滤掉错误推理，或通过强化学习的方式更新主模型参数等。\n近期常见的 PRM/ORM 或类似的多级 reward 机制，通常就是「自动验证器与批判模型」在实践中的一个具体实现 。它们\n都为主模型生成的过程或结果提供一种「外部批判/评价」，从而帮助主模型提升推理一致性、正确性或安全性。\n•\nPRM（Process Reward Model）\nPRM 的目标是给「推理过程」给一个reward，比如给每一步的思路链、Chain-of-Thought 提供一个质量评价。\n这意味着它更关注推理展开的细节：是否逻辑连贯、中间步骤有没有硬伤等。\n这种过程级评估非常符合「批判模型」或「验证器」的角色——它不仅看最终答案对不对，更会审查一系列中间步骤的合理性。\n•\nORM（Output Reward Model）\nORM 则主要打分「最终输出」的质量。\n与 PRM 相比，ORM 只看结果是否正确、合乎人类偏好或任务标准，而不深入逐步过程。\n这种单一关注输出的评估模式，也可视为一种更「精简」的批判模型——它仍然在对主模型的推理结论进行审核。\n另外，若结合外部符号推理器进行正式验证，还可以将数学推理或逻辑证明转化为可机读的公式化、形式化的形式，进而用定理证\n明器进行检验，保证结论正确。不过，目前公式化、形式化的验证仅能涵盖少数对逻辑一致性要求极高的任务，对日常复杂语言仍\n有难度。",
+    "follow_up": [
+      "ToT和CoT在实际应用中的trade-off是什么？",
+      "如何评估复杂推理任务的效果？"
+    ]
+  },
+  {
+    "id": "llm-notes-046",
+    "category": "llm-notes",
+    "subcategory": "大模型架构",
+    "difficulty": "L2",
+    "tags": [
+      "分词",
+      "BPE",
+      "Tokenization"
+    ],
+    "question": "大模型中常用的分词算法有哪些？BPE和BBPE的区别是什么？",
+    "answer": "分词（Tokenization）是将文本切分为模型可处理的最小单元（token）的过程。\n\n**三种分词粒度：**\n| 粒度 | 优点 | 缺点 |\n|------|------|------|\n| Word（词级）| 保留语义边界 | 词表大、OOV问题 |\n| Char（字符级）| 无OOV | 语义弱、序列长 |\n| Subword（子词）| 平衡词表与语义 | 主流选择 |\n\n**主流算法对比：**\n1. BPE (Byte Pair Encoding) — 从字符级开始，迭代合并最高频的相邻字符对\n2. BBPE (Byte-level BPE) — 在字节级别做BPE，可处理任意字符（中文、emoji）\n3. WordPiece — 类似BPE，合并准则基于似然最大化（BERT使用）\n4. Unigram LM — 从大词表开始，逐步删除对总似然贡献最小的token\n\n**BPE vs BBPE区别：**\n- BPE在Unicode字符上操作，BBPE在UTF-8字节上操作\n- BBPE词表覆盖所有字节组合，天然支持多语言\n- GPT-2/GPT-3使用BBPE，LLaMA使用SentencePiece+BPE",
+    "follow_up": [
+      "为什么SentencePiece不依赖预分词（空格切分）？",
+      "如何选择最优的词表大小？"
+    ]
+  },
+  {
+    "id": "llm-notes-047",
+    "category": "llm-notes",
+    "subcategory": "大模型架构",
+    "difficulty": "L3",
+    "tags": [
+      "Attention",
+      "Flash Attention",
+      "Paged Attention"
+    ],
+    "question": "Flash Attention的原理是什么？为什么能加速？Paged Attention解决了什么问题？",
+    "answer": "**Flash Attention — IO感知的精确注意力：**\n\n核心思想：减少HBM（高带宽内存）和SRAM之间的读写次数。\n\n传统Attention计算S=QK^T需要O(N^2)的中间矩阵，频繁读写HBM，显存占用巨大。\n\nFlash Attention的优化：\n1. 分块计算（Tiling）— 将Q/K/V分成小块，每次只加载一块到SRAM计算\n2. 在线Softmax — 增量更新技巧，不需要完整注意力矩阵就能计算softmax\n3. 融合内核 — QK^T到softmax到AV融合为一次GPU操作\n\n效果：速度提升2-4倍，显存从O(N^2)降到O(N)，结果与标准Attention完全一致。\n\n**Paged Attention — 解决KV Cache碎片化（vLLM核心）：**\n\n传统KV Cache为每个序列预分配连续显存，导致内部碎片和外部碎片。\n\nPaged Attention借鉴OS虚拟内存的分页机制：\n- KV Cache按固定大小的block存储（如每block存16个token的KV）\n- 物理block可以不连续，逻辑地址通过block table映射\n- 效果：显存利用率从~60%提升到~96%，吞吐量提升2-4倍",
+    "follow_up": [
+      "Flash Attention v2相比v1有哪些改进？",
+      "Continuous Batching和Static Batching的区别？"
+    ]
+  },
+  {
+    "id": "llm-notes-048",
+    "category": "llm-notes",
+    "subcategory": "大模型架构",
+    "difficulty": "L3",
+    "tags": [
+      "MLA",
+      "KV Cache",
+      "DeepSeek"
+    ],
+    "question": "从MHA到MQA到GQA再到MLA的演进过程是怎样的？各自解决了什么问题？",
+    "answer": "这是大模型KV Cache优化的演进路线，核心目标：减少推理时的KV Cache显存占用。\n\n| 方法 | Key/Value共享方式 | KV Cache大小 | 代表模型 |\n|------|-------------------|-------------|----------|\n| MHA | 每个head独立K/V | N_heads × d_head | 大部分模型 |\n| MQA | 所有head共享1组K/V | 1 × d_head | PaLM |\n| GQA | 分组共享K/V | N_groups × d_head | LLaMA-2/3 |\n| MLA | 低秩压缩K/V | d_c (压缩维度) | DeepSeek-V2 |\n\n**详解：**\n1. MHA (Multi-Head Attention) — 标准多头，KV Cache = 2 × n_heads × d_head × seq_len\n2. MQA (Multi-Query Attention) — 所有head共享K/V，KV Cache减少n_heads倍，但效果下降明显\n3. GQA (Grouped-Query Attention) — heads分组共享K/V，效果接近MHA，速度接近MQA\n4. MLA (Multi-head Latent Attention) — DeepSeek创新：\n   - 将KV压缩到低秩潜在空间：c = W_down × [K;V]\n   - 存储时只存压缩向量c（维度d_c远小于n_heads×d_head）\n   - 推理时通过W_up上采样恢复K/V\n   - KV Cache减少至原来的1/4~1/8，效果几乎无损",
+    "follow_up": [
+      "GQA中group数量如何选择最优？",
+      "MLA的压缩维度d_c如何确定？",
+      "为什么MQA效果下降比GQA明显？"
+    ]
+  },
+  {
+    "id": "llm-notes-049",
+    "category": "llm-notes",
+    "subcategory": "大模型架构",
+    "difficulty": "L2",
+    "tags": [
+      "LayerNorm",
+      "RMSNorm",
+      "归一化"
+    ],
+    "question": "LayerNorm和RMSNorm的区别是什么？Pre-Norm和Post-Norm有什么不同？",
+    "answer": "**LayerNorm vs RMSNorm：**\n\n| 特性 | LayerNorm | RMSNorm |\n|------|-----------|---------|\n| 计算方式 | 减均值+除标准差+缩放偏移 | 只除RMS（均方根）+缩放 |\n| 参数量 | 2N (gamma和beta) | N (只有gamma) |\n| 计算量 | 较高 | 较低 |\n| 代表模型 | BERT, GPT-2 | LLaMA, Qwen |\n\nRMSNorm是LayerNorm的简化版本，去掉了减均值和偏移项，效果相当但计算更快。\n\n**Pre-Norm vs Post-Norm：**\n\nPost-Norm: x -> Attention -> Add(x) -> LayerNorm -> FFN -> Add -> LayerNorm\nPre-Norm:  x -> LayerNorm -> Attention -> Add(x) -> LayerNorm -> FFN -> Add(x)\n\n| 特性 | Post-Norm | Pre-Norm |\n|------|-----------|----------|\n| 训练稳定性 | 差（深层难收敛）| 好（残差直连） |\n| 最终效果 | 略好 | 略差 |\n| 深层模型 | 需warmup | 直接训练 |\n| 代表 | 原始Transformer, BERT | GPT-2+, LLaMA |\n\n大模型几乎全部使用Pre-Norm，因为深层模型训练稳定性更重要。",
+    "follow_up": [
+      "DeepNorm是如何改进Post-Norm的？",
+      "为什么Pre-Norm的最终效果可能略差于Post-Norm？"
+    ]
+  },
+  {
+    "id": "llm-notes-050",
+    "category": "llm-notes",
+    "subcategory": "大模型架构",
+    "difficulty": "L3",
+    "tags": [
+      "SwiGLU",
+      "激活函数",
+      "FFN"
+    ],
+    "question": "大模型中常用的激活函数有哪些？为什么LLaMA选择SwiGLU？",
+    "answer": "**主流激活函数演进：**\n\n| 激活函数 | 公式 | 代表模型 |\n|---------|------|----------|\n| ReLU | max(0,x) | 早期模型 |\n| GELU | x·Phi(x) | BERT, GPT-2 |\n| SiLU/Swish | x·sigma(x) | 部分现代模型 |\n| SwiGLU | Swish(xW1)·(xV) | LLaMA, Qwen |\n\n**SwiGLU详解：**\n传统FFN:  FFN(x) = ReLU(xW1)W2\nSwiGLU:   FFN(x) = (Swish(xW1) ⊙ xV)W2\n\n- 引入门控机制：xV作为门控信号调制Swish(xW1)的输出\n- 需要三个权重矩阵（W1, V, W2），参数量增加约50%\n- 为保持总参数量不变，通常将隐藏层维度缩小（如从4d变为8d/3）\n\n**为什么选择SwiGLU：**\n1. 效果好 — 多个基准测试上优于ReLU和GELU\n2. 门控机制 — 允许模型动态选择信息通路，增强表达能力\n3. 平滑梯度 — SiLU的平滑性有助于深层网络训练",
+    "follow_up": [
+      "GLU家族还有哪些变体（GEGLU, ReGLU等）？",
+      "SwiGLU中隐藏层维度如何设置？"
+    ]
+  },
+  {
+    "id": "llm-notes-051",
+    "category": "llm-notes",
+    "subcategory": "大模型架构",
+    "difficulty": "L3",
+    "tags": [
+      "RoPE",
+      "长度外推",
+      "YaRN"
+    ],
+    "question": "RoPE如何实现长度外推？NTK-aware、YaRN、Dynamic Scaling有什么区别？",
+    "answer": "RoPE的长度外推问题：模型在4K长度上训练，推理时超过4K效果骤降。\n\n核心问题：RoPE的频率theta_i = 10000^(-2i/d)，超出训练最大位置L_train后注意力分布外推效果差。\n\n**主流外推方案：**\n\n| 方法 | 核心思想 | 优点 | 缺点 |\n|------|---------|------|------|\n| Position Interpolation (PI) | 将目标位置线性缩放到训练范围 | 实现简单 | 需要少量微调 |\n| NTK-aware | 调整base频率theta | 无需微调效果尚可 | 低频区域分辨率降低 |\n| Dynamic NTK | 推理时动态调整base | 自适应性好 | 计算开销略增 |\n| YaRN | 分频段插值：高频NTK+低频PI | 效果最好 | 实现复杂 |\n\n**YaRN核心：**\n1. 高频区域（短波长）：保持不变（局部注意力不受影响）\n2. 低频区域（长波长）：使用PI插值（全局位置需精确缩放）\n3. 中间区域：平滑过渡\n4. 引入温度系数alpha调整注意力分布\n5. 效果：LLaMA-2从4K扩展到128K，几乎无损",
+    "follow_up": [
+      "为什么高频分量不需要插值？",
+      "LongRoPE如何实现2M上下文长度？"
+    ]
+  },
+  {
+    "id": "llm-notes-052",
+    "category": "llm-notes",
+    "subcategory": "SFT与RLHF",
+    "difficulty": "L4",
+    "tags": [
+      "DPO",
+      "RLHF",
+      "偏好对齐"
+    ],
+    "question": "DPO（Direct Preference Optimization）的原理是什么？相比PPO有什么优势？",
+    "answer": "DPO直接通过偏好数据优化策略，绕过了显式的奖励模型和强化学习过程。\n\n**核心思想：** 通过数学推导，最优策略和奖励函数之间存在解析关系，可以将RLHF的两阶段（训练RM -> PPO）替换为一个统一的监督学习目标。\n\nDPO损失函数：\nL_DPO = -E[log sigma(beta·log(pi(y_w|x)/pi_ref(y_w|x)) - beta·log(pi(y_l|x)/pi_ref(y_l|x)))]\n\n其中y_w是偏好回复，y_l是非偏好回复，beta是KL约束系数。\n\n**DPO vs PPO对比：**\n\n| 维度 | PPO | DPO |\n|------|-----|-----|\n| 流程 | SFT->RM->PPO | SFT->DPO |\n| 模型数量 | 4个（Actor/Critic/RM/Ref）| 2个（Policy/Ref）|\n| 训练稳定性 | 差（RL调参难） | 好（标准交叉熵） |\n| 计算成本 | 高 | 低（减少~50%） |\n| 在线vs离线 | 在线 | 离线 |\n| 效果 | 略优 | 接近PPO |\n\n**DPO的变体：** IPO（平方损失替代log）、KTO（不需要配对数据）、ORPO（SFT+偏好统一）、SimPO（简化参考模型）",
+    "follow_up": [
+      "为什么DPO在数学上等价于RLHF？",
+      "KTO为什么不需要配对数据？",
+      "SimPO相比DPO有什么改进？"
+    ]
+  },
+  {
+    "id": "llm-notes-053",
+    "category": "llm-notes",
+    "subcategory": "SFT与RLHF",
+    "difficulty": "L4",
+    "tags": [
+      "GRPO",
+      "PPO",
+      "DeepSeek"
+    ],
+    "question": "GRPO（Group Relative Policy Optimization）的原理是什么？相比PPO有哪些改进？",
+    "answer": "GRPO是DeepSeek提出的PPO改进算法，核心创新：去掉Critic网络，用组内相对奖励估计baseline。\n\n**PPO的问题：**\n1. 需要训练Critic网络估计V(s)，增加训练复杂度和显存\n2. Critic估计不准会导致策略梯度方差大\n3. 4个模型同时训练，工程复杂\n\n**GRPO的核心改进：**\n\nPPO的Advantage: A(s,a) = r(s,a) + gamma*V(s') - V(s)  需要Critic\nGRPO的Advantage: 对每个prompt采样G个回复，组内归一化\nA_i = (r_i - mean(r_1,...,r_G)) / std(r_1,...,r_G)\n\n**GRPO流程：**\n1. 对每个prompt采样一组G个回复\n2. 用规则奖励（如数学正确性）或RM打分\n3. 组内归一化得到相对优势\n4. 用PPO-style目标函数（带clip和KL惩罚）更新策略\n\n**优势：**\n- 去掉Critic网络，只需2个模型（Policy/Ref）\n- 组内相对比较更稳定\n- 特别适合有明确正确答案的任务（数学、代码）\n- DeepSeek-R1使用GRPO实现了强大的推理能力",
+    "follow_up": [
+      "GRPO如何处理没有明确答案的开放性任务？",
+      "GRPO中的group size G如何设置？",
+      "DeepSeek-R1的RL训练流程是怎样的？"
+    ]
+  },
+  {
+    "id": "llm-notes-054",
+    "category": "llm-notes",
+    "subcategory": "LoRA与微调",
+    "difficulty": "L3",
+    "tags": [
+      "QLoRA",
+      "量化",
+      "LoRA"
+    ],
+    "question": "QLoRA的原理是什么？如何实现4-bit量化下的高效微调？",
+    "answer": "QLoRA = Quantization + LoRA，在4-bit量化的基座模型上训练LoRA适配器。\n\n**核心创新：**\n\n1. **NF4 (Normal Float 4) 量化**\n   - 基于权重的正态分布设计量化格子，信息论最优\n   - 量化过程：W -> NF4(4-bit) + 量化常数(fp16)\n\n2. **双重量化 (Double Quantization)**\n   - 不仅量化权重，还量化量化常数本身（fp32->fp8）\n   - 每参数平均节省0.37bit\n\n3. **分页优化器 (Paged Optimizer)**\n   - 使用NVIDIA统一内存，显存不足时自动转移到CPU\n   - 避免OOM\n\n**QLoRA训练流程：**\n1. 加载预训练模型，权重量化为NF4 (4-bit)\n2. 冻结量化权重，在fp16精度下训练LoRA适配器\n3. 前向传播时反量化为fp16计算\n4. 反向传播梯度只流经LoRA参数\n\n**效果：** 65B模型可在单张48GB GPU上微调，效果接近全参数微调（差距<1%），显存减少约75%。",
+    "follow_up": [
+      "NF4为什么比INT4量化效果好？",
+      "QLoRA和GPTQ/AWQ量化有什么区别？"
+    ]
+  },
+  {
+    "id": "llm-notes-055",
+    "category": "llm-notes",
+    "subcategory": "LoRA与微调",
+    "difficulty": "L3",
+    "tags": [
+      "LoRA变体",
+      "DoRA",
+      "AdaLoRA"
+    ],
+    "question": "LoRA的变体有哪些？DoRA、AdaLoRA、LoRA+各自有什么改进？",
+    "answer": "LoRA变体通过不同角度改进原始LoRA的局限性。\n\n**主要变体对比：**\n\n| 变体 | 核心改进 | 解决的问题 |\n|------|---------|-----------|\n| AdaLoRA | 动态分配rank | 固定rank不合理 |\n| DoRA | 分解为大小和方向 | LoRA缺少权重幅值调整 |\n| LoRA+ | A和B使用不同学习率 | A/B学习不均衡 |\n| GaLore | 梯度低秩投影，全参数训练 | LoRA只能训练少量参数 |\n| LongLoRA | Shifted Sparse Attention | 原始LoRA不支持长上下文 |\n\n**DoRA详解（最值得关注）：**\n- LoRA: W = W0 + BA\n- DoRA: W = m · (W0 + BA) / ||W0 + BA||\n- 将权重分解为大小(magnitude)和方向(direction)\n- 更接近全参数微调的更新模式\n- 效果显著优于标准LoRA，尤其在低rank时\n\n**AdaLoRA详解：**\n- 基于重要性分数动态调整每层的rank\n- 使用SVD分解替代随机初始化\n- 训练过程中裁剪不重要的奇异值，分配给重要层",
+    "follow_up": [
+      "DoRA为什么比LoRA效果更好？数学上如何解释？",
+      "GaLore如何实现全参数训练但只占用LoRA级别的显存？"
+    ]
+  },
+  {
+    "id": "llm-notes-056",
+    "category": "llm-notes",
+    "subcategory": "LoRA与微调",
+    "difficulty": "L3",
+    "tags": [
+      "量化",
+      "GPTQ",
+      "AWQ",
+      "INT4"
+    ],
+    "question": "GPTQ和AWQ量化算法的原理和区别是什么？",
+    "answer": "两者都是训练后量化（PTQ）方法，将模型权重从FP16压缩到INT4/INT8。\n\n**GPTQ (Generative Pre-trained Transformer Quantization)：**\n\n核心思想：基于二阶信息（Hessian矩阵）逐层最优量化。\n\n1. 计算权重矩阵的Hessian矩阵 H = X^T·X（X是校准数据）\n2. 按列量化权重，每量化一列就用剩余信息补偿前面量化引入的误差\n3. 使用Cholesky分解加速Hessian求逆\n4. 效果：INT4量化后几乎无损，速度提升3-4倍\n\n**AWQ (Activation-aware Weight Quantization)：**\n\n核心思想：不是所有权重同等重要，激活值大的通道对应的权重量化误差影响更大。\n\n1. 观察到：激活幅度大的通道对应的权重对量化误差更敏感\n2. 引入缩放因子s：在量化前将重要通道的权重放大，量化后缩小\n3. 通过网格搜索找到最优的缩放比例\n4. 效果：比GPTQ更快的推理速度（更好的硬件友好性）\n\n**对比：**\n\n| 维度 | GPTQ | AWQ |\n|------|------|-----|\n| 量化依据 | 二阶信息（Hessian） | 激活感知 |\n| 校准数据 | 需要（~128样本）| 需要（~128样本）|\n| 推理速度 | 快 | 更快（INT4 GEMM优化好）|\n| 显存节省 | ~75% | ~75% |\n| 量化效果 | 优秀 | 优秀 |\n| 硬件兼容性 | 较好 | 更好（标准INT4操作）|\n\n**选择建议：** 追求速度选AWQ，追求量化精度选GPTQ，两者都远优于简单的Round-to-Nearest量化。",
+    "follow_up": [
+      "为什么AWQ比GPTQ推理速度更快？",
+      "SmoothQuant和AWQ有什么相似之处？",
+      "如何评估量化后模型的质量损失？"
+    ]
+  },
+  {
+    "id": "llm-notes-057",
+    "category": "llm-notes",
+    "subcategory": "大模型应用",
+    "difficulty": "L3",
+    "tags": [
+      "RAG",
+      "向量检索",
+      "Embedding"
+    ],
+    "question": "RAG（检索增强生成）的完整pipeline是什么？每个环节有哪些优化方法？",
+    "answer": "RAG = 检索 + 生成，通过外部知识库增强LLM的回答能力。\n\n**完整Pipeline：**\n用户Query → [Query改写] → [检索] → [重排] → [上下文组装] → [LLM生成] → 回答\n\n**各环节优化：**\n\n**1. Query处理（检索前）：**\n- Query改写：用LLM将模糊query改写为更精确的检索query\n- Query扩展：添加同义词/相关词扩大召回\n- Query2Doc：用LLM生成伪文档扩展query\n- HyDE：生成伪文档用于向量检索\n- 多query融合：生成多个子query分别检索\n\n**2. 索引构建：**\n- 文档切分策略：固定长度/语义切分/递归切分\n- Embedding模型选择：bge-large, text-embedding-3等\n- 多级索引：摘要索引 + 细粒度索引\n- 元数据过滤：按时间/类型/权限预过滤\n\n**3. 检索：**\n- 向量检索（Dense）：语义相似度，适合模糊匹配\n- 关键词检索（Sparse/BM25）：精确匹配，适合专业术语\n- 混合检索：Dense + Sparse融合，效果最好\n\n**4. 重排（Rerank）：**\n- Cross-encoder模型：bge-reranker, Cohere Rerank\n- LLM打分：让LLM对检索结果相关性评分\n- 多信号融合：相关性 + 新鲜度 + 权威性\n\n**5. 上下文组装与生成：**\n- 长上下文处理：Lost-in-the-middle问题（中间位置信息容易丢失）\n- 文档压缩：RECOMP/LangChain的stuff/map_reduce策略\n- 引用标注：让LLM标注信息来源",
+    "follow_up": [
+      "如何解决RAG中的Lost-in-the-Middle问题？",
+      "GraphRAG相比传统RAG有什么优势？",
+      "如何评估RAG系统的端到端效果？"
+    ]
+  },
+  {
+    "id": "llm-notes-058",
+    "category": "llm-notes",
+    "subcategory": "大模型架构",
+    "difficulty": "L3",
+    "tags": [
+      "MoE",
+      "混合专家",
+      "DeepSeek-MoE"
+    ],
+    "question": "MoE（Mixture of Experts）在大模型中的工作原理是什么？DeepSeek-MoE有什么创新？",
+    "answer": "MoE通过稀疏激活实现「参数量大但计算量小」的效果。\n\n**基本原理：**\n- 传统FFN: y = FFN(x)  所有参数参与计算\n- MoE FFN: y = Gate(x)_i · Expert_i(x) 的加权和  只激活Top-K个专家\n\n- N个专家网络（每个是独立的FFN）\n- Gate/Router计算每个token应该分配给哪些专家\n- 通常Top-2路由：每个token只经过2个专家\n- 效果：总参数量N倍，但每次前向计算量只有2/N\n\n**关键技术问题：**\n\n1. **负载均衡（Load Balancing）**\n   - 问题：Router可能偏向少数专家（马太效应）\n   - 解决：辅助损失（auxiliary loss）惩罚不均匀分配\n\n2. **容量因子（Capacity Factor）**\n   - 每个专家有最大处理token数限制\n   - 超出容量的token被丢弃（drop）或传递给下一层\n\n3. **通信开销**\n   - 分布式训练时专家分布在不同GPU\n   - 需要All-to-All通信传递token\n\n**DeepSeek-MoE的创新：**\n\n1. **细粒度专家分割** — 将每个专家再分割为更小的子专家（如64个），增加路由灵活性\n2. **共享专家（Shared Expert）** — 设置部分专家始终激活，处理通用知识\n3. **设备级负载均衡** — 不只均衡专家级，还均衡设备级负载\n4. **效果：** DeepSeek-V2使用236B总参数，但每次推理只激活21B，效果媲美Dense模型",
+    "follow_up": [
+      "MoE模型的推理延迟和吞吐量有什么特点？",
+      "Switch Transformer和GShard的MoE有什么区别？",
+      "为什么MoE模型更难训练？"
+    ]
+  },
+  {
+    "id": "llm-notes-059",
+    "category": "llm-notes",
+    "subcategory": "大模型综合",
+    "difficulty": "L3",
+    "tags": [
+      "解码策略",
+      "采样",
+      "Temperature"
+    ],
+    "question": "大模型的解码策略有哪些？Top-k、Top-p和Temperature的作用是什么？",
+    "answer": "解码策略决定了模型如何从概率分布中选择下一个token。\n\n**主要策略对比：**\n\n| 策略 | 原理 | 特点 |\n|------|------|------|\n| **Greedy** | 每步选概率最高的token | 确定性，容易重复 |\n| **Beam Search** | 维护K个候选序列 | 质量高但多样性低 |\n| **Top-k** | 只从概率最高的k个token中采样 | 限制选择范围 |\n| **Top-p (Nucleus)** | 从累积概率达到p的最小token集合中采样 | 动态调整范围 |\n| **Temperature** | 调整概率分布的尖锐程度 | 控制随机性 |\n\n**Temperature详解：**\nP'(y_i) = softmax(logit_i / T)\n- T→0：分布更尖锐（接近Greedy），输出更确定\n- T=1：原始概率分布\n- T→∞：分布更平坦（接近均匀随机），输出更随机\n\n**Top-p (Nucleus Sampling)：**\n- 将token按概率降序排列\n- 选择累积概率达到p的最小token集合\n- p=0.9：只在累积概率90%的token中采样\n- 比Top-k更灵活：概率集中时选少量token，概率分散时选更多\n\n**实践推荐：**\n- 事实问答：Temperature=0.1, Top_p=0.95\n- 创意写作：Temperature=0.8, Top_p=0.9\n- 代码生成：Temperature=0.2, Top_p=0.95",
+    "follow_up": [
+      "Beam Search为什么在开放域生成中效果不好？",
+      "Contrastive Search是如何平衡质量和多样性的？",
+      "什么是repetition penalty和frequency penalty？"
+    ]
+  },
+  {
+    "id": "llm-notes-060",
+    "category": "llm-notes",
+    "subcategory": "大模型综合",
+    "difficulty": "L4",
+    "tags": [
+      "幻觉",
+      "事实性",
+      "评估"
+    ],
+    "question": "大模型幻觉（Hallucination）的分类、成因和缓解方法有哪些？",
+    "answer": "幻觉是指LLM生成看似合理但事实上不正确的内容。\n\n**幻觉分类：**\n\n| 类型 | 定义 | 示例 |\n|------|------|------|\n| **事实性幻觉** | 生成与客观事实不符的内容 | 编造不存在的论文/人物 |\n| **忠实性幻觉** | 生成与输入/上下文矛盾的内容 | RAG中歪曲检索文档含义 |\n| **推理幻觉** | 推理过程错误但结论可能正确 | 数学计算步骤错误 |\n\n**幻觉成因：**\n\n1. **数据层面：** 训练数据噪声/错误/过时；知识冲突；长尾覆盖不足\n2. **训练层面：** 自回归「落子无悔」无法修正错误；SFT知识污染\n3. **推理层面：** 无事实核查机制；高温采样增加随机性\n4. **评估层面：** 缺乏有效事实验证\n\n**缓解方法：**\n\n1. **RAG** — 检索外部知识增强事实性\n2. **RLHF/RLAIF** — 用事实性奖励训练模型\n3. **Chain-of-Thought** — 分步推理减少跳步错误\n4. **Self-Check** — 模型自我验证生成内容\n5. **解码控制** — 降低Temperature，约束解码\n6. **不确定性表达** — 训练模型在不确定时说「我不知道」",
+    "follow_up": [
+      "如何评估幻觉的严重程度？有哪些benchmark？",
+      "RAG在哪些场景下不能有效减少幻觉？",
+      "如何训练模型学会拒绝回答不确定的问题？"
+    ]
+  },
+  {
+    "id": "llm-notes-061",
+    "category": "llm-notes",
+    "subcategory": "大模型架构",
+    "difficulty": "L3",
+    "tags": [
+      "常见模型",
+      "LLaMA",
+      "Qwen",
+      "DeepSeek"
+    ],
+    "question": "LLaMA、Qwen和DeepSeek系列的架构有什么主要区别？",
+    "answer": "三大主流开源模型系列的架构对比：\n\n| 特性 | LLaMA-3 | Qwen-2.5 | DeepSeek-V2 |\n|------|---------|----------|-------------|\n| 注意力 | GQA | GQA | MLA |\n| FFN | SwiGLU | SwiGLU | DeepMoE |\n| Norm | RMSNorm | RMSNorm | RMSNorm |\n| Norm位置 | Pre-Norm | Pre-Norm | Pre-Norm |\n| 位置编码 | RoPE | RoPE | Decoupled RoPE |\n| MoE | 否 | 否 | 是（细粒度+共享） |\n| 词表 | 128K | 152K | 100K |\n| 上下文 | 8K→1M | 128K | 128K |\n\n**DeepSeek-V2的独特设计：**\n\n1. **MLA (Multi-head Latent Attention)** — KV Cache压缩为原来的1/4，通过低秩投影实现\n2. **细粒度MoE** — 160个路由专家，每token激活6个 + 2个共享专家始终激活\n3. **Decoupled RoPE** — MLA与RoPE不完全兼容，将K分为不旋转的压缩部分和独立的RoPE部分\n\n**Qwen系列的特色：**\n- 词表最大（152K），中文处理能力强\n- 支持多模态（视觉+文本统一）\n- Code能力突出",
+    "follow_up": [
+      "MLA为什么需要Decoupled RoPE？",
+      "DeepSeek-V3相比V2有哪些改进？",
+      "如何选择适合自己场景的开源模型？"
+    ]
+  }
+]
