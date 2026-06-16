@@ -1,5 +1,5 @@
 // AI Interview — Service Worker
-const CACHE_NAME = 'ai-interview-v8';
+const CACHE_NAME = 'ai-interview-v9';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -13,6 +13,7 @@ const STATIC_ASSETS = [
   './data/ai-basics.json',
   './data/ai-agent.json',
   './data/ai-harness.json',
+  './data/fde.json',
   './data/new-llm-core.json',
   './data/new-agent-arch.json',
   './data/new-agent-skill.json',
