@@ -1,520 +1,394 @@
 [
   {
-    "id": "xhs-003",
+    "id": "llm--001",
     "category": "llm-core",
     "subcategory": "训练理论",
-    "difficulty": "L4",
-    "tags": [
-      "on-policy",
-      "off-policy",
-      "RLHF",
-      "强化学习"
-    ],
-    "question": "请解释 on-policy 和 off-policy 的区别，以及 online 和 offline RL 的含义。",
-    "answer": "**On-policy vs Off-policy**\n\n**On-policy**：策略更新只能使用当前策略自己采集的数据。代表：PPO、REINFORCE。优点：理论清晰；缺点：数据利用率低（采一批用一次就丢）。\n\n**Off-policy**：可以利用其他策略（或旧策略）采集的数据来更新当前策略。代表：DQN、SAC、Q-learning。优点：数据可复用（experience replay）；缺点：需要重要性采样或函数近似修正偏差。\n\n核心区别：是否允许用旧数据训练新策略。\n\n**Online vs Offline RL**\n- **Online RL**：训练过程中可以与环境持续交互采集新数据\n- **Offline RL**：只有固定的历史数据集，不能与环境交互\n\n在 RLHF 场景中：\n- PPO 是 on-policy + online\n- DPO 可视为 off-policy（直接利用偏好数据，不需要在线采样）\n- GRPO 也是 on-policy，但通过组内相对优势减少方差",
+    "difficulty": "L2",
+    "tags": [],
+    "question": "请解释 on-policy 和 off-policy 的区别,以及 online 和 offline RL 的含义.",
+    "answer": "- *On-policy vs Off-policy**\n\n- *On-policy**:策略更新只能使用当前策略自己采集的数据.代表:PPO、REINFORCE.优点:理论清晰;缺点:数据利用率低(采一批用一次就丢).\n\n- *Off-policy**:可以利用其他策略(或旧策略)采集的数据来更新当前策略.代表:DQN、SAC、Q-learning.优点:数据可复用(experience replay);缺点:需要重要性采样或函数近似修正偏差.\n\n**核心区别：** 是否允许用旧数据训练新策略.\n\n- *Online vs Offline RL**\n- **Online RL**:训练过程中可以与环境持续交互采集新数据\n- **Offline RL**:只有固定的历史数据集,不能与环境交互\n\n在 RLHF 场景中:\n- PPO 是 on-policy + online\n- DPO 可视为 off-policy(直接利用偏好数据,不需要在线采样)\n- GRPO 也是 on-policy,但通过组内相对优势减少方差",
     "follow_up": [
-      "为什么 PPO 不能用 experience replay？",
-      "DPO 为什么不需要在线采样？"
+      "为什么 PPO 不能用 experience replay?",
+      "DPO 为什么不需要在线采样?"
     ]
   },
   {
-    "id": "xhs-004",
+    "id": "llm--002",
     "category": "llm-core",
     "subcategory": "对齐训练",
-    "difficulty": "L5",
+    "difficulty": "L2",
     "tags": [
-      "SimPO",
-      "DPO",
-      "对齐",
-      "偏好学习"
+      "IO"
     ],
-    "question": "SimPO 与 DPO 的区别是什么？SimPO 的核心改进是什么？",
-    "answer": "**SimPO (Simple Preference Optimization)** 是对 DPO 的改进，2024 年提出。\n\n**DPO 回顾**：用 reference model 计算 log-prob 差作为隐式 reward。需要维护两个模型（policy + reference）。\n\n**SimPO 核心改进**：\n1. **去掉 reference model**：直接用序列平均 log-prob 作为 reward，无需 reference model\n2. **长度归一化**：用平均 log-prob（除以序列长度）而非求和，消除长度偏置\n3. **目标间隔**：在正负样本之间引入 margin (γ)，要求正样本 reward 至少比负样本高 γ\n\nSimPO Loss = -log σ(β/|y_w| * logπ(y_w|x) - β/|y_l| * logπ(y_l|x) - γ)\n\n**物理含义**：SimPO 认为'好的回答平均每个 token 的对数概率应该更高'，并用 margin 强化区分度。\n\n**优势**：训练更快（省一个模型前向）、省显存、效果不差于 DPO。",
+    "question": "SimPO 与 DPO 的区别是什么?SimPO 的核心改进是什么",
+    "answer": "- *SimPO (Simple Preference Optimization)** 是对 DPO 的改进,2024 年提出.\n\n- *DPO 回顾**:用 reference model 计算 log-prob 差作为隐式 reward.需要维护两个模型(policy + reference).\n\n- *SimPO 核心改进**:\n1. **去掉 reference model**:直接用序列平均 log-prob 作为 reward,无需 reference model\n2. **长度归一化**:用平均 log-prob(除以序列长度)而非求和,消除长度偏置\n3. **目标间隔**:在正负样本之间引入 margin (γ),要求正样本 reward 至少比负样本高 γ\n\nSimPO Loss = -log σ(β/|y_w| * logπ(y_w|x) - β/|y_l| * logπ(y_l|x) - γ)\n\n- *物理含义**:SimPO 认为'好的回答平均每个 token 的对数概率应该更高',并用 margin 强化区分度.\n\n- *优势**:训练更快(省一个模型前向)、省显存、效果不差于 DPO.",
     "follow_up": [
-      "SimPO 的 margin γ 一般设多大？",
-      "为什么去掉 reference model 仍然有效？"
+      "SimPO 的 margin γ 一般设多大?",
+      "为什么去掉 reference model 仍然有效?"
     ]
   },
   {
-    "id": "bili-005",
+    "id": "llm--003",
     "category": "llm-core",
     "subcategory": "模型架构",
-    "difficulty": "L4",
+    "difficulty": "L2",
     "tags": [
-      "参数规模",
-      "7B",
-      "13B",
-      "70B",
-      "模型设计"
+      "Elasticsearch"
     ],
-    "question": "大模型参数量为何常设计为 7B、13B、33B、65B 等数值？这些数字背后有什么讲究？",
-    "answer": "**参数规模设计的工程考量**\n\n1. **GPU 显存对齐**\n- 单张 A100/H100 = 40GB/80GB\n- FP16 下：7B≈14GB、13B≈26GB、70B≈140GB\n- 7B/13B 可单卡运行，70B 需 2-4 卡 TP\n- 设计目标：参数量 ÷ 2 bytes ≈ N × 单卡显存\n\n2. **训练效率 (Chinchilla Laws)**\n- DeepMind 研究表明：最优训练是参数量与数据量按 ~20:1 的 token:param 比例\n- 7B 模型 → ~140B tokens\n- 70B 模型 → ~1.4T tokens\n\n3. **推理成本**\n- 推理成本 ∝ 参数量\n- 7B 适合大规模部署（边缘设备/低成本）\n- 70B 适合高质量场景\n\n4. **DeepSeek 的创新**\n- MoE 架构打破线性关系：总参数大但激活参数小\n- DeepSeek-V3: 671B 总参数但仅 37B 激活\n- 推理成本接近 37B 稠密模型\n\n5. **实际约束**\n- 并行度：参数量需要能被 TP/PP 度数整除\n- 带宽：跨卡通信量与参数分布相关\n\n**趋势**：MoE 让'总参数'和'推理成本'解耦，未来规模设计会更灵活。",
+    "question": "大模型参数量为何常设计为 7B、13B、33B、65B 等数值?这些数字背后有什么讲究",
+    "answer": "- *参数规模设计的工程考量**\n\n1. **GPU 显存对齐**\n- 单张 A100/H100 = 40GB/80GB\n- FP16 下:7B≈14GB、13B≈26GB、70B≈140GB\n- 7B/13B 可单卡运行,70B 需 2-4 卡 TP\n- 设计目标:参数量 ÷ 2 bytes ≈ N × 单卡显存\n\n2. **训练效率 (Chinchilla Laws)**\n- DeepMind 研究表明:最优训练是参数量与数据量按 ~20:1 的 token:param 比例\n- 7B 模型 → ~140B tokens\n- 70B 模型 → ~1.4T tokens\n\n3. **推理成本**\n- 推理成本 ∝ 参数量\n- 7B 适合大规模部署(边缘设备/低成本)\n- 70B 适合高质量场景\n\n4. **DeepSeek 的创新**\n- MoE 架构打破线性关系:总参数大但激活参数小\n- DeepSeek-V3: 671B 总参数但仅 37B 激活\n- 推理成本接近 37B 稠密模型\n\n5. **实际约束**\n- 并行度:参数量需要能被 TP/PP 度数整除\n- 带宽:跨卡通信量与参数分布相关\n\n- *趋势**:MoE 让'总参数'和'推理成本'解耦,未来规模设计会更灵活.",
     "follow_up": [
-      "MoE 的专家数量怎么确定？",
-      "Chinchilla 定律对 MoE 适用吗？"
+      "MoE 的专家数量怎么确定?",
+      "Chinchilla 定律对 MoE 适用吗?"
     ]
   },
   {
-    "id": "bili-006",
+    "id": "llm--004",
     "category": "llm-core",
     "subcategory": "对齐训练",
-    "difficulty": "L5",
-    "tags": [
-      "GRPO",
-      "PPO",
-      "DPO",
-      "强化学习",
-      "对齐"
-    ],
-    "question": "GRPO、PPO、DPO 三者的区别是什么？各自的优缺点？",
-    "answer": "**三者对比**\n\n| 维度 | PPO | DPO | GRPO |\n|------|-----|-----|------|\n| 类型 | On-policy RL | Off-policy 偏好学习 | On-policy RL |\n| 需要RM | ✅ 需要单独 RM | ❌ 隐式 reward | ❌ 组内相对优势 |\n| 需要ref model | ✅ | ✅ | ✅ |\n| 数据 | 实时采样 + RM 打分 | 偏好对 (chosen/rejected) | 同一 prompt 多个采样 + 规则打分 |\n| 训练稳定性 | 中（超参敏感） | 高（直接优化） | 高（组内归一化降方差）|\n\n**PPO 优缺点**\n- 优点：理论成熟，可在线探索\n- 缺点：4 个模型同时训练（policy/ref/reward/value），显存大，超参敏感\n\n**DPO 优缺点**\n- 优点：简单（只需偏好对），训练稳定\n- 缺点：依赖离线偏好数据质量，不能在线探索更好的策略\n\n**GRPO 优缺点 (DeepSeek)**\n- 优点：不需要单独 RM，用组内相对优势替代；减少方差；对推理任务特别有效（可用规则判定对错）\n- 缺点：需要多次采样（组大小 G=4~64），计算成本较高\n\n**选择建议**：\n- 通用对齐 → DPO\n- 推理能力强化 → GRPO\n- 在线探索需求 → PPO",
+    "difficulty": "L2",
+    "tags": [],
+    "question": "GRPO、PPO、DPO 三者的区别是什么?各自的优缺点",
+    "answer": "- *三者对比**\n\n| 维度 | PPO | DPO | GRPO |\n|------|-----|-----|------|\n| 类型 | On-policy RL | Off-policy 偏好学习 | On-policy RL |\n| 需要RM | ✅ 需要单独 RM | ❌ 隐式 reward | ❌ 组内相对优势 |\n| 需要ref model | ✅ | ✅ | ✅ |\n| 数据 | 实时采样 + RM 打分 | 偏好对 (chosen/rejected) | 同一 prompt 多个采样 + 规则打分 |\n| 训练稳定性 | 中(超参敏感) | 高(直接优化) | 高(组内归一化降方差)|\n\n- *PPO 优缺点**\n- 优点:理论成熟,可在线探索\n- 缺点:4 个模型同时训练(policy/ref/reward/value),显存大,超参敏感\n\n- *DPO 优缺点**\n- 优点:简单(只需偏好对),训练稳定\n- 缺点:依赖离线偏好数据质量,不能在线探索更好的策略\n\n- *GRPO 优缺点 (DeepSeek)**\n- 优点:不需要单独 RM,用组内相对优势替代;减少方差;对推理任务特别有效(可用规则判定对错)\n- 缺点:需要多次采样(组大小 G=4~64),计算成本较高\n\n- *选择建议**:\n- 通用对齐 → DPO\n- 推理能力强化 → GRPO\n- 在线探索需求 → PPO",
     "follow_up": [
-      "GRPO 的组大小 G 如何选择？",
-      "为什么 GRPO 对推理任务特别有效？"
+      "GRPO 的组大小 G 如何选择?",
+      "为什么 GRPO 对推理任务特别有效?"
     ]
   },
   {
-    "id": "bili-008",
+    "id": "llm--005",
     "category": "llm-core",
     "subcategory": "表示学习",
-    "difficulty": "L4",
+    "difficulty": "L2",
     "tags": [
-      "SimCSE",
-      "对比学习",
-      "Embedding",
-      "句子表示"
+      "IOC"
     ],
-    "question": "SimCSE 的核心思想是什么？它如何解决句子嵌入的各向异性问题？",
-    "answer": "**SimCSE (Simple Contrastive Learning of Sentence Embeddings)**\n\n**背景问题：各向异性 (Anisotropy)**\n- 预训练 BERT 的句向量分布在一个窄锥形空间中，所有向量挤在一个方向\n- 导致余弦相似度区分度低：任意两句话的相似度都偏高\n\n**SimCSE 核心思想：通过对比学习拉开向量分布**\n\n**无监督 SimCSE**\n- 正样本：同一句子两次 dropout 前向传播（Dropout 引入微小差异）\n- 负样本：batch 内其他句子\n- Loss = -log( exp(sim(x,x+)) / Σ exp(sim(x,x_i)) )\n\n**有监督 SimCSE**\n- 正样本：NLI 数据集中的蕴含句子对\n- 负样本：矛盾句子对（hard negative）\n\n**为什么有效**\n1. 对比学习将向量推向均匀分布 → 缓解各向异性\n2. Dropout 作为最小化增强，保持语义不变\n3. 学习到的不变特征更有泛化力\n\n**效果**：STS-B 等语义相似度任务上大幅提升（BERT: 0.48 → SimCSE: 0.81）",
+    "question": "SimCSE 的核心思想是什么?它如何解决句子嵌入的各向异性问题",
+    "answer": "- *SimCSE (Simple Contrastive Learning of Sentence Embeddings)**\n\n- *背景问题:各向异性 (Anisotropy)**\n- 预训练 BERT 的句向量分布在一个窄锥形空间中,所有向量挤在一个方向\n- 导致余弦相似度区分度低:任意两句话的相似度都偏高\n\n- *SimCSE 核心思想:通过对比学习拉开向量分布**\n\n- *无监督 SimCSE**\n- 正样本:同一句子两次 dropout 前向传播(Dropout 引入微小差异)\n- 负样本:batch 内其他句子\n- Loss = -log( exp(sim(x,x+)) / Σ exp(sim(x,x_i)) )\n\n- *有监督 SimCSE**\n- 正样本:NLI 数据集中的蕴含句子对\n- 负样本:矛盾句子对(hard negative)\n\n- *为什么有效**\n1. 对比学习将向量推向均匀分布 → 缓解各向异性\n2. Dropout 作为最小化增强,保持语义不变\n3. 学习到的不变特征更有泛化力\n\n- *效果**:STS-B 等语义相似度任务上大幅提升(BERT: 0.48 → SimCSE: 0.81)",
     "follow_up": [
-      "SimCSE 的 dropout rate 怎么设置？",
-      "对比学习的温度参数有什么作用？"
+      "SimCSE 的 dropout rate 怎么设置?",
+      "对比学习的温度参数有什么作用?"
     ]
   },
   {
-    "id": "bili-009",
+    "id": "llm--006",
     "category": "llm-core",
     "subcategory": "模型架构",
-    "difficulty": "L4",
+    "difficulty": "L2",
     "tags": [
-      "Llama3",
-      "GQA",
-      "RoPE",
-      "SwiGLU",
-      "开源模型"
+      "IO"
     ],
-    "question": "Llama 3 相比 Llama 2 有哪些关键技术改进？",
-    "answer": "**Llama 3 核心技术升级**\n\n1. **Tokenizer 升级**\n- Llama 2: 32K vocab (SentencePiece)\n- Llama 3: 128K vocab (tiktoken-based)\n- 效果：更好的多语言支持、代码处理能力更强、压缩率提升 15%\n\n2. **Grouped-Query Attention (GQA)**\n- Llama 2 (70B): MHA → GQA\n- Llama 3 (全系 8B/70B/405B): 全部使用 GQA\n- 优势：KV Cache 显存减少，推理更快\n\n3. **RoPE 基频调整**\n- Llama 2: θ=10000\n- Llama 3: θ=500000（支持更长的上下文外推）\n\n4. **SwiGLU 激活函数**\n- 与 Llama 2 一致：FFN 使用 SwiGLU\n\n5. **训练数据**\n- Llama 2: 2T tokens\n- Llama 3: 15T+ tokens（多语言、代码、推理密集）\n\n6. **规模**\n- 8B / 70B / 405B（400B+ 是目前最大开源稠密模型之一）\n- 遵循 Chinchilla 最优 ratio\n\n7. **对齐技术**\n- RLHF + DPO 组合\n- 多轮对话能力显著增强\n- 工具调用（Function Calling）原生支持\n\n**8B vs 70B 对比**：8B 适合边缘部署，70B 接近 GPT-4 水平，405B 在部分基准超越 GPT-4。",
+    "question": "Llama 3 相比 Llama 2 有哪些关键技术改进",
+    "answer": "- *Llama 3 核心技术升级**\n\n1. **Tokenizer 升级**\n- Llama 2: 32K vocab (SentencePiece)\n- Llama 3: 128K vocab (tiktoken-based)\n- 效果:更好的多语言支持、代码处理能力更强、压缩率提升 15%\n\n2. **Grouped-Query Attention (GQA)**\n- Llama 2 (70B): MHA → GQA\n- Llama 3 (全系 8B/70B/405B): 全部使用 GQA\n- 优势:KV Cache 显存减少,推理更快\n\n3. **RoPE 基频调整**\n- Llama 2: θ=10000\n- Llama 3: θ=500000(支持更长的上下文外推)\n\n4. **SwiGLU 激活函数**\n- 与 Llama 2 一致:FFN 使用 SwiGLU\n\n5. **训练数据**\n- Llama 2: 2T tokens\n- Llama 3: 15T+ tokens(多语言、代码、推理密集)\n\n6. **规模**\n- 8B / 70B / 405B(400B+ 是目前最大开源稠密模型之一)\n- 遵循 Chinchilla 最优 ratio\n\n7. **对齐技术**\n- RLHF + DPO 组合\n- 多轮对话能力显著增强\n- 工具调用(Function Calling)原生支持\n\n- *8B vs 70B 对比**:8B 适合边缘部署,70B 接近 GPT-4 水平,405B 在部分基准超越 GPT-4.",
     "follow_up": [
-      "GQA 的 group size 怎么选？",
-      "Llama 3 的 128K context 怎么实现的？"
+      "GQA 的 group size 怎么选?",
+      "Llama 3 的 128K context 怎么实现的?"
     ]
   },
   {
-    "id": "bili-010",
+    "id": "llm--007",
     "category": "llm-core",
     "subcategory": "长上下文",
-    "difficulty": "L5",
+    "difficulty": "L2",
     "tags": [
-      "Infini-attention",
-      "Ring-Attention",
-      "长上下文",
-      "注意力机制"
+      "IO"
     ],
-    "question": "Infini-attention 和 Ring Attention 分别解决什么问题？它们的原理是什么？",
-    "answer": "**两种扩展注意力窗口到无限长度的方案**\n\n**Infini-attention (Google, 2024)**\n核心思想：**压缩记忆 + 局部注意力**\n- 将输入分段，每段用标准因果注意力处理\n- 段间用**压缩记忆**（delta rule 更新）传递信息\n- 毣合当前段的注意力输出和压缩记忆的检索输出\n\n优点：\n- 显存恒定（不随序列长度增长）\n- 可处理无限长度（理论上）\n- 兼容标准 Transformer 训练\n\n公式：A_infi = σ(A_dot) + (1-σ) · A_mem\n（σ 是可学习的门控，平衡局部注意力和记忆检索）\n\n**Ring Attention (UC Berkeley, 2023)**\n核心思想：**跨 GPU 环形通信**\n- 将长序列切分到多个 GPU\n- GPU 组成环形拓扑，KV 块沿环传递\n- 每收到一个 KV 块就计算部分注意力\n\n优点：\n- 支持百万级上下文（1M+ tokens）\n- 不修改模型结构，纯系统级优化\n- 与 Flash Attention 兼容\n\n缺点：\n- 需要 GPU 数量与序列长度成正比\n- 环形通信增加延迟\n\n**对比**：Infini 改模型结构（显存O(1)），Ring 改系统调度（多卡扩展）。",
+    "question": "Infini-attention 和 Ring Attention 分别解决什么问题?它们的原理是什么",
+    "answer": "- *两种扩展注意力窗口到无限长度的方案**\n\n- *Infini-attention (Google, 2024)**\n**核心思想：** **压缩记忆 + 局部注意力**\n- 将输入分段,每段用标准因果注意力处理\n- 段间用**压缩记忆**(delta rule 更新)传递信息\n- 毣合当前段的注意力输出和压缩记忆的检索输出\n\n**优点：** \n- 显存恒定(不随序列长度增长)\n- 可处理无限长度(理论上)\n- 兼容标准 Transformer 训练\n\n**公式：** A_infi = σ(A_dot) + (1-σ) · A_mem\n(σ 是可学习的门控,平衡局部注意力和记忆检索)\n\n- *Ring Attention (UC Berkeley, 2023)**\n**核心思想：** **跨 GPU 环形通信**\n- 将长序列切分到多个 GPU\n- GPU 组成环形拓扑,KV 块沿环传递\n- 每收到一个 KV 块就计算部分注意力\n\n**优点：** \n- 支持百万级上下文(1M+ tokens)\n- 不修改模型结构,纯系统级优化\n- 与 Flash Attention 兼容\n\n**缺点：** \n- 需要 GPU 数量与序列长度成正比\n- 环形通信增加延迟\n\n- *对比**:Infini 改模型结构(显存O(1)),Ring 改系统调度(多卡扩展).",
     "follow_up": [
-      "Infini-attention 的压缩记忆如何避免信息丢失？",
-      "Ring Attention 在多少 GPU 时有收益？"
+      "Infini-attention 的压缩记忆如何避免信息丢失?",
+      "Ring Attention 在多少 GPU 时有收益?"
     ]
   },
   {
-    "id": "dw-001",
+    "id": "llm--008",
     "category": "llm-core",
     "subcategory": "长上下文",
-    "difficulty": "L5",
-    "tags": [
-      "Mamba",
-      "SSM",
-      "状态空间模型",
-      "Transformer替代",
-      "前沿"
-    ],
-    "question": "Mamba（状态空间模型 SSM）与 Transformer 的核心区别是什么？它有什么优势？",
-    "answer": "**Mamba (State Space Model, SSM)**\n\n核心区别：\n1. **注意力机制**：Transformer 用全局自注意力（O(n²)），Mamba 用选择性状态空间模型（O(n)）\n2. **推理复杂度**：Transformer 推理时每生成一个 token 需回看全部历史（KV Cache）；Mamba 用固定大小的隐状态，推理 O(1)\n3. **长序列建模**：Mamba 天然适合超长序列（无 context window 限制）\n\n**Mamba 的核心创新：选择性 SSM**\n- 传统 SSM（S4）是时不变的，无法根据输入选择性记忆\n- Mamba 引入输入相关的参数（Δ, B, C 随输入变化），实现'选择性遗忘和记忆'\n- 类比：Mamba 像 RNN 一样有压缩的隐状态，但通过选择性机制接近 Transformer 的建模能力\n\n**优势**\n- 训练：可线性扩展到百万级 token\n- 推理：无 KV Cache 膨胀，吞吐量高\n- 显存：固定隐状态，不随序列长度增长\n\n**劣势**\n- 复制任务不如 Transformer（难以精确复制远距离 token）\n- 生态不如 Transformer 成熟\n- 当前在代码/数学任务上仍有差距\n\n**趋势**：Jamba (AI21) 等混合架构 = Transformer + Mamba，兼顾两者优势。",
+    "difficulty": "L2",
+    "tags": [],
+    "question": "Mamba(状态空间模型 SSM)与 Transformer 的核心区别是什么?它有什么优势",
+    "answer": "- *Mamba (State Space Model, SSM)**\n\n**核心区别：** \n1. **注意力机制**:Transformer 用全局自注意力(O(n²)),Mamba 用选择性状态空间模型(O(n))\n2. **推理复杂度**:Transformer 推理时每生成一个 token 需回看全部历史(KV Cache);Mamba 用固定大小的隐状态,推理 O(1)\n3. **长序列建模**:Mamba 天然适合超长序列(无 context window 限制)\n\n- *Mamba 的核心创新:选择性 SSM**\n- 传统 SSM(S4)是时不变的,无法根据输入选择性记忆\n- Mamba 引入输入相关的参数(Δ, B, C 随输入变化),实现'选择性遗忘和记忆'\n- 类比:Mamba 像 RNN 一样有压缩的隐状态,但通过选择性机制接近 Transformer 的建模能力\n\n- *优势**\n- 训练:可线性扩展到百万级 token\n- 推理:无 KV Cache 膨胀,吞吐量高\n- 显存:固定隐状态,不随序列长度增长\n\n- *劣势**\n- 复制任务不如 Transformer(难以精确复制远距离 token)\n- 生态不如 Transformer 成熟\n- 当前在代码/数学任务上仍有差距\n\n- *趋势**:Jamba (AI21) 等混合架构 = Transformer + Mamba,兼顾两者优势.",
     "follow_up": [
-      "Mamba 的选择性机制具体怎么实现的？",
-      "Jamba 混合架构如何分配 Transformer 和 Mamba 层？"
+      "Mamba 的选择性机制具体怎么实现的?",
+      "Jamba 混合架构如何分配 Transformer 和 Mamba 层?"
     ]
   },
   {
-    "id": "dw-002",
+    "id": "llm--009",
     "category": "llm-core",
     "subcategory": "对齐训练",
-    "difficulty": "L5",
+    "difficulty": "L2",
     "tags": [
-      "GSPO",
-      "DAPO",
-      "GRPO",
-      "对齐",
-      "强化学习",
-      "前沿"
+      "IO"
     ],
-    "question": "GSPO 和 DAPO 是什么？它们与 GRPO 有什么区别？",
-    "answer": "**GSPO (Group Sequence Policy Optimization)**\n\n是对 GRPO 的改进，核心变化：\n1. **序列级重要性采样**：GRPO 在 token 级别做重要性采样，GSPO 改为序列级别\n2. **降低方差**：序列级归一化减少训练不稳定性\n3. **更稳定的 KL 控制**：用序列级 KL 散度替代 token 级\n\n**DAPO (Dynamic Adaptive Policy Optimization)**\n\n另一个 GRPO 变体：\n1. **动态优势权重**：根据生成质量动态调整正负样本的权重\n2. **自适应 clip 范围**：PPO 的 clip 范围 ε 根据训练进度自适应调整\n3. **长序列友好**：对长推理链（如数学证明）的奖励信号更敏感\n\n**三者核心对比**\n\n| 维度 | GRPO | GSPO | DAPO |\n|------|------|------|------|\n| 采样粒度 | token 级 | 序列级 | 动态 |\n| KL 控制 | token 级 | 序列级 | 自适应 |\n| 优势估计 | 组内相对 | 序列归一化 | 动态加权 |\n| 适用场景 | 通用 | 稳定性优先 | 长推理链 |\n\n**总结**：从 GRPO → GSPO/DAPO 的演进，本质上是在解决'如何更稳定、更有效地将序列级奖励分配到 token 级别'的信用分配问题。",
+    "question": "GSPO 和 DAPO 是什么?它们与 GRPO 有什么区别",
+    "answer": "- *GSPO (Group Sequence Policy Optimization)**\n\n是对 GRPO 的改进,核心变化:\n1. **序列级重要性采样**:GRPO 在 token 级别做重要性采样,GSPO 改为序列级别\n2. **降低方差**:序列级归一化减少训练不稳定性\n3. **更稳定的 KL 控制**:用序列级 KL 散度替代 token 级\n\n- *DAPO (Dynamic Adaptive Policy Optimization)**\n\n另一个 GRPO 变体:\n1. **动态优势权重**:根据生成质量动态调整正负样本的权重\n2. **自适应 clip 范围**:PPO 的 clip 范围 ε 根据训练进度自适应调整\n3. **长序列友好**:对长推理链(如数学证明)的奖励信号更敏感\n\n- *三者核心对比**\n\n| 维度 | GRPO | GSPO | DAPO |\n|------|------|------|------|\n| 采样粒度 | token 级 | 序列级 | 动态 |\n| KL 控制 | token 级 | 序列级 | 自适应 |\n| 优势估计 | 组内相对 | 序列归一化 | 动态加权 |\n| 适用场景 | 通用 | 稳定性优先 | 长推理链 |\n\n- *总结**:从 GRPO → GSPO/DAPO 的演进,本质上是在解决'如何更稳定、更有效地将序列级奖励分配到 token 级别'的信用分配问题.",
     "follow_up": [
-      "为什么 token 级 KL 散度不如序列级稳定？",
-      "DAPO 的自适应 clip 如何设计？"
+      "为什么 token 级 KL 散度不如序列级稳定?",
+      "DAPO 的自适应 clip 如何设计?"
     ]
   },
   {
-    "id": "dw-003",
+    "id": "llm--010",
     "category": "llm-core",
     "subcategory": "对齐训练",
-    "difficulty": "L5",
+    "difficulty": "L2",
     "tags": [
-      "信用分配",
-      "token级奖励",
-      "序列级奖励",
-      "强化学习",
-      "前沿"
+      "IO",
+      "IOC",
+      "Elasticsearch"
     ],
-    "question": "在大模型强化学习对齐中，如何解决信用分配（Credit Assignment）问题？token 级别和序列级别的奖励有什么不同？",
-    "answer": "**信用分配问题**：给定一个序列级奖励（如'这个回答好/差'），如何确定序列中哪些 token 贡献了正向/负向价值？\n\n**序列级奖励 (Sequence-level)**\n- 整个回答获得一个标量 reward\n- 优点：标注成本低（人类只需整体评分）\n- 缺点：无法区分序列中哪部分好哪部分差\n\n**Token 级奖励 (Token-level)**\n- 序列中每个 token 获得独立 reward\n- 优点：精确指导哪些 token 该加强/减弱\n- 缺点：标注成本极高，通常无法直接获得\n\n**主流信用分配方法**\n\n1. **GAE (Generalized Advantage Estimation)**\n- PPO 标准方法，用 value function 估计每个 token 的优势\n- 需要 value model（额外参数和计算）\n\n2. **GRPO 的组内相对优势**\n- 同一 prompt 采样 G 个回答，用组内排名作为优势\n- 不需要 value model，但组大小影响估计质量\n\n3. **过程奖励模型 (PRM, Process Reward Model)**\n- 对推理过程的每一步打分（如 OpenAI 的 Math PRM）\n- 精确但需要大量步骤级标注数据\n\n4. **隐式 token 归因**\n- 用梯度或注意力权重推断哪些 token 贡献了奖励\n- 如 Integrated Gradients、Attention rollout\n\n**实践建议**：推理任务（数学/代码）适合 PRM，对话任务适合 GAE/GRPO。",
+    "question": "在大模型强化学习对齐中,如何解决信用分配(Credit Assignment)问题?token 级别和序列级别的奖励有什么不同",
+    "answer": "- *信用分配问题**:给定一个序列级奖励(如'这个回答好/差'),如何确定序列中哪些 token 贡献了正向/负向价值?\n\n- *序列级奖励 (Sequence-level)**\n- 整个回答获得一个标量 reward\n- 优点:标注成本低(人类只需整体评分)\n- 缺点:无法区分序列中哪部分好哪部分差\n\n- *Token 级奖励 (Token-level)**\n- 序列中每个 token 获得独立 reward\n- 优点:精确指导哪些 token 该加强/减弱\n- 缺点:标注成本极高,通常无法直接获得\n\n- *主流信用分配方法**\n\n1. **GAE (Generalized Advantage Estimation)**\n- PPO 标准方法,用 value function 估计每个 token 的优势\n- 需要 value model(额外参数和计算)\n\n2. **GRPO 的组内相对优势**\n- 同一 prompt 采样 G 个回答,用组内排名作为优势\n- 不需要 value model,但组大小影响估计质量\n\n3. **过程奖励模型 (PRM, Process Reward Model)**\n- 对推理过程的每一步打分(如 OpenAI 的 Math PRM)\n- 精确但需要大量步骤级标注数据\n\n4. **隐式 token 归因**\n- 用梯度或注意力权重推断哪些 token 贡献了奖励\n- 如 Integrated Gradients、Attention rollout\n\n- *实践建议**:推理任务(数学/代码)适合 PRM,对话任务适合 GAE/GRPO.",
     "follow_up": [
-      "PRM 的数据怎么收集？",
-      "为什么 GRPO 不需要 value model？"
+      "PRM 的数据怎么收集?",
+      "为什么 GRPO 不需要 value model?"
     ]
   },
   {
-    "id": "dw-006",
+    "id": "llm--011",
     "category": "llm-core",
     "subcategory": "LLM前沿",
-    "difficulty": "L4",
+    "difficulty": "L2",
     "tags": [
-      "具身智能",
-      "Embodied AI",
-      "机器人",
-      "LLM",
-      "前沿"
+      "IOC",
+      "Elasticsearch"
     ],
-    "question": "什么是具身智能（Embodied AI）？LLM 如何赋能机器人？",
-    "answer": "**具身智能**：AI 拥有'身体'（机器人/虚拟形象），通过感知-决策-执行的闭环与物理世界交互。\n\n**LLM 在具身智能中的角色**\n\n1. **高级任务规划**\n- 用户：'帮我泡杯咖啡'\n- LLM 拆解：1.走到厨房 → 2.找到杯子 → 3.操作咖啡机 → 4.倒水 → 5.端回来\n\n2. **代码生成控制**\n- LLM 直接生成机器人控制代码（Python/C++）\n- 如 Google RT-2：视觉 → LLM → 动作 token\n\n3. **常识推理**\n- '杯子掉在地上会碎' → 规划时避免\n- '水太烫要等一下' → 执行时调整\n\n**核心挑战**\n1. **感知-动作鸿沟**：文本/图像是离散的，动作是连续的（关节角度、力大小）\n2. **实时性**：物理世界不能等 LLM 推理 5 秒\n3. **安全约束**：错误动作可能造成物理损坏\n4. **数据稀缺**：真实机器人交互数据采集成本极高\n\n**代表项目**\n- **RT-2 (Google)**：VLM 直接输出机器人动作\n- **NVIDIA GR00T**：人形机器人的基础模型\n- **Figure 01/02**：OpenAI 支持的人形机器人\n- **Tesla Optimus**：端到端神经网络控制\n\n**趋势**：从'仿真训练+真实部署'(Sim2Real) 到'真实数据+大规模训练'。",
+    "question": "什么是具身智能(Embodied AI)?LLM 如何赋能机器人",
+    "answer": "- *具身智能**:AI 拥有'身体'(机器人/虚拟形象),通过感知-决策-执行的闭环与物理世界交互.\n\n- *LLM 在具身智能中的角色**\n\n1. **高级任务规划**\n- 用户:'帮我泡杯咖啡'\n- LLM 拆解:1.走到厨房 → 2.找到杯子 → 3.操作咖啡机 → 4.倒水 → 5.端回来\n\n2. **代码生成控制**\n- LLM 直接生成机器人控制代码(Python/C++)\n- 如 Google RT-2:视觉 → LLM → 动作 token\n\n3. **常识推理**\n- '杯子掉在地上会碎' → 规划时避免\n- '水太烫要等一下' → 执行时调整\n\n- *核心挑战**\n1. **感知-动作鸿沟**:文本/图像是离散的,动作是连续的(关节角度、力大小)\n2. **实时性**:物理世界不能等 LLM 推理 5 秒\n3. **安全约束**:错误动作可能造成物理损坏\n4. **数据稀缺**:真实机器人交互数据采集成本极高\n\n- *代表项目**\n- **RT-2 (Google)**:VLM 直接输出机器人动作\n- **NVIDIA GR00T**:人形机器人的基础模型\n- **Figure 01/02**:OpenAI 支持的人形机器人\n- **Tesla Optimus**:端到端神经网络控制\n\n- *趋势**:从'仿真训练+真实部署'(Sim2Real) 到'真实数据+大规模训练'.",
     "follow_up": [
-      "Sim2Real 的 gap 如何弥补？",
-      "RT-2 如何将动作编码为 token？"
+      "Sim2Real 的 gap 如何弥补?",
+      "RT-2 如何将动作编码为 token?"
     ]
   },
   {
-    "id": "pdf-002",
+    "id": "llm--012",
     "category": "llm-core",
     "subcategory": "训练优化",
     "difficulty": "L3",
     "tags": [
-      "损失缩放",
-      "Loss Scaling",
-      "混合精度",
-      "FP16",
-      "训练",
-      "面试100问"
+      "IO",
+      "CAS"
     ],
-    "question": "什么是损失缩放（Loss Scaling）？为什么混合精度训练需要它？",
-    "answer": "**损失缩放 (Loss Scaling)** 是混合精度训练中解决 FP16 梯度下溢（underflow）的关键技术。\n\n**问题背景**\n- FP16 的最小正常数约为 6e-5，很多梯度值小于此值会被截断为 0\n- 梯度为 0 → 参数不更新 → 模型停止学习\n\n**损失缩放原理**\n\n1. **前向传播**：正常计算，得到 loss\n2. **损失放大**：loss × scale_factor（如 2^16 = 65536）\n3. **反向传播**：放大后的 loss 产生放大的梯度，避免下溢\n4. **梯度缩小**：更新前，梯度 ÷ scale_factor 恢复真实值\n\n```python\n# PyTorch AMP (自动混合精度)\nscaler = torch.cuda.amp.GradScaler()\n\nwith torch.cuda.amp.autocast():\n    output = model(inputs)\n    loss = criterion(output, targets)\n\nscaler.scale(loss).backward()  # 放大 loss\nscaler.step(optimizer)          # 更新（自动缩小梯度）\nscaler.update()                 # 动态调整 scale_factor\n```\n\n**动态损失缩放**\n- 如果梯度出现 inf/nan → scale_factor 减半\n- 连续 N 步无 inf/nan → scale_factor 翻倍\n- 自动找到合适的 scale，无需手动调参\n\n**bfloat16 vs float16**\n- float16: 指数位 5bit，尾数位 10bit → 动态范围小，需要 loss scaling\n- bfloat16: 指数位 8bit，尾数位 7bit → 动态范围与 float32 相同，**不需要 loss scaling**\n- 但 bfloat16 精度略低，某些任务可能略差\n\n**经验**：现代训练推荐用 bfloat16（如果 GPU 支持），省去 loss scaling 的复杂性。",
+    "question": "什么是损失缩放(Loss Scaling)?为什么混合精度训练需要它",
+    "answer": "- *损失缩放 (Loss Scaling)** 是混合精度训练中解决 FP16 梯度下溢(underflow)的关键技术.\n\n- *问题背景**\n- FP16 的最小正常数约为 6e-5,很多梯度值小于此值会被截断为 0\n- 梯度为 0 → 参数不更新 → 模型停止学习\n\n- *损失缩放原理**\n\n1. **前向传播**:正常计算,得到 loss\n2. **损失放大**:loss × scale_factor(如 2^16 = 65536)\n3. **反向传播**:放大后的 loss 产生放大的梯度,避免下溢\n4. **梯度缩小**:更新前,梯度 ÷ scale_factor 恢复真实值\n\n```python\n# PyTorch AMP (自动混合精度)\nscaler = torch.cuda.amp.GradScaler()\n\nwith torch.cuda.amp.autocast():\noutput = model(inputs)\nloss = criterion(output, targets)\n\nscaler.scale(loss).backward()  # 放大 loss\nscaler.step(optimizer)          # 更新(自动缩小梯度)\nscaler.update()                 # 动态调整 scale_factor\n```\n\n- *动态损失缩放**\n- 如果梯度出现 inf/nan → scale_factor 减半\n- 连续 N 步无 inf/nan → scale_factor 翻倍\n- 自动找到合适的 scale,无需手动调参\n\n- *bfloat16 vs float16**\n- float16: 指数位 5bit,尾数位 10bit → 动态范围小,需要 loss scaling\n- bfloat16: 指数位 8bit,尾数位 7bit → 动态范围与 float32 相同,**不需要 loss scaling**\n- 但 bfloat16 精度略低,某些任务可能略差\n\n- *经验**:现代训练推荐用 bfloat16(如果 GPU 支持),省去 loss scaling 的复杂性.",
     "follow_up": [
-      "如何判断梯度是否发生了下溢？",
-      "bfloat16 在哪些 GPU 上支持？"
+      "如何判断梯度是否发生了下溢?",
+      "bfloat16 在哪些 GPU 上支持?"
     ]
   },
   {
-    "id": "opt-l1-001",
+    "id": "llm--013",
+    "category": "llm-core",
+    "subcategory": "大模型基础",
+    "difficulty": "L1",
+    "tags": [],
+    "question": "什么是大语言模型(LLM)?它的核心能力有哪些",
+    "answer": "- *大语言模型 (LLM)** 是基于 Transformer 架构、在海量文本上训练的超大规模神经网络模型.\n\n- *核心能力**\n1. **语言理解**:理解指令、推理、翻译\n2. **文本生成**:对话、写作、代码补全\n3. **知识记忆**:训练数据中的事实和模式\n4. **指令跟随**:按格式/约束输出\n\n- *代表模型**:GPT-4、Claude、GLM、Llama、Qwen\n\n- *一句话理解**:LLM = 超大规模参数 + 海量训练数据 + Transformer 架构 → 涌现出语言理解和生成能力.",
+    "follow_up": [
+      "LLM 和传统 NLP 模型有什么区别?",
+      "LLM 的'涌现能力'指什么?"
+    ]
+  },
+  {
+    "id": "llm--014",
+    "category": "llm-core",
+    "subcategory": "大模型基础",
+    "difficulty": "L1",
+    "tags": [],
+    "question": "什么是 Token?为什么大模型用 Token 而不是字或词",
+    "answer": "- *Token** 是大模型处理文本的最小单位,介于字符和词之间.\n\n- *为什么不用字?**\n- 单个字信息量太少,序列太长\n\n- *为什么不用词?**\n- 中文词边界不明确\n- 词表太大(百万级),模型难以处理\n\n- *Token 的优势**\n- 词表可控(通常 3万~12万)\n- 可处理新词、缩写、代码、emoji\n- 多语言通用\n\n- *例子**:'Hello World' → ['Hello', ' World'] = 2 tokens\n\n- *估算**:1 个中文 ≈ 1-2 tokens,1 个英文单词 ≈ 1-1.5 tokens.",
+    "follow_up": [
+      "BPE 和 WordPiece 有什么区别?",
+      "如何减少中文的 token 数量?"
+    ]
+  },
+  {
+    "id": "llm--015",
     "category": "llm-core",
     "subcategory": "大模型基础",
     "difficulty": "L1",
     "tags": [
-      "GPT",
-      "LLM",
-      "基础概念",
-      "入门"
+      "IO",
+      "Elasticsearch"
     ],
-    "question": "什么是大语言模型（LLM）？它的核心能力有哪些？",
-    "answer": "**大语言模型 (LLM)** 是基于 Transformer 架构、在海量文本上训练的超大规模神经网络模型。\n\n**核心能力**\n1. **语言理解**：理解指令、推理、翻译\n2. **文本生成**：对话、写作、代码补全\n3. **知识记忆**：训练数据中的事实和模式\n4. **指令跟随**：按格式/约束输出\n\n**代表模型**：GPT-4、Claude、GLM、Llama、Qwen\n\n**一句话理解**：LLM = 超大规模参数 + 海量训练数据 + Transformer 架构 → 涌现出语言理解和生成能力。",
+    "question": "什么是 Prompt(提示词)?好的 Prompt 有什么特点",
+    "answer": "- *Prompt** 是输入给大模型的指令文本,告诉模型'做什么'和'怎么做'.\n\n- *好的 Prompt 的 5 个要素**\n1. **角色**:'你是一个资深 Python 工程师'\n2. **任务**:'请审查以下代码的安全漏洞'\n3. **上下文**:提供背景信息/数据\n4. **格式**:'以 JSON 格式输出,包含 severity 和 description'\n5. **约束**:'不超过 200 字,不要编造信息'\n\n- *一句话理解**:Prompt 是你和大模型沟通的'语言',写得越清晰,回答越精准.",
     "follow_up": [
-      "LLM 和传统 NLP 模型有什么区别？",
-      "LLM 的'涌现能力'指什么？"
+      "Few-shot 和 Zero-shot 有什么区别?",
+      "如何衡量 Prompt 的质量?"
     ]
   },
   {
-    "id": "opt-l1-002",
+    "id": "llm--016",
     "category": "llm-core",
     "subcategory": "大模型基础",
-    "difficulty": "L1",
+    "difficulty": "L2",
     "tags": [
-      "Token",
-      "Tokenizer",
-      "分词",
-      "基础概念"
+      "IO",
+      "IOC"
     ],
-    "question": "什么是 Token？为什么大模型用 Token 而不是字或词？",
-    "answer": "**Token** 是大模型处理文本的最小单位，介于字符和词之间。\n\n**为什么不用字？**\n- 单个字信息量太少，序列太长\n\n**为什么不用词？**\n- 中文词边界不明确\n- 词表太大（百万级），模型难以处理\n\n**Token 的优势**\n- 词表可控（通常 3万~12万）\n- 可处理新词、缩写、代码、emoji\n- 多语言通用\n\n**例子**：'Hello World' → ['Hello', ' World'] = 2 tokens\n\n**估算**：1 个中文 ≈ 1-2 tokens，1 个英文单词 ≈ 1-1.5 tokens。",
+    "question": "大模型的训练过程分为哪几个阶段?每个阶段的目标是什么",
+    "answer": "- *大模型训练三阶段**\n\n1. **预训练 (Pre-training)**\n- 目标:从海量文本中学习语言规律和世界知识\n- 数据:万亿级 token(网页、书籍、代码)\n- 方法:预测下一个 token(next-token prediction)\n- 产出:基座模型(Base Model)\n\n2. **指令微调 (SFT)**\n- 目标:让模型学会遵循人类指令\n- 数据:高质量指令-回答对(几万到百万条)\n- 产出:对话模型(Chat Model)\n\n3. **对齐 (RLHF / DPO)**\n- 目标:让回答更安全、有用、符合人类偏好\n- 数据:偏好排序数据(好回答 vs 差回答)\n- 产出:对齐模型(Aligned Model)\n\n- *一句话理解**:预训练→学知识,SFT→学指令,RLHF→学品味.",
     "follow_up": [
-      "BPE 和 WordPiece 有什么区别？",
-      "如何减少中文的 token 数量？"
+      "预训练数据质量重要还是数量重要?",
+      "SFT 数据多少条够用?"
     ]
   },
   {
-    "id": "opt-l1-003",
-    "category": "llm-core",
-    "subcategory": "大模型基础",
-    "difficulty": "L1",
-    "tags": [
-      "Prompt",
-      "提示词",
-      "基础概念",
-      "入门"
-    ],
-    "question": "什么是 Prompt（提示词）？好的 Prompt 有什么特点？",
-    "answer": "**Prompt** 是输入给大模型的指令文本，告诉模型'做什么'和'怎么做'。\n\n**好的 Prompt 的 5 个要素**\n1. **角色**：'你是一个资深 Python 工程师'\n2. **任务**：'请审查以下代码的安全漏洞'\n3. **上下文**：提供背景信息/数据\n4. **格式**：'以 JSON 格式输出，包含 severity 和 description'\n5. **约束**：'不超过 200 字，不要编造信息'\n\n**一句话理解**：Prompt 是你和大模型沟通的'语言'，写得越清晰，回答越精准。",
-    "follow_up": [
-      "Few-shot 和 Zero-shot 有什么区别？",
-      "如何衡量 Prompt 的质量？"
-    ]
-  },
-  {
-    "id": "opt-l1-004",
-    "category": "llm-core",
-    "subcategory": "大模型基础",
-    "difficulty": "L1",
-    "tags": [
-      "预训练",
-      "SFT",
-      "基础概念",
-      "入门"
-    ],
-    "question": "大模型的训练过程分为哪几个阶段？每个阶段的目标是什么？",
-    "answer": "**大模型训练三阶段**\n\n1. **预训练 (Pre-training)**\n- 目标：从海量文本中学习语言规律和世界知识\n- 数据：万亿级 token（网页、书籍、代码）\n- 方法：预测下一个 token（next-token prediction）\n- 产出：基座模型（Base Model）\n\n2. **指令微调 (SFT)**\n- 目标：让模型学会遵循人类指令\n- 数据：高质量指令-回答对（几万到百万条）\n- 产出：对话模型（Chat Model）\n\n3. **对齐 (RLHF / DPO)**\n- 目标：让回答更安全、有用、符合人类偏好\n- 数据：偏好排序数据（好回答 vs 差回答）\n- 产出：对齐模型（Aligned Model）\n\n**一句话理解**：预训练→学知识，SFT→学指令，RLHF→学品味。",
-    "follow_up": [
-      "预训练数据质量重要还是数量重要？",
-      "SFT 数据多少条够用？"
-    ]
-  },
-  {
-    "id": "opt-l1-005",
+    "id": "llm--017",
     "category": "llm-core",
     "subcategory": "训练与微调",
     "difficulty": "L1",
-    "tags": [
-      "微调",
-      "Fine-tuning",
-      "基础概念",
-      "入门"
-    ],
-    "question": "什么是模型微调（Fine-tuning）？为什么不直接用预训练模型？",
-    "answer": "**微调 (Fine-tuning)** 是在预训练模型基础上，用特定领域数据继续训练，使其适应下游任务。\n\n**为什么不直接用预训练模型？**\n1. 预训练模型是'通才'，缺乏领域深度\n2. 不会遵循指令格式（如输出 JSON）\n3. 回复风格不符合业务需求\n4. 缺乏私有知识\n\n**微调方式**\n- **全量微调**：更新所有参数（效果好，成本高）\n- **LoRA**：只训练低秩适配器（成本低，效果接近）\n- **QLoRA**：4bit 量化 + LoRA（极致省显存）\n\n**一句话理解**：预训练模型 = 大学毕业生；微调 = 入职培训。",
+    "tags": [],
+    "question": "什么是模型微调(Fine-tuning)?为什么不直接用预训练模型",
+    "answer": "- *微调 (Fine-tuning)** 是在预训练模型基础上,用特定领域数据继续训练,使其适应下游任务.\n\n- *为什么不直接用预训练模型?**\n1. 预训练模型是'通才',缺乏领域深度\n2. 不会遵循指令格式(如输出 JSON)\n3. 回复风格不符合业务需求\n4. 缺乏私有知识\n\n- *微调方式**\n- **全量微调**:更新所有参数(效果好,成本高)\n- **LoRA**:只训练低秩适配器(成本低,效果接近)\n- **QLoRA**:4bit 量化 + LoRA(极致省显存)\n\n- *一句话理解**:预训练模型 = 大学毕业生;微调 = 入职培训.",
     "follow_up": [
-      "LoRA 为什么能减少训练参数？",
-      "微调多少条数据合适？"
+      "LoRA 为什么能减少训练参数?",
+      "微调多少条数据合适?"
     ]
   },
   {
-    "id": "opt-l1-006",
+    "id": "llm--018",
     "category": "llm-core",
     "subcategory": "大模型基础",
     "difficulty": "L1",
     "tags": [
-      "幻觉",
-      "Hallucination",
-      "基础概念",
-      "入门"
+      "IO"
     ],
-    "question": "什么是大模型的'幻觉'（Hallucination）？为什么会发生？",
-    "answer": "**幻觉** 指大模型生成看似合理但实际上不正确的内容。\n\n**幻觉类型**\n1. **事实幻觉**：说错事实（'爱因斯坦生于1900年' → 实际1879年）\n2. **逻辑幻觉**：推理过程有误\n3. **来源幻觉**：编造不存在的引用/论文\n\n**产生原因**\n- 训练数据有噪声或过时\n- 模型本质是'概率生成'，不是'知识检索'\n- 缺乏实时信息\n\n**缓解方法**\n- RAG：检索外部知识\n- 提示词约束：'如果不确定请说不知道'\n- 微调：减少编造倾向\n\n**一句话理解**：LLM 是'概率预测器'不是'数据库'，所以会'一本正经地胡说'。",
+    "question": "什么是大模型的'幻觉'(Hallucination)?为什么会发生",
+    "answer": "- *幻觉** 指大模型生成看似合理但实际上不正确的内容.\n\n- *幻觉类型**\n1. **事实幻觉**:说错事实('爱因斯坦生于1900年' → 实际1879年)\n2. **逻辑幻觉**:推理过程有误\n3. **来源幻觉**:编造不存在的引用/论文\n\n- *产生原因**\n- 训练数据有噪声或过时\n- 模型本质是'概率生成',不是'知识检索'\n- 缺乏实时信息\n\n- *缓解方法**\n- RAG:检索外部知识\n- 提示词约束:'如果不确定请说不知道'\n- 微调:减少编造倾向\n\n- *一句话理解**:LLM 是'概率预测器'不是'数据库',所以会'一本正经地胡说'.",
     "follow_up": [
-      "RAG 能完全消除幻觉吗？",
-      "如何量化幻觉率？"
+      "RAG 能完全消除幻觉吗?",
+      "如何量化幻觉率?"
     ]
   },
   {
-    "id": "opt-l1-007",
+    "id": "llm--019",
     "category": "llm-core",
     "subcategory": "推理与部署",
-    "difficulty": "L1",
-    "tags": [
-      "推理",
-      "API",
-      "基础概念",
-      "入门"
-    ],
-    "question": "大模型推理的输入和输出是什么？Temperature 参数有什么作用？",
-    "answer": "**推理 (Inference)** 是将输入文本送入模型，生成输出的过程。\n\n**输入**：一段文本序列（Token IDs）\n**输出**：模型预测的下一个 Token（逐个生成）\n\n**Temperature 参数**\n- **Temperature = 0**：每次选概率最高的 token（确定性输出）\n- **Temperature = 1**：按原始概率分布采样（有创造性）\n- **Temperature > 1**：概率分布更平坦（更随机，可能不连贯）\n\n**实用建议**\n- 代码生成/事实问答：Temperature = 0~0.3\n- 创意写作/头脑风暴：Temperature = 0.7~1.0\n- 超过 1.2 通常不建议\n\n**一句话理解**：Temperature 低 = 严谨（选最优），Temperature 高 = 创意（加点随机性）。",
+    "difficulty": "L2",
+    "tags": [],
+    "question": "大模型推理的输入和输出是什么?Temperature 参数有什么作用",
+    "answer": "- *推理 (Inference)** 是将输入文本送入模型,生成输出的过程.\n\n- *输入**:一段文本序列(Token IDs)\n- *输出**:模型预测的下一个 Token(逐个生成)\n\n- *Temperature 参数**\n- **Temperature = 0**:每次选概率最高的 token(确定性输出)\n- **Temperature = 1**:按原始概率分布采样(有创造性)\n- **Temperature > 1**:概率分布更平坦(更随机,可能不连贯)\n\n- *实用建议**\n- 代码生成/事实问答:Temperature = 0~0.3\n- 创意写作/头脑风暴:Temperature = 0.7~1.0\n- 超过 1.2 通常不建议\n\n- *一句话理解**:Temperature 低 = 严谨(选最优),Temperature 高 = 创意(加点随机性).",
     "follow_up": [
-      "Top-p 和 Temperature 有什么区别？",
-      "什么时候用 Beam Search？"
+      "Top-p 和 Temperature 有什么区别?",
+      "什么时候用 Beam Search?"
     ]
   },
   {
-    "id": "opt-l1-008",
+    "id": "llm--020",
     "category": "llm-core",
     "subcategory": "大模型基础",
-    "difficulty": "L1",
-    "tags": [
-      "开源模型",
-      "闭源模型",
-      "基础概念",
-      "入门"
-    ],
-    "question": "开源大模型和闭源大模型有什么区别？如何选择？",
-    "answer": "**开源 vs 闭源**\n\n| 维度 | 开源（Llama/Qwen/GLM） | 闭源（GPT-4/Claude） |\n|------|------------------------|---------------------|\n| 模型权重 | ✅ 可下载 | ❌ 只能用 API |\n| 微调 | ✅ 可自定义 | ❌ 只能 prompt |\n| 数据隐私 | ✅ 本地部署 | ❌ 数据上传 |\n| 成本 | 一次性 GPU 成本 | 按 token 付费 |\n| 能力上限 | 略低于顶级闭源 | 最强 |\n\n**选择建议**\n- **数据敏感**（金融/医疗）→ 开源本地部署\n- **需要深度定制**（行业模型）→ 开源 + 微调\n- **追求最强效果**（通用场景）→ 闭源 API\n- **成本敏感 + 高 QPS** → 开源自部署\n\n**趋势**：开源模型与闭源的差距在缩小（Llama 3.1 405B 接近 GPT-4）。",
+    "difficulty": "L2",
+    "tags": [],
+    "question": "开源大模型和闭源大模型有什么区别?如何选择",
+    "answer": "- *开源 vs 闭源**\n\n| 维度 | 开源(Llama/Qwen/GLM) | 闭源(GPT-4/Claude) |\n|------|------------------------|---------------------|\n| 模型权重 | ✅ 可下载 | ❌ 只能用 API |\n| 微调 | ✅ 可自定义 | ❌ 只能 prompt |\n| 数据隐私 | ✅ 本地部署 | ❌ 数据上传 |\n| 成本 | 一次性 GPU 成本 | 按 token 付费 |\n| 能力上限 | 略低于顶级闭源 | 最强 |\n\n- *选择建议**\n- **数据敏感**(金融/医疗)→ 开源本地部署\n- **需要深度定制**(行业模型)→ 开源 + 微调\n- **追求最强效果**(通用场景)→ 闭源 API\n- **成本敏感 + 高 QPS** → 开源自部署\n\n- *趋势**:开源模型与闭源的差距在缩小(Llama 3.1 405B 接近 GPT-4).",
     "follow_up": [
-      "7B 模型能做什么级别的任务？",
-      "如何评估开源模型够不够用？"
+      "7B 模型能做什么级别的任务?",
+      "如何评估开源模型够不够用?"
     ]
   },
   {
-    "id": "opt-l1-009",
+    "id": "llm--021",
     "category": "llm-core",
     "subcategory": "训练与微调",
-    "difficulty": "L1",
+    "difficulty": "L2",
     "tags": [
-      "上下文",
-      "Context Window",
-      "基础概念",
-      "入门"
+      "IO"
     ],
-    "question": "什么是上下文窗口（Context Window）？为什么它有限制？",
-    "answer": "**上下文窗口** 是大模型一次能处理的最大 Token 数量。\n\n**为什么有限制？**\n- Self-Attention 计算复杂度是 O(n²)\n- KV Cache 随序列增长占用显存\n- 序列越长，注意力越分散（Lost in the Middle）\n\n**常见窗口大小**\n- GPT-3: 4K tokens\n- GPT-4 Turbo: 128K tokens\n- Claude 3: 200K tokens\n- Gemini 1.5: 1M~2M tokens\n\n**窗口不够怎么办？**\n- RAG：只检索相关片段\n- 滑动窗口：分段处理\n- 上下文压缩：摘要+关键信息\n\n**一句话理解**：上下文窗口 = 大模型的'工作记忆容量'，类似人一次能记住多少页书。",
+    "question": "什么是上下文窗口(Context Window)?为什么它有限制",
+    "answer": "- *上下文窗口** 是大模型一次能处理的最大 Token 数量.\n\n- *为什么有限制?**\n- Self-Attention 计算复杂度是 O(n²)\n- KV Cache 随序列增长占用显存\n- 序列越长,注意力越分散(Lost in the Middle)\n\n- *常见窗口大小**\n- GPT-3: 4K tokens\n- GPT-4 Turbo: 128K tokens\n- Claude 3: 200K tokens\n- Gemini 1.5: 1M~2M tokens\n\n- *窗口不够怎么办?**\n- RAG:只检索相关片段\n- 滑动窗口:分段处理\n- 上下文压缩:摘要+关键信息\n\n- *一句话理解**:上下文窗口 = 大模型的'工作记忆容量',类似人一次能记住多少页书.",
     "follow_up": [
-      "如何实现百万级上下文？",
-      "Lost in the Middle 是什么问题？"
+      "如何实现百万级上下文?",
+      "Lost in the Middle 是什么问题?"
     ]
   },
   {
-    "id": "opt-l1-010",
+    "id": "llm--022",
     "category": "llm-core",
     "subcategory": "推理与部署",
-    "difficulty": "L1",
+    "difficulty": "L2",
     "tags": [
-      "Embedding",
-      "向量化",
-      "基础概念",
-      "入门"
+      "IOC"
     ],
-    "question": "什么是 Embedding（向量化）？它在 AI 中有什么用？",
-    "answer": "**Embedding** 是将文本（或图片）转换为固定维度的向量（如 768 维浮点数组），使语义相近的内容在向量空间中距离也近。\n\n**用途**\n1. **语义搜索**：'苹果手机' 和 'iPhone' 向量距离近\n2. **RAG 检索**：从知识库中找最相关的文档\n3. **聚类分类**：相似内容自动分组\n4. **推荐系统**：基于向量相似度推荐\n\n**直觉理解**\n- king - man + woman ≈ queen\n- 向量空间中'语义关系'可以用方向表示\n\n**常用模型**：BGE、text-embedding-ada-002、E5、M3E\n\n**一句话理解**：Embedding = 把文字变成'坐标'，让计算机用距离来衡量'语义相似度'。",
+    "question": "什么是 Embedding(向量化)?它在 AI 中有什么用",
+    "answer": "- *Embedding** 是将文本(或图片)转换为固定维度的向量(如 768 维浮点数组),使语义相近的内容在向量空间中距离也近.\n\n- *用途**\n1. **语义搜索**:'苹果手机' 和 'iPhone' 向量距离近\n2. **RAG 检索**:从知识库中找最相关的文档\n3. **聚类分类**:相似内容自动分组\n4. **推荐系统**:基于向量相似度推荐\n\n- *直觉理解**\n- king - man + woman ≈ queen\n- 向量空间中'语义关系'可以用方向表示\n\n- *常用模型**:BGE、text-embedding-ada-002、E5、M3E\n\n- *一句话理解**:Embedding = 把文字变成'坐标',让计算机用距离来衡量'语义相似度'.",
     "follow_up": [
-      "如何选择 Embedding 模型？",
-      "向量维度越高越好吗？"
+      "如何选择 Embedding 模型?",
+      "向量维度越高越好吗?"
     ]
   },
   {
-    "id": "opt-l5-001",
+    "id": "llm--023",
     "category": "llm-core",
     "subcategory": "训练与微调",
-    "difficulty": "L5",
-    "tags": [
-      "Scaling Law",
-      "Chinchilla",
-      "训练理论",
-      "高级"
-    ],
-    "question": "请详细解释 Scaling Laws（缩放定律）和 Chinchilla 最优策略，它对大模型训练有什么指导意义？",
-    "answer": "**Scaling Laws (Kaplan et al. 2020)**\n核心发现：模型 Loss 与参数量(N)、数据量(D)、计算量(C) 存在幂律关系：\n\nL(N) ∝ N^(-0.076)，L(D) ∝ D^(-0.095)，L(C) ∝ C^(-0.05)\n\n关键结论：\n1. 模型越大，loss 越低（但边际递减）\n2. 参数量和数据量需要同步增长\n3. Kaplan 建议 N 和 D 按 ~1:8.4 的比例增长\n\n**Chinchilla (Hoffmann et al. 2022)**\n修正了 Kaplan 的结论：\n- 最优策略是 **N:D ≈ 1:20**（每个参数训练 ~20 个 token）\n- 例：70B 模型最优训练量 ≈ 1.4T tokens\n- 之前很多模型'参数多但训练不足'（compute-suboptimal）\n\n**实践指导**\n1. 给定计算预算 C，最优 N = (C / 6)^(1/2)，D = (C / 6)^(1/2)\n2. 不要盲目增大参数量，数据量同样重要\n3. Llama 3 用 15T tokens 训练 70B 模型，远超 Chinchilla 最优，但效果更好（因为数据质量高）\n\n**MoE 与 Scaling Laws**\n- MoE 打破了稠密模型的 Scaling Law\n- 激活参数而非总参数决定推理成本\n- DeepSeek-V3: 671B 总参数，37B 激活，训练 14.8T tokens",
+    "difficulty": "L2",
+    "tags": [],
+    "question": "请详细解释 Scaling Laws(缩放定律)和 Chinchilla 最优策略,它对大模型训练有什么指导意义",
+    "answer": "- *Scaling Laws (Kaplan et al. 2020)**\n**核心发现：** 模型 Loss 与参数量(N)、数据量(D)、计算量(C) 存在幂律关系:\n\nL(N) ∝ N^(-0.076),L(D) ∝ D^(-0.095),L(C) ∝ C^(-0.05)\n\n**关键结论：** \n1. 模型越大,loss 越低(但边际递减)\n2. 参数量和数据量需要同步增长\n3. Kaplan 建议 N 和 D 按 ~1:8.4 的比例增长\n\n- *Chinchilla (Hoffmann et al. 2022)**\n修正了 Kaplan 的结论:\n- 最优策略是 **N:D ≈ 1:20**(每个参数训练 ~20 个 token)\n- 例:70B 模型最优训练量 ≈ 1.4T tokens\n- 之前很多模型'参数多但训练不足'(compute-suboptimal)\n\n- *实践指导**\n1. 给定计算预算 C,最优 N = (C / 6)^(1/2),D = (C / 6)^(1/2)\n2. 不要盲目增大参数量,数据量同样重要\n3. Llama 3 用 15T tokens 训练 70B 模型,远超 Chinchilla 最优,但效果更好(因为数据质量高)\n\n- *MoE 与 Scaling Laws**\n- MoE 打破了稠密模型的 Scaling Law\n- 激活参数而非总参数决定推理成本\n- DeepSeek-V3: 671B 总参数,37B 激活,训练 14.8T tokens",
     "follow_up": [
-      "Chinchilla 定律对小模型还适用吗？",
-      "为什么 Llama 3 超额训练效果更好？"
+      "Chinchilla 定律对小模型还适用吗?",
+      "为什么 Llama 3 超额训练效果更好?"
     ]
   },
   {
-    "id": "opt-l5-002",
+    "id": "llm--024",
     "category": "llm-core",
     "subcategory": "训练与微调",
-    "difficulty": "L5",
+    "difficulty": "L2",
     "tags": [
-      "预训练",
-      "训练不稳定",
-      "梯度爆炸",
-      "工程化",
-      "高级"
+      "IO",
+      "IOC"
     ],
-    "question": "训练千亿参数模型时，训练不稳定性（loss spike、梯度爆炸）如何解决？",
-    "answer": "**训练不稳定的表现**\n1. **Loss Spike**：loss 突然跳升，可能恢复也可能发散\n2. **梯度爆炸/消失**：梯度过大/过小\n3. **NaN/Inf**：浮点溢出\n\n**根本原因**\n- 混合精度训练的数值范围有限\n- 大 batch 下的梯度更新方向不稳定\n- 注意力矩阵的 softmax 数值溢出\n- 优化器状态（Adam momentum）累积异常\n\n**解决方案（多层防御）\n\n1. **数值稳定性**\n- 用 BF16 代替 FP16（更大动态范围）\n- Softmax 前减去最大值（Flash Attention 内置）\n- QK 归一化（QK-Norm）\n\n2. **梯度控制**\n- 梯度裁剪（gradient clipping，clip=1.0）\n- 梯度累积后再更新\n\n3. **训练策略**\n- Warmup：前 2000 步线性增加学习率\n- Cosine 衰减调度\n- 初始化：μP（maximal update parametrization）\n\n4. **Loss Spike 恢复**\n- 检测 spike → 回滚到上一个 checkpoint\n- 跳过 bad batch（数据质量导致）\n- 降低学习率重试\n\n5. **分布式优化**\n- ZeRO-3 + 梯度分桶减少通信\n- 张量并行 + 流水线并行的负载均衡\n\n**经验**：GPT-3 论文报告训练过程中 loss spike 是常态，关键是设计好恢复机制。",
+    "question": "训练千亿参数模型时,训练不稳定性(loss spike、梯度爆炸)如何解决",
+    "answer": "- *训练不稳定的表现**\n1. **Loss Spike**:loss 突然跳升,可能恢复也可能发散\n2. **梯度爆炸/消失**:梯度过大/过小\n3. **NaN/Inf**:浮点溢出\n\n- *根本原因**\n- 混合精度训练的数值范围有限\n- 大 batch 下的梯度更新方向不稳定\n- 注意力矩阵的 softmax 数值溢出\n- 优化器状态(Adam momentum)累积异常\n\n- *解决方案(多层防御)\n\n1. **数值稳定性**\n- 用 BF16 代替 FP16(更大动态范围)\n- Softmax 前减去最大值(Flash Attention 内置)\n- QK 归一化(QK-Norm)\n\n2. **梯度控制**\n- 梯度裁剪(gradient clipping,clip=1.0)\n- 梯度累积后再更新\n\n3. **训练策略**\n- Warmup:前 2000 步线性增加学习率\n- Cosine 衰减调度\n- 初始化:μP(maximal update parametrization)\n\n4. **Loss Spike 恢复**\n- 检测 spike → 回滚到上一个 checkpoint\n- 跳过 bad batch(数据质量导致)\n- 降低学习率重试\n\n5. **分布式优化**\n- ZeRO-3 + 梯度分桶减少通信\n- 张量并行 + 流水线并行的负载均衡\n\n- *经验**:GPT-3 论文报告训练过程中 loss spike 是常态,关键是设计好恢复机制.",
     "follow_up": [
-      "如何自动检测 loss spike？",
-      "μP 初始化原理是什么？"
+      "如何自动检测 loss spike?",
+      "μP 初始化原理是什么?"
     ]
   },
   {
-    "id": "opt-l5-003",
+    "id": "llm--025",
     "category": "llm-core",
     "subcategory": "模型架构",
-    "difficulty": "L5",
-    "tags": [
-      "MoE",
-      "专家路由",
-      "DeepSeek",
-      "架构设计",
-      "高级"
-    ],
-    "question": "DeepSeek-V3 的 MoE 架构有什么创新？与 Mixtral 的 MoE 有什么区别？",
-    "answer": "**DeepSeek-V3 MoE 架构创新**\n\n总参数 671B，激活参数 37B（稀疏率 ~5.5%）\n\n**核心创新**\n\n1. **细粒度专家 + 共享专家**\n- 256 个路由专家 + 1 个共享专家\n- 每个 token 激活 8 个路由专家 + 1 个共享\n- 共享专家学习通用知识，路由专家学习专精知识\n- 对比 Mixtral：8 个等大专家，激活 2 个\n\n2. **无辅助损失的负载均衡**\n- 传统方法：加 auxiliary loss 强制均匀分配 → 损害模型效果\n- DeepSeek 创新：为每个专家引入一个 bias 偏置项\n- 如果专家被选次数偏少 → 增加 bias → 更容易被选中\n- 无需额外 loss，不干扰主训练目标\n\n3. **MLA（多头隐变量注意力）**\n- 将 KV Cache 压缩到低维隐变量\n- KV Cache 显存减少 93%（对比 MHA）\n- 推理速度大幅提升\n\n4. **FP8 训练**\n- 首次在大规模训练中使用 FP8 混合精度\n- 训练成本降至 $5.576M（对比 Llama 3 405B 的 ~$60M）\n\n**与 Mixtral 对比**\n\n| 维度 | Mixtral 8x7B | DeepSeek-V3 |\n|------|-------------|-------------|\n| 专家数 | 8 | 256+1 |\n| 激活数 | 2 | 8+1 |\n| 专家粒度 | 粗（每专家7B） | 细（每专家~2B） |\n| 负载均衡 | 辅助 loss | bias 调整 |\n| KV优化 | 标准 MHA | MLA 压缩 |",
+    "difficulty": "L2",
+    "tags": [],
+    "question": "DeepSeek-V3 的 MoE 架构有什么创新?与 Mixtral 的 MoE 有什么区别",
+    "answer": "- *DeepSeek-V3 MoE 架构创新**\n\n总参数 671B,激活参数 37B(稀疏率 ~5.5%)\n\n- *核心创新**\n\n1. **细粒度专家 + 共享专家**\n- 256 个路由专家 + 1 个共享专家\n- 每个 token 激活 8 个路由专家 + 1 个共享\n- 共享专家学习通用知识,路由专家学习专精知识\n- 对比 Mixtral:8 个等大专家,激活 2 个\n\n2. **无辅助损失的负载均衡**\n- 传统方法:加 auxiliary loss 强制均匀分配 → 损害模型效果\n- DeepSeek 创新:为每个专家引入一个 bias 偏置项\n- 如果专家被选次数偏少 → 增加 bias → 更容易被选中\n- 无需额外 loss,不干扰主训练目标\n\n3. **MLA(多头隐变量注意力)**\n- 将 KV Cache 压缩到低维隐变量\n- KV Cache 显存减少 93%(对比 MHA)\n- 推理速度大幅提升\n\n4. **FP8 训练**\n- 首次在大规模训练中使用 FP8 混合精度\n- 训练成本降至 $5.576M(对比 Llama 3 405B 的 ~$60M)\n\n- *与 Mixtral 对比**\n\n| 维度 | Mixtral 8x7B | DeepSeek-V3 |\n|------|-------------|-------------|\n| 专家数 | 8 | 256+1 |\n| 激活数 | 2 | 8+1 |\n| 专家粒度 | 粗(每专家7B) | 细(每专家~2B) |\n| 负载均衡 | 辅助 loss | bias 调整 |\n| KV优化 | 标准 MHA | MLA 压缩 |",
     "follow_up": [
-      "细粒度专家为什么比粗粒度好？",
-      "MLA 如何压缩 KV Cache？"
+      "细粒度专家为什么比粗粒度好?",
+      "MLA 如何压缩 KV Cache?"
     ]
   },
   {
-    "id": "opt-l5-004",
+    "id": "llm--026",
     "category": "llm-core",
     "subcategory": "训练与微调",
-    "difficulty": "L5",
+    "difficulty": "L2",
     "tags": [
-      "数据质量",
-      "预训练数据",
-      "数据清洗",
-      "工程化",
-      "高级"
+      "IO"
     ],
-    "question": "预训练数据的质量如何影响模型能力？高质量数据管道的关键步骤有哪些？",
-    "answer": "**数据质量 = 模型质量**（Data is all you need）\n\nLlama 3 的经验：用 15T tokens 高质量数据训练 70B 模型，效果超过用 2T tokens 训练的更大模型。\n\n**高质量数据管道的关键步骤**\n\n1. **数据采集**\n- 网页（Common Crawl）→ 需重度清洗\n- 书籍/论文 → 高质量\n- 代码（GitHub）→ 推理能力关键\n- 对话数据 → 指令跟随\n\n2. **去重 (Deduplication)**\n- URL 去重：同一页面只保留一次\n- 文档级去重：MinHash/SimHash 近似去重\n- 行级去重（Llama 3 创新）：逐行去重，去除模板化内容\n- 经验：去重可去除 30-50% 的数据\n\n3. **质量过滤**\n- 启发式：去除过短/过长/重复/乱码文本\n- 模型过滤：用小模型给文本打质量分\n- 安全过滤：去除 PII、有害内容\n- 语言识别：过滤非目标语言\n\n4. **数据配比 (Data Mixing)**\n- Llama 3 配比：~50% 网页 + ~25% 代码 + ~17% 数学/推理 + ~8% 多语言\n- 代码和数学数据对推理能力至关重要\n- 配比需要消融实验确定\n\n5. **课程学习 (Curriculum)**\n- 先训简单/通用数据，再加难/专业数据\n- Llama 3 三阶段：初始预训练 → 长文本预训练 → 退火训练\n\n6. **合成数据**\n- 用强模型生成高质量训练数据\n- DeepSeek-R1 的蒸馏数据显著提升小模型推理\n- 风险：模型坍缩（反复用自身输出训练会退化）",
+    "question": "预训练数据的质量如何影响模型能力?高质量数据管道的关键步骤有哪些",
+    "answer": "- *数据质量 = 模型质量**(Data is all you need)\n\nLlama 3 的经验:用 15T tokens 高质量数据训练 70B 模型,效果超过用 2T tokens 训练的更大模型.\n\n- *高质量数据管道的关键步骤**\n\n1. **数据采集**\n- 网页(Common Crawl)→ 需重度清洗\n- 书籍/论文 → 高质量\n- 代码(GitHub)→ 推理能力关键\n- 对话数据 → 指令跟随\n\n2. **去重 (Deduplication)**\n- URL 去重:同一页面只保留一次\n- 文档级去重:MinHash/SimHash 近似去重\n- 行级去重(Llama 3 创新):逐行去重,去除模板化内容\n- 经验:去重可去除 30-50% 的数据\n\n3. **质量过滤**\n- 启发式:去除过短/过长/重复/乱码文本\n- 模型过滤:用小模型给文本打质量分\n- 安全过滤:去除 PII、有害内容\n- 语言识别:过滤非目标语言\n\n4. **数据配比 (Data Mixing)**\n- Llama 3 配比:~50% 网页 + ~25% 代码 + ~17% 数学/推理 + ~8% 多语言\n- 代码和数学数据对推理能力至关重要\n- 配比需要消融实验确定\n\n5. **课程学习 (Curriculum)**\n- 先训简单/通用数据,再加难/专业数据\n- Llama 3 三阶段:初始预训练 → 长文本预训练 → 退火训练\n\n6. **合成数据**\n- 用强模型生成高质量训练数据\n- DeepSeek-R1 的蒸馏数据显著提升小模型推理\n- 风险:模型坍缩(反复用自身输出训练会退化)",
     "follow_up": [
-      "如何评估预训练数据的质量？",
-      "合成数据会导致模型坍缩吗？"
+      "如何评估预训练数据的质量?",
+      "合成数据会导致模型坍缩吗?"
     ]
   },
   {
-    "id": "opt-l5-005",
-    "category": "llm-core",
-    "subcategory": "模型架构",
-    "difficulty": "L5",
-    "tags": [
-      "多头注意力",
-      "MLA",
-      "KV Cache压缩",
-      "架构",
-      "高级"
-    ],
-    "question": "MLA（Multi-head Latent Attention）是如何实现 KV Cache 93% 压缩的？它的数学原理是什么？",
-    "answer": "**MLA (Multi-head Latent Attention)** 是 DeepSeek-V2/V3 提出的注意力机制，核心目标：在不损失精度的情况下大幅压缩 KV Cache。\n\n**问题背景**\n- 标准 MHA：KV Cache 大小 = 2 × n_heads × head_dim × seq_len × batch\n- 对于 128K 上下文，KV Cache 可能占用 40GB+ 显存\n\n**MLA 核心思想：低秩压缩**\n\nStep 1: **下采样**\n- 将 hidden_size (如 7168) 通过下投影矩阵 W_DKV 压缩到低维 c_KV (如 512)\n- 只缓存压缩后的 c_KV（而非完整的 K, V）\n- KV Cache 减少 7168/512 ≈ 14倍\n\nStep 2: **上采样恢复**\n- 推理时，通过上投影矩阵 W_UK, W_UV 从 c_KV 恢复 K, V\n- 关键优化：将 W_UK 合并到 Q 的投影中（'吸收'）\n- 这样推理时不需要显式恢复 K，直接用压缩向量计算\n\nStep 3: **RoPE 解耦**\n- 低秩压缩与 RoPE 位置编码不兼容（旋转矩阵无法被吸收）\n- 解决：额外保留一小部分（如 64 维）专用于 RoPE\n- 最终 KV Cache = c_KV (512维) + rope_k (64维) = 576维\n\n**压缩比**\n- MHA: 2 × 128 × 512 = 131,072 (per token)\n- MLA: 512 + 64 = 576 (per token)\n- 压缩比 ≈ 131072/576 ≈ 227x（理论值）\n- 实际加上 batch 优化约 **93% 压缩**",
-    "follow_up": [
-      "MLA 的'吸收'技巧具体怎么推导？",
-      "MLA 和 GQA 各有什么优劣？"
-    ]
-  },
-  {
-    "id": "opt-l5-006",
+    "id": "llm--027",
     "category": "llm-core",
     "subcategory": "推理与部署",
-    "difficulty": "L5",
+    "difficulty": "L2",
     "tags": [
-      "投机解码",
-      "Speculative Decoding",
-      "推理加速",
-      "高级"
+      "IOC"
     ],
-    "question": "投机解码（Speculative Decoding）的原理是什么？它在什么场景下收益最大？",
-    "answer": "**投机解码** 用小模型快速生成'草稿'，大模型批量验证，实现无损加速。\n\n**工作流程**\n\n1. **Draft Phase（草稿阶段）**\n- 小模型（draft model）快速自回归生成 γ 个 token\n- 例：7B 小模型生成 5 个候选 token\n\n2. **Verify Phase（验证阶段）**\n- 大模型（target model）一次性处理这 γ+1 个 token（并行前向）\n- 对每个位置，比较大模型和小模型的输出分布\n- 接受：如果小模型的 token 在大模型的分布中概率足够高\n- 拒绝：从拒绝位置开始，用大模型重新采样\n\n**数学保证（无损）**\n- 使用拒绝采样保证输出分布与大模型完全一致\n- 加速但不降低质量\n\n**加速效果**\n- 理论加速比 = γ × acceptance_rate\n- 实测：在对话场景加速 2-3x\n- 在代码生成（高接受率）加速可达 3-5x\n\n**最佳场景**\n1. **草稿与目标分布接近**：如同系列模型（Llama 7B → 70B）\n2. **输出较确定性**：代码、结构化输出（接受率高）\n3. **大 batch 推理**：摊薄验证阶段的计算成本\n\n**变体**\n- **Medusa**：用多个 head 并行预测多个位置\n- **EAGLE**：用目标模型的隐状态做更准确的预测\n- **Lookahead Decoding**：无需草稿模型，利用 Jacobi 迭代",
+    "question": "投机解码(Speculative Decoding)的原理是什么?它在什么场景下收益最大",
+    "answer": "- *投机解码** 用小模型快速生成'草稿',大模型批量验证,实现无损加速.\n\n- *工作流程**\n\n1. **Draft Phase(草稿阶段)**\n- 小模型(draft model)快速自回归生成 γ 个 token\n- 例:7B 小模型生成 5 个候选 token\n\n2. **Verify Phase(验证阶段)**\n- 大模型(target model)一次性处理这 γ+1 个 token(并行前向)\n- 对每个位置,比较大模型和小模型的输出分布\n- 接受:如果小模型的 token 在大模型的分布中概率足够高\n- 拒绝:从拒绝位置开始,用大模型重新采样\n\n- *数学保证(无损)**\n- 使用拒绝采样保证输出分布与大模型完全一致\n- 加速但不降低质量\n\n- *加速效果**\n- 理论加速比 = γ × acceptance_rate\n- 实测:在对话场景加速 2-3x\n- 在代码生成(高接受率)加速可达 3-5x\n\n- *最佳场景**\n1. **草稿与目标分布接近**:如同系列模型(Llama 7B → 70B)\n2. **输出较确定性**:代码、结构化输出(接受率高)\n3. **大 batch 推理**:摊薄验证阶段的计算成本\n\n- *变体**\n- **Medusa**:用多个 head 并行预测多个位置\n- **EAGLE**:用目标模型的隐状态做更准确的预测\n- **Lookahead Decoding**:无需草稿模型,利用 Jacobi 迭代",
     "follow_up": [
-      "如何选择 draft model？",
-      "EAGLE 为什么比 Vanilla Speculative 更快？"
+      "如何选择 draft model?",
+      "EAGLE 为什么比 Vanilla Speculative 更快?"
     ]
   }
 ]

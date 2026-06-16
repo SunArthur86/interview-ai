@@ -157,20 +157,12 @@ function tagClick(tag) {
   applyFilters();
 }
 
-function renderCards() {
-  const grid = document.getElementById('cardsGrid');
-  if (State.filtered.length === 0) {
-    grid.innerHTML = `
-      <div class="empty-state" style="grid-column: 1/-1;">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
-        </svg>
-        <h3>没有找到匹配的题目</h3>
-        <p>试试调整筛选条件或搜索关键词</p>
-      </div>`;
-    return;
-  }
-  grid.innerHTML = State.filtered.map((q, i) => {
+// ============ Virtual Scrolling / Lazy Load ============
+const PAGE_SIZE = 48;       // cards per batch
+State._renderedCount = 0;    // how many cards rendered so far
+State._scrollObserver = null;
+
+function buildCardHTML(q, i) {
     const cat = CATEGORIES[q._category];
     const isFav = State.favorites.has(q.id);
     const isViewed = State.viewed.has(q.id);
@@ -182,7 +174,7 @@ function renderCards() {
     );
     const isDue = reviewItem && reviewItem.nextDate <= new Date().toISOString().split('T')[0];
     return `
-      <div class="card" style="--card-accent: ${cat.color}; animation-delay: ${i * 0.03}s;" onclick="openModal('${q.id}')">
+      <div class="card" style="--card-accent: ${cat.color}; animation-delay: ${Math.min(i, 20) * 0.03}s;" onclick="openModal('${q.id}')">
         <div class="card__header">
           <span class="card__id">${q.id.toUpperCase()}</span>
           <span class="card__difficulty" data-level="${q.difficulty}">${q.difficulty}</span>
@@ -201,7 +193,77 @@ function renderCards() {
           </svg>
         </button>
       </div>`;
-  }).join('');
+}
+
+function renderCards() {
+  const grid = document.getElementById('cardsGrid');
+  if (State.filtered.length === 0) {
+    grid.innerHTML = `
+      <div class="empty-state" style="grid-column: 1/-1;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+        </svg>
+        <h3>没有找到匹配的题目</h3>
+        <p>试试调整筛选条件或搜索关键词</p>
+      </div>`;
+    return;
+  }
+
+  // Reset lazy-load state
+  State._renderedCount = 0;
+  grid.innerHTML = '';
+
+  // Render first batch
+  renderMoreCards();
+
+  // Set up IntersectionObserver for infinite scroll
+  if (State._scrollObserver) State._scrollObserver.disconnect();
+
+  const sentinel = document.createElement('div');
+  sentinel.id = 'loadMoreSentinel';
+  sentinel.style.height = '10px';
+  grid.appendChild(sentinel);
+
+  State._scrollObserver = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting && State._renderedCount < State.filtered.length) {
+      renderMoreCards();
+    }
+  }, { rootMargin: '300px' });
+  State._scrollObserver.observe(sentinel);
+}
+
+function renderMoreCards() {
+  const grid = document.getElementById('cardsGrid');
+  const sentinel = document.getElementById('loadMoreSentinel');
+  const start = State._renderedCount;
+  const end = Math.min(start + PAGE_SIZE, State.filtered.length);
+
+  const html = State.filtered.slice(start, end).map((q, i) => buildCardHTML(q, start + i)).join('');
+
+  if (sentinel) {
+    sentinel.insertAdjacentHTML('beforebegin', html);
+  } else {
+    grid.insertAdjacentHTML('beforeend', html);
+  }
+
+  State._renderedCount = end;
+
+  // Show/hide load more hint
+  const existingHint = document.getElementById('loadMoreHint');
+  if (State._renderedCount < State.filtered.length) {
+    const hintText = `滚动加载更多 · 已显示 ${State._renderedCount} / ${State.filtered.length} 题`;
+    if (!existingHint && sentinel) {
+      const hint = document.createElement('div');
+      hint.id = 'loadMoreHint';
+      hint.style.cssText = 'grid-column:1/-1;text-align:center;padding:12px;color:var(--text-tertiary);font-size:0.8125rem;';
+      hint.textContent = hintText;
+      sentinel.parentNode.insertBefore(hint, sentinel);
+    } else if (existingHint) {
+      existingHint.textContent = hintText;
+    }
+  } else if (existingHint) {
+    existingHint.remove();
+  }
 }
 
 function renderSubcategoryFilter() {

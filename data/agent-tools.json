@@ -1,411 +1,290 @@
 [
   {
-    "id": "tool-001",
+    "id": "agen-001",
+    "category": "agent-tools",
+    "subcategory": "工具调用",
+    "difficulty": "L1",
+    "tags": [],
+    "question": "为什么用 JSON Schema 描述参数",
+    "answer": "三方面--(1)跨语言标准,各 SDK 统一;(2)可自动校验,避免脏参数进业务;(3)作为\n模型「字段说明」,减少胡编参数名.缺点是 Schema 过长会占 token,需要精简描述或工具路\n由.",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "agen-002",
     "category": "agent-tools",
     "subcategory": "工具调用",
     "difficulty": "L1",
     "tags": [
-      "工具调用"
+      "IO",
+      "CAS",
+      "Elasticsearch"
     ],
-    "question": "为什么用 JSON Schema 描述参数？",
-    "answer": "三方面——（1）跨语言标准，各 SDK 统一；（2）可自动校验，避免脏参数进业务；（3）作为\n模型「字段说明」，减少胡编参数名。缺点是 Schema 过长会占 token，需要精简描述或工具路\n由。",
+    "question": "模型选错工具怎么办",
+    "answer": "工程上(1)优化 description  与示例边界;(2)工具路由缩小候选集;(3)执行前做规则\n校验或二次确认;(4)对高风险操作要求人类确认;(5)记录 bad case 做 prompt 迭代.不能\n假设模型 100% 正确.",
     "follow_up": [
       "面试官追问方向请结合实际项目经验展开"
     ]
   },
   {
-    "id": "tool-002",
+    "id": "agen-003",
+    "category": "agent-tools",
+    "subcategory": "工具调用",
+    "difficulty": "L1",
+    "tags": [],
+    "question": "如何做参数校验",
+    "answer": "分层--语法层 json.loads ;结构层 jsonschema.validate ;语义层业务函数(如用户\nID 是否存在);安全层鉴权与输入清洗(见第 6 节).",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "agen-004",
+    "category": "agent-tools",
+    "subcategory": "工具调用",
+    "difficulty": "L2",
+    "tags": [],
+    "question": "Tool 与业务里的普通 Python 函数有何不同",
+    "answer": "Tool 多了面向模型的元数据(描述、Schema)和统一执行接口(记录日志、超时、权限).\n业务函数关注领域逻辑;Tool 是 Agent 可调度的「外壳」.",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "agen-005",
+    "category": "agent-tools",
+    "subcategory": "工具调用",
+    "difficulty": "L2",
+    "tags": [
+      "索引"
+    ],
+    "question": "工具返回 10MB 日志怎么办",
+    "answer": "不应直接返回.应(1)截断 + 摘要;(2)写入对象存储返回链接;(3)提供 grep_in_log\n等缩小工具;(4)向量索引仅检索相关片段.",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "agen-006",
+    "category": "agent-tools",
+    "subcategory": "工具调用",
+    "difficulty": "L1",
+    "tags": [],
+    "question": "MCP 里 Client 和你在 OpenAI 里写的「执行工具的 Python 代码」是什么关系",
+    "answer": "OpenAI 场景下你手写 run_tool ;MCP 下 Client 把远端/子进程 Server 的工具列表拉平,\n调用时按协议发 RPC,结果再转成 tool  消息.你仍要写 Host 逻辑,但工具实现可独立进程、\n独立语言.",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "agen-007",
     "category": "agent-tools",
     "subcategory": "工具调用",
     "difficulty": "L1",
     "tags": [
-      "工具调用",
-      "工具"
+      "IO"
     ],
-    "question": "模型选错工具怎么办？",
-    "answer": "工程上（1）优化 description  与示例边界；（2）工具路由缩小候选集；（3）执行前做规则\n校验或二次确认；（4）对高风险操作要求人类确认；（5）记录 bad case 做 prompt 迭代。不能\n假设模型 100% 正确。",
+    "question": "企业为什么愿意接 MCP 而不是每个业务线自己写 Function",
+    "answer": "降低重复建设、统一安全与观测、加快试点(换模型不换工具链)、利于平台组与业务组分\n工.\n4. 工具路由(Tool Routing)",
     "follow_up": [
       "面试官追问方向请结合实际项目经验展开"
     ]
   },
   {
-    "id": "tool-003",
+    "id": "agen-008",
     "category": "agent-tools",
     "subcategory": "工具调用",
     "difficulty": "L1",
     "tags": [
-      "工具调用"
+      "IO",
+      "Elasticsearch"
     ],
-    "question": "如何做参数校验？",
-    "answer": "分层——语法层 json.loads ；结构层 jsonschema.validate ；语义层业务函数（如用户\nID 是否存在）；安全层鉴权与输入清洗（见第 6 节）。",
+    "question": "向量路由选出来的工具不对怎么兜底",
+    "answer": "Top-K 调大、混合关键词打分、加一层 LLM「是否适用」二分类、允许用户澄清、保留「通\n用搜索」工具作后备.\n5. 工具编排(Tool Orchestration)",
     "follow_up": [
       "面试官追问方向请结合实际项目经验展开"
     ]
   },
   {
-    "id": "tool-004",
+    "id": "agen-009",
+    "category": "agent-tools",
+    "subcategory": "工具调用",
+    "difficulty": "L1",
+    "tags": [],
+    "question": "并行与串行如何取舍",
+    "answer": "读多且无依赖并行;有写冲突、强一致、或后一步参数必须来自上一步精确字段时串行;可并\n行读再串行写(Quorum 读/写视业务而定).",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "agen-010",
+    "category": "agent-tools",
+    "subcategory": "工具调用",
+    "difficulty": "L1",
+    "tags": [],
+    "question": "如何防止模型通过工具泄露敏感数据",
+    "answer": "最小权限、结果脱敏(掩码)、行级权限、禁止把密钥放进工具返回值、敏感字段仅后端可见\n且不出现在模型上下文.\n7. 常见工具实现",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "agen-011",
     "category": "agent-tools",
     "subcategory": "工具调用",
     "difficulty": "L1",
     "tags": [
-      "工具调用",
-      "工具"
+      "IO"
     ],
-    "question": "Tool 与业务里的普通 Python 函数有何不同？",
-    "answer": "Tool 多了面向模型的元数据（描述、Schema）和统一执行接口（记录日志、超时、权限）。\n业务函数关注领域逻辑；Tool 是 Agent 可调度的「外壳」。",
+    "question": "Function Calling 和「让模型输出 JSON」有什么本质区别",
+    "answer": "Function Calling 是厂商提供的结构化工具调用通道(字段名、类型、与对话轮次绑定);纯\nJSON 输出依赖 prompt 约束,解析脆弱、易混入闲聊文本.FC 更利于多轮 tool 消息与并行调用\nID 对齐.实践中也可结合:FC 负责调度,JSON 负责业务负载.\n**追问：** 若模型不支持 FC 怎么办?--可用 JSON mode / 约束解码 / 后处理抽取;或用小模型\n做「动作分类」.",
     "follow_up": [
       "面试官追问方向请结合实际项目经验展开"
     ]
   },
   {
-    "id": "tool-005",
+    "id": "agen-012",
     "category": "agent-tools",
     "subcategory": "工具调用",
     "difficulty": "L2",
     "tags": [
-      "工具调用",
-      "工具"
+      "IO",
+      "Elasticsearch"
     ],
-    "question": "工具返回 10MB 日志怎么办？",
-    "answer": "不应直接返回。应（1）截断 + 摘要；（2）写入对象存储返回链接；（3）提供 grep_in_log\n等缩小工具；（4）向量索引仅检索相关片段。",
-    "follow_up": [
-      "面试官追问方向请结合实际项目经验展开"
-    ]
-  },
-  {
-    "id": "tool-006",
-    "category": "agent-tools",
-    "subcategory": "工具调用",
-    "difficulty": "L2",
-    "tags": [
-      "MCP",
-      "工具调用",
-      "工具"
-    ],
-    "question": "MCP 里 Client 和你在 OpenAI 里写的「执行工具的 Python 代码」是什么关系？",
-    "answer": "OpenAI 场景下你手写 run_tool ；MCP 下 Client 把远端/子进程 Server 的工具列表拉平，\n调用时按协议发 RPC，结果再转成 tool  消息。你仍要写 Host 逻辑，但工具实现可独立进程、\n独立语言。",
-    "follow_up": [
-      "面试官追问方向请结合实际项目经验展开"
-    ]
-  },
-  {
-    "id": "tool-007",
-    "category": "agent-tools",
-    "subcategory": "工具调用",
-    "difficulty": "L2",
-    "tags": [
-      "工具调用",
-      "MCP"
-    ],
-    "question": "企业为什么愿意接 MCP 而不是每个业务线自己写 Function？",
-    "answer": "降低重复建设、统一安全与观测、加快试点（换模型不换工具链）、利于平台组与业务组分\n工。\n4. 工具路由（Tool Routing）",
-    "follow_up": [
-      "面试官追问方向请结合实际项目经验展开"
-    ]
-  },
-  {
-    "id": "tool-008",
-    "category": "agent-tools",
-    "subcategory": "工具调用",
-    "difficulty": "L2",
-    "tags": [
-      "工具调用",
-      "向量",
-      "工具"
-    ],
-    "question": "向量路由选出来的工具不对怎么兜底？",
-    "answer": "Top-K 调大、混合关键词打分、加一层 LLM「是否适用」二分类、允许用户澄清、保留「通\n用搜索」工具作后备。\n5. 工具编排（Tool Orchestration）",
-    "follow_up": [
-      "面试官追问方向请结合实际项目经验展开"
-    ]
-  },
-  {
-    "id": "tool-009",
-    "category": "agent-tools",
-    "subcategory": "工具调用",
-    "difficulty": "L2",
-    "tags": [
-      "工具调用"
-    ],
-    "question": "并行与串行如何取舍？",
-    "answer": "读多且无依赖并行；有写冲突、强一致、或后一步参数必须来自上一步精确字段时串行；可并\n行读再串行写（Quorum 读/写视业务而定）。",
-    "follow_up": [
-      "面试官追问方向请结合实际项目经验展开"
-    ]
-  },
-  {
-    "id": "tool-010",
-    "category": "agent-tools",
-    "subcategory": "工具调用",
-    "difficulty": "L2",
-    "tags": [
-      "工具调用",
-      "工具"
-    ],
-    "question": "如何防止模型通过工具泄露敏感数据？",
-    "answer": "最小权限、结果脱敏（掩码）、行级权限、禁止把密钥放进工具返回值、敏感字段仅后端可见\n且不出现在模型上下文。\n7. 常见工具实现",
-    "follow_up": [
-      "面试官追问方向请结合实际项目经验展开"
-    ]
-  },
-  {
-    "id": "tool-011",
-    "category": "agent-tools",
-    "subcategory": "工具调用",
-    "difficulty": "L1",
-    "tags": [
-      "工具调用",
-      "工具"
-    ],
-    "question": "Function Calling 和「让模型输出 JSON」有什么本质区别？ ",
-    "answer": "Function Calling 是厂商提供的结构化工具调用通道（字段名、类型、与对话轮次绑定）；纯\nJSON 输出依赖 prompt 约束，解析脆弱、易混入闲聊文本。FC 更利于多轮 tool 消息与并行调用\nID 对齐。实践中也可结合：FC 负责调度，JSON 负责业务负载。\n追问：若模型不支持 FC 怎么办？——可用 JSON mode / 约束解码 / 后处理抽取；或用小模型\n做「动作分类」。",
-    "follow_up": [
-      "面试官追问方向请结合实际项目经验展开"
-    ]
-  },
-  {
-    "id": "tool-012",
-    "category": "agent-tools",
-    "subcategory": "工具调用",
-    "difficulty": "L1",
-    "tags": [
-      "工具调用",
-      "工具"
-    ],
-    "question": "描述 OpenAI 兼容接口里 tool_calls  与 tool  消息的对应关系。 ",
-    "answer": "每条 assistant.tool_calls[]  有唯一 id ；执行后每条结果作为一条 role=tool  消\n息，且必须带相同 tool_call_id ，保证多并行调用时不错配。\nif isinstance(node, ast.Constant) and isinstance(node.value, (int, \nfloat)):\nreturn float(node.value)\nif isinstance(node, ast.BinOp) and type(node.op) in _ALLOWED:\nreturn _ALLOWED[type(node.op)](eval_expr(node.left),\neval_expr(node.right))\nif isinstance(node, ast.UnaryOp) and type(node.op) in _ALLOWED:\nreturn _ALLOWED[type(node.op)](eval_expr(node.operand))\nraise ValueError(\"unsupported expression\")\ndef calculator(expr: str) -> float:\ntree = ast.parse(expr, mode=\"eval\")\nreturn eval_expr(tree.body)",
+    "question": "描述 OpenAI 兼容接口里 tool_calls 与 tool 消息的对应关系.",
+    "answer": "每条 assistant.tool_calls[]  有唯一 id ;执行后每条结果作为一条 role=tool  消\n息,且必须带相同 tool_call_id ,保证多并行调用时不错配.\nif isinstance(node, ast.Constant) and isinstance(node.value, (int,\nfloat)):\nreturn float(node.value)\nif isinstance(node, ast.BinOp) and type(node.op) in _ALLOWED:\nreturn _ALLOWED[type(node.op)](eval_expr(node.left),\neval_expr(node.right))\nif isinstance(node, ast.UnaryOp) and type(node.op) in _ALLOWED:\nreturn _ALLOWED[type(node.op)](eval_expr(node.operand))\nraise ValueError(\"unsupported expression\")\ndef calculator(expr: str) -> float:\ntree = ast.parse(expr, mode=\"eval\")\nreturn eval_expr(tree.body)",
     "follow_up": []
   },
   {
-    "id": "tool-013",
+    "id": "agen-013",
     "category": "agent-tools",
     "subcategory": "工具调用",
     "difficulty": "L1",
     "tags": [
-      "工具调用",
-      "工具"
+      "IO",
+      "Elasticsearch"
     ],
-    "question": "为什么工具 description  比函数名更重要？ ",
-    "answer": "模型主要依据自然语言描述区分相似工具；函数名更多是给程序路由用。描述应写清边界与反\n例。",
+    "question": "如何设计 JSON Schema 降低模型填错概率",
+    "answer": "减少可选参数模糊性;用 enum ;在 description  给示例;避免深层嵌套;必要时分拆多\n个函数.",
     "follow_up": [
       "面试官追问方向请结合实际项目经验展开"
     ]
   },
   {
-    "id": "tool-014",
+    "id": "agen-014",
+    "category": "agent-tools",
+    "subcategory": "工具调用",
+    "difficulty": "L1",
+    "tags": [],
+    "question": "MCP 解决的主要痛点是什么",
+    "answer": "工具集成碎片化、重复建设、难以跨产品复用;MCP 提供标准边界(Server)与传输,使工\n具像外设一样即插即用(在生态支持前提下).",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "agen-015",
     "category": "agent-tools",
     "subcategory": "工具调用",
     "difficulty": "L1",
     "tags": [
-      "工具调用"
+      "IO"
     ],
-    "question": "如何设计 JSON Schema 降低模型填错概率？ ",
-    "answer": "减少可选参数模糊性；用 enum ；在 description  给示例；避免深层嵌套；必要时分拆多\n个函数。",
+    "question": "MCP 与 Function Calling 是替代关系吗",
+    "answer": "不是.FC 是模型侧表达;MCP 是工具侧集成.Host 常将 MCP 工具列表映射为 FC 的\ntools .",
     "follow_up": [
       "面试官追问方向请结合实际项目经验展开"
     ]
   },
   {
-    "id": "tool-015",
+    "id": "agen-016",
+    "category": "agent-tools",
+    "subcategory": "工具调用",
+    "difficulty": "L1",
+    "tags": [],
+    "question": "工具路由什么时候必须上",
+    "answer": "当工具数量导致上下文膨胀、误选率上升或延迟/成本明显增加时;具体阈值依赖模型与描述\n长度,常见从几十起考虑.",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "agen-017",
     "category": "agent-tools",
     "subcategory": "工具调用",
     "difficulty": "L1",
     "tags": [
-      "LangChain",
-      "工具调用",
-      "工具"
+      "IOC"
     ],
-    "question": "LangChain Tool 的 docstring 为什么要写「何时不要用」？ ",
-    "answer": "减少误触发（false positive），尤其在工具功能重叠时，这是线上质量关键。",
+    "question": "向量路由的缺陷与改进",
+    "answer": "**缺陷：** 描述不佳则 embedding 不准;OOV 专有名词弱.改进:混合检索、同义词表、用户域\n特征、日志驱动迭代描述、加轻量分类器.",
     "follow_up": [
       "面试官追问方向请结合实际项目经验展开"
     ]
   },
   {
-    "id": "tool-016",
+    "id": "agen-018",
+    "category": "agent-tools",
+    "subcategory": "工具调用",
+    "difficulty": "L1",
+    "tags": [],
+    "question": "如何做工具调用的权限控制",
+    "answer": "会话绑定真实用户身份;服务端校验租户与角色;最小权限;敏感操作 HITL;不把长期密钥\n暴露给模型上下文.",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "agen-019",
     "category": "agent-tools",
     "subcategory": "工具调用",
     "difficulty": "L2",
     "tags": [
-      "工具调用",
-      "MCP"
+      "IO",
+      "Elasticsearch"
     ],
-    "question": "MCP 解决的主要痛点是什么？ ",
-    "answer": "工具集成碎片化、重复建设、难以跨产品复用；MCP 提供标准边界（Server）与传输，使工\n具像外设一样即插即用（在生态支持前提下）。",
+    "question": "代码执行工具如何做到基本安全",
+    "answer": "沙箱隔离、资源与网络限制、禁用危险模块、超时、只读默认、审计;生产慎用.\nQ16(加一):审计日志至少记哪些字段?\nA:时间、trace/request id、用户/租户、工具名、参数摘要(脱敏)、结果状态、耗时、模型版\n本;合规场景保留策略与不可篡改存储视要求而定.\nQ17(加一):Calculator 为什么禁止 eval ?\nA:eval  可执行任意 Python,等同于远程代码执行;应使用 AST 白名单或安全数学库.\n小结\nFunction Calling:模型产出结构化调用意图,应用在本地执行并回传,是 Agent 的「手」.\nTool 工程:描述、Schema、返回值与错误模式与路由同样重要.\n**MCP：** 标准化工具与上下文连接,利于复用与治理.\n**路由与编排：** 解决规模与依赖问题;安全贯穿权限、输入、确认、限流与审计.\n建议结合自家业务画一张「用户请求 → 路由 → 工具 → 依赖 → 回传模型」的时序图,面试时能\n用白板讲清楚,比背诵定义更有说服力.\n\n108\n05 记忆系统(Memory)\n**面向初学者的系统梳理：** 从「为什么需要记忆」到生产落地与高级框架.每个小节尽量包含:概念",
     "follow_up": [
       "面试官追问方向请结合实际项目经验展开"
     ]
   },
   {
-    "id": "tool-017",
-    "category": "agent-tools",
-    "subcategory": "工具调用",
-    "difficulty": "L2",
-    "tags": [
-      "MCP",
-      "工具调用",
-      "工具"
-    ],
-    "question": "MCP 与 Function Calling 是替代关系吗？ ",
-    "answer": "不是。FC 是模型侧表达；MCP 是工具侧集成。Host 常将 MCP 工具列表映射为 FC 的\ntools 。",
-    "follow_up": [
-      "面试官追问方向请结合实际项目经验展开"
-    ]
-  },
-  {
-    "id": "tool-018",
-    "category": "agent-tools",
-    "subcategory": "工具调用",
-    "difficulty": "L2",
-    "tags": [
-      "工具调用",
-      "工具"
-    ],
-    "question": "工具路由什么时候必须上？ ",
-    "answer": "当工具数量导致上下文膨胀、误选率上升或延迟/成本明显增加时；具体阈值依赖模型与描述\n长度，常见从几十起考虑。",
-    "follow_up": [
-      "面试官追问方向请结合实际项目经验展开"
-    ]
-  },
-  {
-    "id": "tool-019",
-    "category": "agent-tools",
-    "subcategory": "工具调用",
-    "difficulty": "L2",
-    "tags": [
-      "工具调用",
-      "向量"
-    ],
-    "question": "向量路由的缺陷与改进？ ",
-    "answer": "缺陷：描述不佳则 embedding 不准；OOV 专有名词弱。改进：混合检索、同义词表、用户域\n特征、日志驱动迭代描述、加轻量分类器。",
-    "follow_up": [
-      "面试官追问方向请结合实际项目经验展开"
-    ]
-  },
-  {
-    "id": "tool-020",
-    "category": "agent-tools",
-    "subcategory": "工具调用",
-    "difficulty": "L2",
-    "tags": [
-      "工具调用",
-      "工具"
-    ],
-    "question": "并行工具调用要注意什么？ ",
-    "answer": "幂等性、后端并发限制、数据竞争（写操作）、结果合并顺序、部分失败重试策略。",
-    "follow_up": [
-      "面试官追问方向请结合实际项目经验展开"
-    ]
-  },
-  {
-    "id": "tool-021",
-    "category": "agent-tools",
-    "subcategory": "工具调用",
-    "difficulty": "L2",
-    "tags": [
-      "工具调用",
-      "工具"
-    ],
-    "question": "什么是工具编排中的「依赖 DAG」？ ",
-    "answer": "把工具调用当节点，数据依赖当边；拓扑排序执行，避免环与竞态，便于失败重试与可视化监\n控。",
-    "follow_up": [
-      "面试官追问方向请结合实际项目经验展开"
-    ]
-  },
-  {
-    "id": "tool-022",
-    "category": "agent-tools",
-    "subcategory": "工具调用",
-    "difficulty": "L2",
-    "tags": [
-      "工具调用",
-      "工具"
-    ],
-    "question": "敏感操作为什么推荐「两阶段提交」式工具设计？ ",
-    "answer": "第一阶段生成草稿/待确认对象，第二阶段在用户确认后再真正执行，降低模型误触发损失。",
-    "follow_up": [
-      "面试官追问方向请结合实际项目经验展开"
-    ]
-  },
-  {
-    "id": "tool-023",
-    "category": "agent-tools",
-    "subcategory": "工具调用",
-    "difficulty": "L3",
-    "tags": [
-      "工具调用",
-      "工具"
-    ],
-    "question": "工具返回为什么要尽量结构化（JSON）？ ",
-    "answer": "便于模型解析下一步推理、便于程序校验与日志；纯自然语言易产生歧义。",
-    "follow_up": [
-      "面试官追问方向请结合实际项目经验展开"
-    ]
-  },
-  {
-    "id": "tool-024",
-    "category": "agent-tools",
-    "subcategory": "工具调用",
-    "difficulty": "L3",
-    "tags": [
-      "安全",
-      "工具调用",
-      "工具"
-    ],
-    "question": "如何做工具调用的权限控制？ ",
-    "answer": "会话绑定真实用户身份；服务端校验租户与角色；最小权限；敏感操作 HITL；不把长期密钥\n暴露给模型上下文。",
-    "follow_up": [
-      "面试官追问方向请结合实际项目经验展开"
-    ]
-  },
-  {
-    "id": "tool-025",
-    "category": "agent-tools",
-    "subcategory": "工具调用",
-    "difficulty": "L3",
-    "tags": [
-      "安全",
-      "工具调用",
-      "工具"
-    ],
-    "question": "代码执行工具如何做到基本安全？ ",
-    "answer": "沙箱隔离、资源与网络限制、禁用危险模块、超时、只读默认、审计；生产慎用。\nQ16（加一）：审计日志至少记哪些字段？ \nA：时间、trace/request id、用户/租户、工具名、参数摘要（脱敏）、结果状态、耗时、模型版\n本；合规场景保留策略与不可篡改存储视要求而定。\nQ17（加一）：Calculator 为什么禁止 eval ？ \nA：eval  可执行任意 Python，等同于远程代码执行；应使用 AST 白名单或安全数学库。\n小结 \nFunction Calling：模型产出结构化调用意图，应用在本地执行并回传，是 Agent 的「手」。\nTool 工程：描述、Schema、返回值与错误模式与路由同样重要。\nMCP：标准化工具与上下文连接，利于复用与治理。\n路由与编排：解决规模与依赖问题；安全贯穿权限、输入、确认、限流与审计。\n建议结合自家业务画一张「用户请求 → 路由 → 工具 → 依赖 → 回传模型」的时序图，面试时能\n用白板讲清楚，比背诵定义更有说服力。\n\n108\n05 记忆系统（Memory） \n面向初学者的系统梳理：从「为什么需要记忆」到生产落地与高级框架。每个小节尽量包含：概念",
-    "follow_up": [
-      "面试官追问方向请结合实际项目经验展开"
-    ]
-  },
-  {
-    "id": "supp-019",
-    "category": "agent-tools",
-    "subcategory": "Function Calling",
-    "difficulty": "L2",
-    "tags": [
-      "tool_choice",
-      "tool_call_id",
-      "Function Calling"
-    ],
-    "question": "OpenAI Function Calling中tool_choice和tool_call_id有什么作用？",
-    "answer": "**tool_choice — 控制工具选择行为：**\n\n| 值 | 含义 |\n|------|------|\n| `\"auto\"` | 模型自己决定是否调用工具（默认） |\n| `\"none\"` | 禁止调用任何工具 |\n| `\"required\"` | **必须**调用至少一个工具 |\n| `{\"type\":\"function\",\"function\":{\"name\":\"xxx\"}}` | 强制调用指定工具 |\n\n**tool_call_id — 关联请求和响应：**\n\n工具调用的两步流程中，tool_call_id将「模型请求调用」和「工具执行结果」关联起来。\n```python\n# Step 1: 模型决定调用工具\nresponse = client.chat.completions.create(...)\ntool_call = response.choices[0].message.tool_calls[0]\ntool_call_id = tool_call.id  # \"call_abc123\"\n\n# Step 2: 执行工具后返回结果\nresult = execute_tool(tool_call)\n\n# Step 3: 把结果传回模型（必须带tool_call_id）\nmessages.append({\n    \"role\": \"tool\",\n    \"tool_call_id\": tool_call_id,  # 关键！\n    \"content\": json.dumps(result)\n})\n```\n\n**为什么需要循环 for _ in range(5)：**\n模型可能需要多步工具调用（A的结果决定B），循环允许模型多次调用直到finish。",
-    "follow_up": [
-      "tool_choice设为required会有什么风险？",
-      "如何处理模型调用不存在的工具？"
-    ]
-  },
-  {
-    "id": "supp-020",
+    "id": "agen-020",
     "category": "agent-tools",
     "subcategory": "Function Calling",
     "difficulty": "L3",
     "tags": [
-      "@tool",
-      "StructuredTool",
-      "LangChain工具"
+      "IO",
+      "Elasticsearch"
     ],
-    "question": "LangChain中@tool装饰器和StructuredTool有什么区别？如何选择？",
-    "answer": "**两种定义工具的方式：**\n\n**1. @tool装饰器（快速简洁）：**\n```python\nfrom langchain.tools import tool\n\n@tool\ndef search(query: str, limit: int = 5) -> str:\n    \"\"\"搜索文档库。\n    \n    Args:\n        query: 搜索关键词\n        limit: 返回数量\n    \"\"\"\n    return db.search(query, limit)\n```\n- 自动从docstring + 类型注解生成schema\n- 简单快速\n- **适合：** 原型开发、简单工具\n\n**2. StructuredTool（完全控制）：**\n```python\nfrom langchain.tools import StructuredTool\nfrom pydantic import BaseModel\n\nclass SearchInput(BaseModel):\n    query: str = Field(description=\"搜索关键词\")\n    limit: int = Field(default=5, ge=1, le=100)\n\ntool = StructuredTool.from_function(\n    func=search,\n    name=\"search_docs\",\n    description=\"搜索内部文档库\",\n    args_schema=SearchInput,\n    return_direct=False\n)\n```\n- 完全控制名称、描述、参数schema\n- 支持Pydantic验证\n- **适合：** 生产环境、复杂工具\n\n**选择：**\n- 快速原型 → @tool\n- 生产环境 → StructuredTool",
+    "question": "OpenAI Function Calling中tool_choice和tool_call_id有什么作用",
+    "answer": "- *tool_choice - 控制工具选择行为:**\n\n| 值 | 含义 |\n|------|------|\n| `\"auto\"` | 模型自己决定是否调用工具(默认) |\n| `\"none\"` | 禁止调用任何工具 |\n| `\"required\"` | **必须**调用至少一个工具 |\n| `{\"type\":\"function\",\"function\":{\"name\":\"xxx\"}}` | 强制调用指定工具 |\n\n- *tool_call_id - 关联请求和响应:**\n\n工具调用的两步流程中,tool_call_id将「模型请求调用」和「工具执行结果」关联起来.\n```python\n# Step 1: 模型决定调用工具\nresponse = client.chat.completions.create(...)\ntool_call = response.choices[0].message.tool_calls[0]\ntool_call_id = tool_call.id  # \"call_abc123\"\n\n# Step 2: 执行工具后返回结果\nresult = execute_tool(tool_call)\n\n# Step 3: 把结果传回模型(必须带tool_call_id)\nmessages.append({\n**\"role\"：** \"tool\",\n**\"tool_call_id\"：** tool_call_id,  # 关键!\n**\"content\"：** json.dumps(result)\n})\n```\n\n- *为什么需要循环 for _ in range(5):**\n模型可能需要多步工具调用(A的结果决定B),循环允许模型多次调用直到finish.",
     "follow_up": [
-      "如何处理工具返回的大数据？",
-      "工具的return_direct是什么意思？"
+      "tool_choice设为required会有什么风险?",
+      "如何处理模型调用不存在的工具?"
+    ]
+  },
+  {
+    "id": "agen-021",
+    "category": "agent-tools",
+    "subcategory": "Function Calling",
+    "difficulty": "L3",
+    "tags": [
+      "String",
+      "注解",
+      "IO",
+      "GC",
+      "IOC",
+      "Elasticsearch"
+    ],
+    "question": "LangChain中@tool装饰器和StructuredTool有什么区别?如何选择",
+    "answer": "- *两种定义工具的方式:**\n\n- *1. @tool装饰器(快速简洁):**\n```python\nfrom langchain.tools import tool\n\n@tool\ndef search(query: str, limit: int = 5) -> str:\n\"\"\"搜索文档库.\n\n**Args：** \n**query：** 搜索关键词\n**limit：** 返回数量\n\"\"\"\nreturn db.search(query, limit)\n```\n- 自动从docstring + 类型注解生成schema\n- 简单快速\n- **适合:** 原型开发、简单工具\n\n- *2. StructuredTool(完全控制):**\n```python\nfrom langchain.tools import StructuredTool\nfrom pydantic import BaseModel\n\nclass SearchInput(BaseModel):\n**query：** str = Field(description=\"搜索关键词\")\n**limit：** int = Field(default=5, ge=1, le=100)\n\ntool = StructuredTool.from_function(\nfunc=search,\nname=\"search_docs\",\ndescription=\"搜索内部文档库\",\nargs_schema=SearchInput,\nreturn_direct=False\n)\n```\n- 完全控制名称、描述、参数schema\n- 支持Pydantic验证\n- **适合:** 生产环境、复杂工具\n\n- *选择:**\n- 快速原型 → @tool\n- 生产环境 → StructuredTool",
+    "follow_up": [
+      "如何处理工具返回的大数据?",
+      "工具的return_direct是什么意思?"
     ]
   }
 ]

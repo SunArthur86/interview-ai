@@ -1,285 +1,238 @@
 [
   {
-    "id": "multi-001",
+    "id": "agen-001",
+    "category": "agent-multi",
+    "subcategory": "多智能体系统",
+    "difficulty": "L1",
+    "tags": [],
+    "question": "单 Agent 和多 Agent 的本质区别是什么?什么时候该上多 Agent",
+    "answer": "本质区别不在「调几次模型」,而在 是否显式建模角色、通信与治理.单 Agent 适合:任\n务边界清晰、工具少、强实时、成本极度敏感的场景.多 Agent 适合:任务可分解、需要不同专\n业视角、需要并行、需要权限隔离(例如代码执行与对外发布分离)、需要可观测的分阶段产出 的\n场景.\n- *追问应对:**若问「多 Agent 会不会更贵?」--答:通常 Token 与调用次数上升,但若通过\n小模型子任务 + 大模型仲裁、并行缩短时间、减少无效重试,总成本未必更高,需要按业务度\n量.",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "agen-002",
+    "category": "agent-multi",
+    "subcategory": "多智能体系统",
+    "difficulty": "L1",
+    "tags": [],
+    "question": "什么是「注意力漂移」?多 Agent 如何缓解",
+    "answer": "注意力漂移指模型在长上下文或多目标提示下,对关键约束的关注度下降,导致输出偏离\n要求.多 Agent 缓解方式包括:拆分子目标使每个子上下文更短;专职角色减少单提示中的目标\n数量;中间结果结构化(JSON/状态机)减少自然语言堆砌.\n- *追问应对:**若问「不用多 Agent 怎么缓解?」--答:摘要、检索注入关键句、约束前置、\n链式调用 with 校验器 等.",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "agen-003",
+    "category": "agent-multi",
+    "subcategory": "多智能体系统",
+    "difficulty": "L1",
+    "tags": [],
+    "question": "多 Agent 的「容错」具体怎么体现",
+    "answer": "体现为 失败隔离 + 可替换性:例如审查 Agent 发现实现 Agent 的代码不合规,可打回重\n写而不污染主对话;执行 Agent 沙箱崩溃可只重启该步骤.工程上常配合 重试、指数退避、断路\n器、降级模板.\n- *追问应对:**若问「会不会互相甩锅?」--答:会,所以需要 明确终止条件、主席/仲裁机\n制、可观测日志(见第 5、9 节).",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "agen-004",
+    "category": "agent-multi",
+    "subcategory": "多智能体系统",
+    "difficulty": "L1",
+    "tags": [],
+    "question": "Boss-Worker 和 Pipeline 有什么本质差异",
+    "answer": "Pipeline 强调 固定的阶段顺序与数据形态;Boss-Worker 强调 动态任务图--Boss 可\n按需增删子任务、并行派发.Pipeline 更像工厂流水线;Boss-Worker 更像项目经理排期.\n- *追问应对:**若问「能混合吗?」--答:非常常见,例如 Boss 定阶段,阶段内 Pipeline,\n阶段间 讨论.",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "agen-005",
+    "category": "agent-multi",
+    "subcategory": "多智能体系统",
+    "difficulty": "L1",
+    "tags": [],
+    "question": "民主讨论模式如何避免永远开不完会",
+    "answer": "需要 硬终止条件:最大轮数、Token 预算、无新信息阈值(连续两轮无实质变更则停)、\n或 主席裁决;并配合 结构化发言(观点 + 证据 + 反对意见)减少废话.\n- *追问应对:**若问「讨论适合生产吗?」--答:适合 低风险创意类 或 人类在环;纯自动高风\n险决策通常要 仲裁 + 规则引擎.",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "agen-006",
+    "category": "agent-multi",
+    "subcategory": "多智能体系统",
+    "difficulty": "L2",
+    "tags": [],
+    "question": "黑板模式和消息队列有什么相似与不同",
+    "answer": "**相似：** 都 解耦发送方与接收方.不同:黑板通常是 共享状态容器(读最新快照),强调\n协作求解;队列是 事件/任务的管道,强调 可靠投递、顺序、削峰.黑板更像「会议室白板」;队\n列更像「工单系统」.\n- *追问应对:**若问「能结合吗?」--答:可以,队列传事件,消费者更新黑板,兼顾可靠与共\n享状态.",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "agen-007",
+    "category": "agent-multi",
+    "subcategory": "多智能体系统",
+    "difficulty": "L1",
+    "tags": [],
+    "question": "动态任务分配和固定 Pipeline 各适合什么场景",
+    "answer": "固定 Pipeline 适合 SOP 稳定、输入输出契约清晰(如审核流水线).动态分配适合 探索\n性任务(研究、故障排查),中间可能发现新子问题.工程上常 混合:主干 Pipeline + 动态插入\n节点.\n- *追问应对:**若问「动态会不会不可控?」--答:需要 预算、最大深度、允许的工具白名单\n与 人类在环.",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "agen-008",
+    "category": "agent-multi",
+    "subcategory": "多智能体系统",
+    "difficulty": "L1",
+    "tags": [],
+    "question": "为什么光有投票不够",
+    "answer": "因为 LLM Agent 的「独立意见」往往 不独立(相似训练分布、相似 system 提示),且\n缺少 真实世界证据 时,投票可能强化错误.更稳妥的是 证据门槛 + 优先级规则 + 人类在环.\n- *追问应对:**若问「Red Team 怎么用?」--答:专门 Agent 负责挑错、攻击假设、构造反\n例,输出 必须回应的质疑清单.",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "agen-009",
+    "category": "agent-multi",
+    "subcategory": "多智能体系统",
+    "difficulty": "L2",
+    "tags": [
+      "IOC",
+      "Redis"
+    ],
+    "question": "多 Agent 系统为什么推荐状态机而不是纯自然语言传递一切",
+    "answer": "自然语言灵活但 难校验、难回放、难测试.状态机提供 可验证迁移、清晰终止、可观测\n指标(卡在何阶段多久).自然语言可作为 附件说明,不应是唯一真相来源.\n- *追问应对:**若问「状态存在哪?」--答:进程内只适合 demo;生产用 Redis/DB 并加 乐\n观锁.",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "agen-010",
+    "category": "agent-multi",
+    "subcategory": "多智能体系统",
+    "difficulty": "L1",
+    "tags": [],
+    "question": "AutoGen 和 LangGraph 多 Agent 有什么气质差异",
+    "answer": "AutoGen 偏 对话与多角色交互 的快速组合;LangGraph 偏 显式图状态机 与 检查点/分\n支.若强调 生产可恢复与审计,LangGraph 往往更易 形式化;若强调 探索式对话与人机混合,\nAutoGen 叙事更自然.\n- *追问应对:**若问「能混用吗?」--答:可以,例如 LangGraph 节点内嵌 AutoGen 会话,\n但要 统一 trace id 与成本核算.",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "agen-011",
+    "category": "agent-multi",
+    "subcategory": "多智能体系统",
+    "difficulty": "L1",
+    "tags": [],
+    "question": "CrewAI 的「Crew」抽象解决什么问题",
+    "answer": "把 角色分工 + 任务依赖 + 执行顺序 从 prompt 工程里抽成一等公民,降低「写一大坨\nsystem prompt」的心智负担,让 协作结构 可见、可复用.\n\n147\n- *追问应对:**若问缺点?答:抽象与真实权限/数据边界 仍需自己把控;复杂分支可能要\n下沉到代码.",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "agen-012",
+    "category": "agent-multi",
+    "subcategory": "多智能体系统",
+    "difficulty": "L1",
+    "tags": [],
+    "question": "MetaGPT 适合直接上生产吗",
+    "answer": "**视场景而定：** 它擅长 结构化软件过程与多角色产出 的演示与研究;生产需补 强测试、强\n权限、强监控、成本与延迟控制,框架本身不替你完成这些.\n- *追问应对:**若问「和 CrewAI 选哪个?」--答:先看团队熟悉度与 是否需要强图编排/检查\n点(偏 LangGraph)或 快速角色任务叙事(偏 CrewAI).",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "agen-013",
+    "category": "agent-multi",
+    "subcategory": "多智能体系统",
+    "difficulty": "L1",
+    "tags": [],
+    "question": "企业里多 Agent 与「传统工作流引擎(BPM)」关系是什么",
+    "answer": "BPM 管 确定性流程与人工节点;多 Agent 管 需要语言推理与开放工具调用的步骤.常\n**见架构：** BPM 编排确定性 + LLM Agent 作为某一人工/自动活动;或 Agent 产出结构化决策,\n由 BPM 落账.\n- *追问应对:**若问「谁主谁辅?」--答:强合规流程 BPM 主;强探索任务 Agent 主,但要\n有 护栏.",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "agen-014",
     "category": "agent-multi",
     "subcategory": "多智能体系统",
     "difficulty": "L1",
     "tags": [
-      "多智能体系统"
+      "熔断"
     ],
-    "question": "单 Agent 和多 Agent 的本质区别是什么？什么时候该上多 Agent？",
-    "answer": "本质区别不在「调几次模型」，而在 是否显式建模角色、通信与治理。单 Agent 适合：任\n务边界清晰、工具少、强实时、成本极度敏感的场景。多 Agent 适合：任务可分解、需要不同专\n业视角、需要并行、需要权限隔离（例如代码执行与对外发布分离）、需要可观测的分阶段产出 的\n场景。\n**追问应对：**若问「多 Agent 会不会更贵？」——答：通常 Token 与调用次数上升，但若通过\n小模型子任务 + 大模型仲裁、并行缩短时间、减少无效重试，总成本未必更高，需要按业务度\n量。",
+    "question": "如何检测多 Agent 系统的「死循环」",
+    "answer": "**组合策略：** (1)全局步数上限;(2)状态哈希去重(若连续重复同一计划/同一工具入参\n则停);(3)无进展检测(关键指标多轮不变,如 bug 数未降);(4)预算熔断(Token/费用/时\n间).\n- *追问应对:**若问「误杀怎么办?」--答:提高 进展定义粒度、允许 人类确认继续.",
     "follow_up": [
       "面试官追问方向请结合实际项目经验展开"
     ]
   },
   {
-    "id": "multi-002",
+    "id": "agen-015",
     "category": "agent-multi",
     "subcategory": "多智能体系统",
     "difficulty": "L1",
-    "tags": [
-      "Transformer",
-      "多智能体系统"
-    ],
-    "question": "什么是「注意力漂移」？多 Agent 如何缓解？",
-    "answer": "注意力漂移指模型在长上下文或多目标提示下，对关键约束的关注度下降，导致输出偏离\n要求。多 Agent 缓解方式包括：拆分子目标使每个子上下文更短；专职角色减少单提示中的目标\n数量；中间结果结构化（JSON/状态机）减少自然语言堆砌。\n**追问应对：**若问「不用多 Agent 怎么缓解？」——答：摘要、检索注入关键句、约束前置、\n链式调用 with 校验器 等。",
+    "tags": [],
+    "question": "错误隔离在多 Agent 里如何实现",
+    "answer": "(1)沙箱执行 与 最小权限工具;(2)校验 Agent 作为门禁;(3)检查点:通过后持久化,失\n败从检查点重试;(4)不把未经校验的自然语言当 API 参数.\n- *追问应对:**若问「工具返回很大怎么办?」--答:存对象存储,传 句柄/摘要 进上下文.",
     "follow_up": [
       "面试官追问方向请结合实际项目经验展开"
     ]
   },
   {
-    "id": "multi-003",
+    "id": "agen-016",
+    "category": "agent-multi",
+    "subcategory": "多智能体系统",
+    "difficulty": "L2",
+    "tags": [],
+    "question": "多 Agent 会不会降低「一致性」(同一产品前后端接口对不上)",
+    "answer": "会,所以需要 单一契约源(OpenAPI/JSON Schema)+ 契约测试 Agent 或静态检查 +\n状态机门禁.",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "agen-017",
+    "category": "agent-multi",
+    "subcategory": "多智能体系统",
+    "difficulty": "L2",
+    "tags": [
+      "IO"
+    ],
+    "question": "多 Agent 的评估怎么做",
+    "answer": "**分层：** 单元(单 Agent I/O)、集成(两两交互)、端到端(任务成功率);辅以 LLM-as-\njudge 需防偏,最好配 黄金集与人审.\nfrom typing import Callable, Any, Set, List\ndef run_with_guard(agent_step: Callable[[List[str]], str], user_goal: str,\n**max_steps：** int = 20):\n**transcript：** List[str] = []\n**seen：** Set[str] = set()\nfor _ in range(max_steps):\naction = agent_step(transcript + [f\"GOAL: {user_goal}\"])\nh = action.strip()\nif h in seen:\nraise RuntimeError(\"detected repeated action; abort\")\nseen.add(h)\ntranscript.append(action)\nif \"DONE\" in action:\nreturn transcript\nraise RuntimeError(\"max steps exceeded\")\npython",
+    "follow_up": [
+      "面试官追问方向请结合实际项目经验展开"
+    ]
+  },
+  {
+    "id": "agen-018",
     "category": "agent-multi",
     "subcategory": "多智能体系统",
     "difficulty": "L1",
-    "tags": [
-      "多智能体系统"
-    ],
-    "question": "多 Agent 的「容错」具体怎么体现？",
-    "answer": "体现为 失败隔离 + 可替换性：例如审查 Agent 发现实现 Agent 的代码不合规，可打回重\n写而不污染主对话；执行 Agent 沙箱崩溃可只重启该步骤。工程上常配合 重试、指数退避、断路\n器、降级模板。\n**追问应对：**若问「会不会互相甩锅？」——答：会，所以需要 明确终止条件、主席/仲裁机\n制、可观测日志（见第 5、9 节）。",
+    "tags": [],
+    "question": "为什么需要「人机在环」",
+    "answer": "高风险决策、未知法规、或 模型置信度低 时,人类是 最后防线;同时可 收集真实反馈\n迭代提示与工具.",
     "follow_up": [
       "面试官追问方向请结合实际项目经验展开"
     ]
   },
   {
-    "id": "multi-004",
-    "category": "agent-multi",
-    "subcategory": "多智能体系统",
-    "difficulty": "L1",
-    "tags": [
-      "多智能体系统"
-    ],
-    "question": "Boss-Worker 和 Pipeline 有什么本质差异？",
-    "answer": "Pipeline 强调 固定的阶段顺序与数据形态；Boss-Worker 强调 动态任务图——Boss 可\n按需增删子任务、并行派发。Pipeline 更像工厂流水线；Boss-Worker 更像项目经理排期。\n**追问应对：**若问「能混合吗？」——答：非常常见，例如 Boss 定阶段，阶段内 Pipeline，\n阶段间 讨论。",
-    "follow_up": [
-      "面试官追问方向请结合实际项目经验展开"
-    ]
-  },
-  {
-    "id": "multi-005",
-    "category": "agent-multi",
-    "subcategory": "多智能体系统",
-    "difficulty": "L1",
-    "tags": [
-      "多智能体系统"
-    ],
-    "question": "民主讨论模式如何避免永远开不完会？",
-    "answer": "需要 硬终止条件：最大轮数、Token 预算、无新信息阈值（连续两轮无实质变更则停）、\n或 主席裁决；并配合 结构化发言（观点 + 证据 + 反对意见）减少废话。\n**追问应对：**若问「讨论适合生产吗？」——答：适合 低风险创意类 或 人类在环；纯自动高风\n险决策通常要 仲裁 + 规则引擎。",
-    "follow_up": [
-      "面试官追问方向请结合实际项目经验展开"
-    ]
-  },
-  {
-    "id": "multi-006",
+    "id": "agen-019",
     "category": "agent-multi",
     "subcategory": "多智能体系统",
     "difficulty": "L2",
     "tags": [
-      "多智能体系统"
+      "IO",
+      "IOC"
     ],
-    "question": "黑板模式和消息队列有什么相似与不同？",
-    "answer": "相似：都 解耦发送方与接收方。不同：黑板通常是 共享状态容器（读最新快照），强调\n协作求解；队列是 事件/任务的管道，强调 可靠投递、顺序、削峰。黑板更像「会议室白板」；队\n列更像「工单系统」。\n**追问应对：**若问「能结合吗？」——答：可以，队列传事件，消费者更新黑板，兼顾可靠与共\n享状态。",
-    "follow_up": [
-      "面试官追问方向请结合实际项目经验展开"
-    ]
-  },
-  {
-    "id": "multi-007",
-    "category": "agent-multi",
-    "subcategory": "多智能体系统",
-    "difficulty": "L2",
-    "tags": [
-      "多智能体系统"
-    ],
-    "question": "动态任务分配和固定 Pipeline 各适合什么场景？",
-    "answer": "固定 Pipeline 适合 SOP 稳定、输入输出契约清晰（如审核流水线）。动态分配适合 探索\n性任务（研究、故障排查），中间可能发现新子问题。工程上常 混合：主干 Pipeline + 动态插入\n节点。\n**追问应对：**若问「动态会不会不可控？」——答：需要 预算、最大深度、允许的工具白名单\n与 人类在环。",
-    "follow_up": [
-      "面试官追问方向请结合实际项目经验展开"
-    ]
-  },
-  {
-    "id": "multi-008",
-    "category": "agent-multi",
-    "subcategory": "多智能体系统",
-    "difficulty": "L2",
-    "tags": [
-      "多智能体系统"
-    ],
-    "question": "为什么光有投票不够？",
-    "answer": "因为 LLM Agent 的「独立意见」往往 不独立（相似训练分布、相似 system 提示），且\n缺少 真实世界证据 时，投票可能强化错误。更稳妥的是 证据门槛 + 优先级规则 + 人类在环。\n**追问应对：**若问「Red Team 怎么用？」——答：专门 Agent 负责挑错、攻击假设、构造反\n例，输出 必须回应的质疑清单。",
-    "follow_up": [
-      "面试官追问方向请结合实际项目经验展开"
-    ]
-  },
-  {
-    "id": "multi-009",
-    "category": "agent-multi",
-    "subcategory": "多智能体系统",
-    "difficulty": "L2",
-    "tags": [
-      "多智能体系统"
-    ],
-    "question": "多 Agent 系统为什么推荐状态机而不是纯自然语言传递一切？",
-    "answer": "自然语言灵活但 难校验、难回放、难测试。状态机提供 可验证迁移、清晰终止、可观测\n指标（卡在何阶段多久）。自然语言可作为 附件说明，不应是唯一真相来源。\n**追问应对：**若问「状态存在哪？」——答：进程内只适合 demo；生产用 Redis/DB 并加 乐\n观锁。",
-    "follow_up": [
-      "面试官追问方向请结合实际项目经验展开"
-    ]
-  },
-  {
-    "id": "multi-010",
-    "category": "agent-multi",
-    "subcategory": "多智能体系统",
-    "difficulty": "L2",
-    "tags": [
-      "LangChain",
-      "多智能体系统"
-    ],
-    "question": "AutoGen 和 LangGraph 多 Agent 有什么气质差异？",
-    "answer": "AutoGen 偏 对话与多角色交互 的快速组合；LangGraph 偏 显式图状态机 与 检查点/分\n支。若强调 生产可恢复与审计，LangGraph 往往更易 形式化；若强调 探索式对话与人机混合，\nAutoGen 叙事更自然。\n**追问应对：**若问「能混用吗？」——答：可以，例如 LangGraph 节点内嵌 AutoGen 会话，\n但要 统一 trace id 与成本核算。",
-    "follow_up": [
-      "面试官追问方向请结合实际项目经验展开"
-    ]
-  },
-  {
-    "id": "multi-011",
-    "category": "agent-multi",
-    "subcategory": "多智能体系统",
-    "difficulty": "L2",
-    "tags": [
-      "多智能体系统"
-    ],
-    "question": "CrewAI 的「Crew」抽象解决什么问题？",
-    "answer": "把 角色分工 + 任务依赖 + 执行顺序 从 prompt 工程里抽成一等公民，降低「写一大坨\nsystem prompt」的心智负担，让 协作结构 可见、可复用。\n\n147\n**追问应对：**若问缺点？答：抽象与真实权限/数据边界 仍需自己把控；复杂分支可能要\n下沉到代码。",
-    "follow_up": [
-      "面试官追问方向请结合实际项目经验展开"
-    ]
-  },
-  {
-    "id": "multi-012",
-    "category": "agent-multi",
-    "subcategory": "多智能体系统",
-    "difficulty": "L2",
-    "tags": [
-      "多智能体系统"
-    ],
-    "question": "MetaGPT 适合直接上生产吗？",
-    "answer": "视场景而定：它擅长 结构化软件过程与多角色产出 的演示与研究；生产需补 强测试、强\n权限、强监控、成本与延迟控制，框架本身不替你完成这些。\n**追问应对：**若问「和 CrewAI 选哪个？」——答：先看团队熟悉度与 是否需要强图编排/检查\n点（偏 LangGraph）或 快速角色任务叙事（偏 CrewAI）。",
-    "follow_up": [
-      "面试官追问方向请结合实际项目经验展开"
-    ]
-  },
-  {
-    "id": "multi-013",
-    "category": "agent-multi",
-    "subcategory": "多智能体系统",
-    "difficulty": "L3",
-    "tags": [
-      "多智能体系统"
-    ],
-    "question": "企业里多 Agent 与「传统工作流引擎（BPM）」关系是什么？",
-    "answer": "BPM 管 确定性流程与人工节点；多 Agent 管 需要语言推理与开放工具调用的步骤。常\n见架构：BPM 编排确定性 + LLM Agent 作为某一人工/自动活动；或 Agent 产出结构化决策，\n由 BPM 落账。\n**追问应对：**若问「谁主谁辅？」——答：强合规流程 BPM 主；强探索任务 Agent 主，但要\n有 护栏。",
-    "follow_up": [
-      "面试官追问方向请结合实际项目经验展开"
-    ]
-  },
-  {
-    "id": "multi-014",
-    "category": "agent-multi",
-    "subcategory": "多智能体系统",
-    "difficulty": "L3",
-    "tags": [
-      "多智能体系统"
-    ],
-    "question": "如何检测多 Agent 系统的「死循环」？",
-    "answer": "组合策略：（1）全局步数上限；（2）状态哈希去重（若连续重复同一计划/同一工具入参\n则停）；（3）无进展检测（关键指标多轮不变，如 bug 数未降）；（4）预算熔断（Token/费用/时\n间）。\n**追问应对：**若问「误杀怎么办？」——答：提高 进展定义粒度、允许 人类确认继续。",
-    "follow_up": [
-      "面试官追问方向请结合实际项目经验展开"
-    ]
-  },
-  {
-    "id": "multi-015",
-    "category": "agent-multi",
-    "subcategory": "多智能体系统",
-    "difficulty": "L3",
-    "tags": [
-      "多智能体系统"
-    ],
-    "question": "错误隔离在多 Agent 里如何实现？",
-    "answer": "（1）沙箱执行 与 最小权限工具；（2）校验 Agent 作为门禁；（3）检查点：通过后持久化，失\n败从检查点重试；（4）不把未经校验的自然语言当 API 参数。\n**追问应对：**若问「工具返回很大怎么办？」——答：存对象存储，传 句柄/摘要 进上下文。",
-    "follow_up": [
-      "面试官追问方向请结合实际项目经验展开"
-    ]
-  },
-  {
-    "id": "multi-016",
-    "category": "agent-multi",
-    "subcategory": "多智能体系统",
-    "difficulty": "L3",
-    "tags": [
-      "多智能体系统"
-    ],
-    "question": "多 Agent 会不会降低「一致性」（同一产品前后端接口对不上）？",
-    "answer": "会，所以需要 单一契约源（OpenAPI/JSON Schema）+ 契约测试 Agent 或静态检查 +\n状态机门禁。",
-    "follow_up": [
-      "面试官追问方向请结合实际项目经验展开"
-    ]
-  },
-  {
-    "id": "multi-017",
-    "category": "agent-multi",
-    "subcategory": "多智能体系统",
-    "difficulty": "L3",
-    "tags": [
-      "安全",
-      "多智能体系统"
-    ],
-    "question": "如何做跨 Agent 的权限隔离？",
-    "answer": "工具 分账户/分密钥；Agent 最小权限；敏感操作走 审批工作流；审计日志 不可篡改存\n储。",
-    "follow_up": [
-      "面试官追问方向请结合实际项目经验展开"
-    ]
-  },
-  {
-    "id": "multi-018",
-    "category": "agent-multi",
-    "subcategory": "多智能体系统",
-    "difficulty": "L3",
-    "tags": [
-      "多智能体系统",
-      "评估"
-    ],
-    "question": "多 Agent 的评估怎么做？",
-    "answer": "分层：单元（单 Agent I/O）、集成（两两交互）、端到端（任务成功率）；辅以 LLM-as-\njudge 需防偏，最好配 黄金集与人审。\nfrom typing import Callable, Any, Set, List\ndef run_with_guard(agent_step: Callable[[List[str]], str], user_goal: str,\nmax_steps: int = 20):\ntranscript: List[str] = []\nseen: Set[str] = set()\nfor _ in range(max_steps):\naction = agent_step(transcript + [f\"GOAL: {user_goal}\"])\nh = action.strip()\nif h in seen:\nraise RuntimeError(\"detected repeated action; abort\")\nseen.add(h)\ntranscript.append(action)\nif \"DONE\" in action:\nreturn transcript\nraise RuntimeError(\"max steps exceeded\")\npython",
-    "follow_up": [
-      "面试官追问方向请结合实际项目经验展开"
-    ]
-  },
-  {
-    "id": "multi-019",
-    "category": "agent-multi",
-    "subcategory": "多智能体系统",
-    "difficulty": "L3",
-    "tags": [
-      "多智能体系统"
-    ],
-    "question": "为什么需要「人机在环」？",
-    "answer": "高风险决策、未知法规、或 模型置信度低 时，人类是 最后防线；同时可 收集真实反馈\n迭代提示与工具。",
-    "follow_up": [
-      "面试官追问方向请结合实际项目经验展开"
-    ]
-  },
-  {
-    "id": "multi-020",
-    "category": "agent-multi",
-    "subcategory": "多智能体系统",
-    "difficulty": "L3",
-    "tags": [
-      "多智能体系统",
-      "工具"
-    ],
-    "question": "多 Agent 与「单 Agent + 多个工具」取舍？",
-    "answer": "若只需 统一策略 调不同 API，单 Agent + 工具即可；若需要 角色隔离、并行、对抗评\n审、组织流程，多 Agent 更合适。\n本篇小结（背调清单） \n为何多 Agent：拆上下文、专业化、并行、隔离失败；单 Agent 有注意力与能力边界问题。\n三种协作：Boss-Worker、Pipeline、Joint Discussion —— 各有瓶颈（Boss 单点、Pipeline\n难回溯、讨论易空转）。\n通信：直连、黑板、Pub-Sub、队列 —— 解耦度与复杂度不同。\n分配：能力/负载/动态/竞拍 —— 匹配度与治理成本之间的权衡。\n冲突：投票、优先级、主席、证据 —— 防「假独立」与集体偏误。\n状态：全局真相 + 状态机 + 事件驱动。\n框架：AutoGen、CrewAI、MetaGPT、ChatDev、LangGraph —— 理解抽象差异与工程补齐\n点。\n生产：钱、慢、死循环、错、看不清 —— 都要有 硬约束与可观测。\n文档版本：面向入门系统梳理；框架 API 以官方文档为准。\n\n153\n07 大模型基础（面试八股文） \n面向零基础读者的系统梳理：每个知识点尽量包含「概念解释、原理详解、面试问答、追问",
+    "question": "多 Agent 与「单 Agent + 多个工具」取舍",
+    "answer": "若只需 统一策略 调不同 API,单 Agent + 工具即可;若需要 角色隔离、并行、对抗评\n审、组织流程,多 Agent 更合适.\n本篇小结(背调清单)\n为何多 Agent:拆上下文、专业化、并行、隔离失败;单 Agent 有注意力与能力边界问题.\n**三种协作：** Boss-Worker、Pipeline、Joint Discussion -- 各有瓶颈(Boss 单点、Pipeline\n难回溯、讨论易空转).\n**通信：** 直连、黑板、Pub-Sub、队列 -- 解耦度与复杂度不同.\n**分配：** 能力/负载/动态/竞拍 -- 匹配度与治理成本之间的权衡.\n**冲突：** 投票、优先级、主席、证据 -- 防「假独立」与集体偏误.\n**状态：** 全局真相 + 状态机 + 事件驱动.\n**框架：** AutoGen、CrewAI、MetaGPT、ChatDev、LangGraph -- 理解抽象差异与工程补齐\n点.\n**生产：** 钱、慢、死循环、错、看不清 -- 都要有 硬约束与可观测.\n**文档版本：** 面向入门系统梳理;框架 API 以官方文档为准.\n\n153\n07 大模型基础(面试八股文)\n**面向零基础读者的系统梳理：** 每个知识点尽量包含「概念解释、原理详解、面试问答、追问",
     "follow_up": [
       "面试官追问方向请结合实际项目经验展开"
     ]
