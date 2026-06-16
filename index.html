@@ -3,18 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-  <title>AI 面试题库 · 816 题精讲</title>
-  <meta name="description" content="816 道精选 AI 面试题，涵盖 LLM核心、AI Agent、AI Harness、FDE、工程化实战、AI 基础七大方向，由浅入深 L1-L5 分级，支持按难度排序、智能搜索、遗忘曲线复习。">
-  <meta name="keywords" content="AI面试题,大模型面试,Agent面试,RAG,LLM,人工智能,深度学习,Transformer,LoRA,DPO,PPO,DeepSeek,vLLM,FlashAttention">
+  <title>面试题库 · 精讲</title>
+  <meta name="description" id="metaDesc" content="精选面试题库">
+  <meta name="keywords" id="metaKeywords" content="面试题">
 
   <!-- PWA -->
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#0071e3">
+  <meta name="theme-color" id="metaTheme" content="#0071e3">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="AI面试题">
-  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
+  <meta name="apple-mobile-web-app-title" id="metaAppleTitle" content="面试题">
+  <link rel="apple-touch-icon" id="iconApple" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📖</text></svg>">
+  <link rel="icon" id="iconFav" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📖</text></svg>">
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -37,6 +37,22 @@
 </head>
 <body>
 
+  <!-- ===== Config (must load before framework) ===== -->
+  <script src="config.js"></script>
+  <script>
+    // Apply config to meta tags immediately
+    (function() {
+      document.title = APP_CONFIG.appName + ' · 精讲';
+      document.getElementById('metaDesc').setAttribute('content', APP_CONFIG.appDescription);
+      document.getElementById('metaKeywords').setAttribute('content', APP_CONFIG.keywords);
+      document.getElementById('metaTheme').setAttribute('content', APP_CONFIG.themeColor);
+      document.getElementById('metaAppleTitle').setAttribute('content', APP_CONFIG.appNameShort);
+      const iconUrl = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>" + APP_CONFIG.appIcon + "</text></svg>";
+      document.getElementById('iconApple').setAttribute('href', iconUrl);
+      document.getElementById('iconFav').setAttribute('href', iconUrl);
+    })();
+  </script>
+
   <!-- ===== Loader ===== -->
   <div id="loader" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);z-index:5000;">
     <div style="text-align:center;">
@@ -48,7 +64,7 @@
 
   <!-- ===== Top Nav ===== -->
   <nav class="top-nav">
-    <div class="top-nav__brand">AI <span>面试题库</span></div>
+    <div class="top-nav__brand" id="navBrand">📖 <span>面试题库</span></div>
     <div class="top-nav__search">
       <svg class="top-nav__search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
@@ -75,16 +91,8 @@
     </div>
   </nav>
 
-  <!-- ===== Category Tabs ===== -->
-  <div class="category-tabs">
-    <button class="category-tab active" data-cat="all" onclick="setCategory('all')">📚 全部 <span class="count">0</span></button>
-    <button class="category-tab" data-cat="llm-core" onclick="setCategory('llm-core')">🔥 LLM 核心 <span class="count">0</span></button>
-    <button class="category-tab" data-cat="ai-agent" onclick="setCategory('ai-agent')">🤖 AI Agent <span class="count">0</span></button>
-    <button class="category-tab" data-cat="ai-harness" onclick="setCategory('ai-harness')">🏗️ AI Harness <span class="count">0</span></button>
-    <button class="category-tab" data-cat="fde" onclick="setCategory('fde')">🚀 FDE <span class="count">0</span></button>
-    <button class="category-tab" data-cat="eng-practice" onclick="setCategory('eng-practice')">⚙️ 工程化实战 <span class="count">0</span></button>
-    <button class="category-tab" data-cat="ai-basics" onclick="setCategory('ai-basics')">🧠 AI 基础 <span class="count">0</span></button>
-  </div>
+  <!-- ===== Category Tabs (dynamically rendered from APP_CONFIG) ===== -->
+  <div class="category-tabs"></div>
 
   <!-- ===== Filter Bar ===== -->
   <div class="filter-bar">
@@ -216,7 +224,6 @@
     </div>
     <div class="settings-group settings-group__review">
       <div class="settings-group__label">🔁 遗忘曲线复习</div>
-
       <!-- Algorithm Selection -->
       <div style="margin-bottom:16px;">
         <div style="font-size:0.8125rem;color:var(--text-secondary);margin-bottom:8px;">复习算法</div>
@@ -244,7 +251,6 @@
           </div>
         </div>
       </div>
-
       <!-- Daily Review Limit -->
       <div style="margin-bottom:12px;">
         <div style="font-size:0.8125rem;color:var(--text-secondary);margin-bottom:8px;">每日复习上限</div>
@@ -254,7 +260,6 @@
           <button onclick="setDailyReviewLimit(ReviewConfig.dailyReviewLimit + 5)">+</button>
         </div>
       </div>
-
       <!-- Toggles -->
       <div class="settings-option" onclick="toggleAutoEnroll(); this.querySelector('.toggle').classList.toggle('active')">
         <span class="settings-option__label">自动加入复习</span>
@@ -264,19 +269,14 @@
         <span class="settings-option__label">复习提醒</span>
         <div class="toggle active"></div>
       </div>
-
       <button onclick="resetReviewData()" style="width:100%;padding:10px;border:1px solid var(--danger);border-radius:var(--radius-sm);background:transparent;color:var(--danger);font-size:0.875rem;cursor:pointer;transition:all 0.15s;margin-top:8px;">
         清空复习数据
       </button>
     </div>
     <div class="settings-group">
       <div class="settings-group__label">关于</div>
-      <p style="font-size:0.8125rem;color:var(--text-secondary);line-height:1.6;">
-        AI 面试题库 v3.6<br>
-        784 道精选题目 · 遗忘曲线复习系统<br>
-        覆盖 LLM核心 · AI Agent · AI Harness · 工程化实战 · AI基础<br>
-        <br>
-        <span style="color:var(--text-tertiary);">对标阿里 P7 / 字节 2-2 / 腾讯 T9</span>
+      <p id="aboutText" style="font-size:0.8125rem;color:var(--text-secondary);line-height:1.6;">
+        面试题库
       </p>
     </div>
   </div>
@@ -319,7 +319,7 @@
     </div>
   </div>
 
-  <!-- ===== Scripts ===== -->
+  <!-- ===== Framework Scripts ===== -->
   <script src="js/app.js"></script>
   <script src="js/study.js"></script>
   <script src="js/forgetting.js"></script>
@@ -329,7 +329,6 @@
       const t = document.getElementById('darkToggle');
       if (t) t.classList.toggle('active', document.documentElement.getAttribute('data-theme') === 'dark');
     }
-    // Override applyTheme to also sync toggle
     const _origApplyTheme = applyTheme;
     applyTheme = function() { _origApplyTheme(); syncDarkToggle(); };
     // Update statPercent
@@ -341,6 +340,8 @@
         el.textContent = Math.round((State.viewed.size / State.allQuestions.length) * 100) + '%';
       }
     };
+    // Set nav brand from config
+    document.getElementById('navBrand').innerHTML = APP_CONFIG.appIcon + ' <span>' + APP_CONFIG.appName.replace(APP_CONFIG.appIcon + ' ', '') + '</span>';
   </script>
 </body>
 </html>

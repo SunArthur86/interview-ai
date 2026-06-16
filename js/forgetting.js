@@ -1,5 +1,6 @@
 /**
- * AI Interview — Forgetting Curve Review System (遗忘曲线复习系统)
+ * Interview Framework — Forgetting Curve Review System (遗忘曲线复习系统)
+ * Config-driven: reads APP_CONFIG for all project-specific values.
  * 
  * Three algorithms:
  *   1. SM-2 (SuperMemo 2) — quality-based ease factor adjustment
@@ -11,7 +12,7 @@
 // ============ Review Config (user-configurable) ============
 const ReviewConfig = {
   // Algorithm selection: 'sm2' | 'leitner' | 'ebbinghaus'
-  algorithm: localStorage.getItem('ai-interview.reviewAlgorithm') || 'sm2',
+  algorithm: localStorage.getItem(APP_CONFIG.storagePrefix + '.reviewAlgorithm') || 'sm2',
 
   // --- SM-2 specific ---
   sm2: {
@@ -32,13 +33,13 @@ const ReviewConfig = {
   },
 
   // --- Daily review limit ---
-  dailyReviewLimit: parseInt(localStorage.getItem('ai-interview.dailyReviewLimit') || '50'),
+  dailyReviewLimit: parseInt(localStorage.getItem(APP_CONFIG.storagePrefix + '.dailyReviewLimit') || '50'),
 
   // --- Notification ---
-  reviewNotification: localStorage.getItem('ai-interview.reviewNotification') !== 'false',
+  reviewNotification: localStorage.getItem(APP_CONFIG.storagePrefix + '.reviewNotification') !== 'false',
 
   // --- Auto-include new questions in review ---
-  autoEnroll: localStorage.getItem('ai-interview.autoEnroll') !== 'false',
+  autoEnroll: localStorage.getItem(APP_CONFIG.storagePrefix + '.autoEnroll') !== 'false',
 
   // --- Fuzz factor (random delay to avoid clustering) ---
   fuzzEnabled: true,
@@ -52,9 +53,10 @@ const ReviewEngine = {
 
   // ---- Storage ----
   _data: null,   // cache
-  _lsKey: 'ai-interview.reviewData',
+  _lsKey: null,  // set in load() from APP_CONFIG
 
   load() {
+    if (!this._lsKey) this._lsKey = APP_CONFIG.storagePrefix + '.reviewData';
     if (this._data) return this._data;
     try {
       this._data = JSON.parse(localStorage.getItem(this._lsKey) || '{}');
@@ -400,7 +402,7 @@ function renderReviewCard() {
   const dueDays = item ? getDaysBetween(item.nextDate, getToday()) : 0;
 
   State.viewed.add(q.id);
-  localStorage.setItem('ai-interview.viewed', JSON.stringify([...State.viewed]));
+  localStorage.setItem(APP_CONFIG.storagePrefix + '.viewed', JSON.stringify([...State.viewed]));
 
   const container = document.getElementById('studyContent');
   container.innerHTML = `
@@ -545,7 +547,7 @@ function rateReviewQuestion(qId, quality) {
   // Also sync with study.js rating system
   const ratingMap = { 0: 'dont', 1: 'fuzzy', 2: 'know', 3: 'know' };
   StudyState.ratings[qId] = ratingMap[quality];
-  localStorage.setItem('ai-interview.ratings', JSON.stringify(StudyState.ratings));
+  localStorage.setItem(APP_CONFIG.storagePrefix + '.ratings', JSON.stringify(StudyState.ratings));
   updateDailyLog(ratingMap[quality], null);
 
   // Animate
@@ -728,7 +730,7 @@ function getAlgoLabel() {
 // ============ Settings: Algorithm Selection ============
 function setReviewAlgorithm(algo) {
   ReviewConfig.algorithm = algo;
-  localStorage.setItem('ai-interview.reviewAlgorithm', algo);
+  localStorage.setItem(APP_CONFIG.storagePrefix + '.reviewAlgorithm', algo);
   ReviewEngine.migrateAlgorithm(algo);
   // Update UI
   document.querySelectorAll('.algo-option').forEach(el => {
@@ -739,14 +741,14 @@ function setReviewAlgorithm(algo) {
 
 function setDailyReviewLimit(limit) {
   ReviewConfig.dailyReviewLimit = Math.max(5, Math.min(500, limit));
-  localStorage.setItem('ai-interview.dailyReviewLimit', String(ReviewConfig.dailyReviewLimit));
+  localStorage.setItem(APP_CONFIG.storagePrefix + '.dailyReviewLimit', String(ReviewConfig.dailyReviewLimit));
   const el = document.getElementById('reviewLimitValue');
   if (el) el.textContent = ReviewConfig.dailyReviewLimit;
 }
 
 function toggleReviewNotification() {
   ReviewConfig.reviewNotification = !ReviewConfig.reviewNotification;
-  localStorage.setItem('ai-interview.reviewNotification', String(ReviewConfig.reviewNotification));
+  localStorage.setItem(APP_CONFIG.storagePrefix + '.reviewNotification', String(ReviewConfig.reviewNotification));
   // Request permission if enabling
   if (ReviewConfig.reviewNotification && 'Notification' in window) {
     if (Notification.permission === 'default') {
@@ -757,7 +759,7 @@ function toggleReviewNotification() {
 
 function toggleAutoEnroll() {
   ReviewConfig.autoEnroll = !ReviewConfig.autoEnroll;
-  localStorage.setItem('ai-interview.autoEnroll', String(ReviewConfig.autoEnroll));
+  localStorage.setItem(APP_CONFIG.storagePrefix + '.autoEnroll', String(ReviewConfig.autoEnroll));
 }
 
 // Reset all review data

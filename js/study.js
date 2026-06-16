@@ -1,6 +1,7 @@
 /**
- * AI Interview — Study Mode (刷题模式)
+ * Interview Framework — Study Mode (刷题模式)
  * Flashcard-style sequential/random practice with self-assessment
+ * Config-driven: reads APP_CONFIG for all project-specific values.
  */
 'use strict';
 
@@ -12,15 +13,15 @@ const StudyState = {
   index: 0,              // current index in queue
   revealed: false,       // answer shown?
   // Self-assessment data: { questionId: 'know'|'fuzzy'|'dont' }
-  ratings: JSON.parse(localStorage.getItem('ai-interview.ratings') || '{}'),
+  ratings: JSON.parse(localStorage.getItem(APP_CONFIG.storagePrefix + '.ratings') || '{}'),
   // Daily study log: { '2024-01-15': { studied: 10, know: 6, fuzzy: 2, dont: 2 } }
-  dailyLog: JSON.parse(localStorage.getItem('ai-interview.dailyLog') || '{}'),
+  dailyLog: JSON.parse(localStorage.getItem(APP_CONFIG.storagePrefix + '.dailyLog') || '{}'),
   // Last study date (for streak calculation)
-  lastStudyDate: localStorage.getItem('ai-interview.lastStudyDate') || null,
+  lastStudyDate: localStorage.getItem(APP_CONFIG.storagePrefix + '.lastStudyDate') || null,
   // Study streak days
-  streak: parseInt(localStorage.getItem('ai-interview.streak') || '0'),
+  streak: parseInt(localStorage.getItem(APP_CONFIG.storagePrefix + '.streak') || '0'),
   // Daily goal
-  dailyGoal: parseInt(localStorage.getItem('ai-interview.dailyGoal') || '20'),
+  dailyGoal: parseInt(localStorage.getItem(APP_CONFIG.storagePrefix + '.dailyGoal') || '20'),
   // Today's studied count
   todayCount: 0,
 };
@@ -105,7 +106,7 @@ function renderStudyCard() {
 
   // Mark as viewed
   State.viewed.add(q.id);
-  localStorage.setItem('ai-interview.viewed', JSON.stringify([...State.viewed]));
+  localStorage.setItem(APP_CONFIG.storagePrefix + '.viewed', JSON.stringify([...State.viewed]));
 
   const container = document.getElementById('studyContent');
   container.innerHTML = `
@@ -189,7 +190,7 @@ function revealAnswer() {
 function rateQuestion(qId, rating) {
   const prevRating = StudyState.ratings[qId];
   StudyState.ratings[qId] = rating;
-  localStorage.setItem('ai-interview.ratings', JSON.stringify(StudyState.ratings));
+  localStorage.setItem(APP_CONFIG.storagePrefix + '.ratings', JSON.stringify(StudyState.ratings));
 
   // Animate button
   const btn = document.querySelector(`[data-rate="${rating}"]`);
@@ -328,7 +329,7 @@ function updateDailyLog(rating, prevRating) {
     }
   }
 
-  localStorage.setItem('ai-interview.dailyLog', JSON.stringify(StudyState.dailyLog));
+  localStorage.setItem(APP_CONFIG.storagePrefix + '.dailyLog', JSON.stringify(StudyState.dailyLog));
 
   // Update streak
   if (StudyState.lastStudyDate !== today) {
@@ -342,8 +343,8 @@ function updateDailyLog(rating, prevRating) {
       StudyState.streak = 1;
     }
     StudyState.lastStudyDate = today;
-    localStorage.setItem('ai-interview.lastStudyDate', today);
-    localStorage.setItem('ai-interview.streak', String(StudyState.streak));
+    localStorage.setItem(APP_CONFIG.storagePrefix + '.lastStudyDate', today);
+    localStorage.setItem(APP_CONFIG.storagePrefix + '.streak', String(StudyState.streak));
   }
 
   StudyState.todayCount = log.studied;
@@ -469,7 +470,7 @@ function shuffleArray(arr) {
 // ============ Settings: Adjust Daily Goal ============
 function adjustDailyGoal(delta) {
   StudyState.dailyGoal = Math.max(5, Math.min(200, StudyState.dailyGoal + delta));
-  localStorage.setItem('ai-interview.dailyGoal', String(StudyState.dailyGoal));
+  localStorage.setItem(APP_CONFIG.storagePrefix + '.dailyGoal', String(StudyState.dailyGoal));
   const el = document.getElementById('dailyGoalValue');
   if (el) el.textContent = StudyState.dailyGoal;
   updateStudyDashboard();
@@ -492,7 +493,7 @@ function exportProgress() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `ai-interview-progress-${getToday()}.json`;
+  a.download = `${APP_CONFIG.storagePrefix}-progress-${getToday()}.json`;
   a.click();
   URL.revokeObjectURL(url);
 }

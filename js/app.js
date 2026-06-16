@@ -1,6 +1,7 @@
 /**
- * AI Interview — App Logic
+ * Interview Framework — App Logic (config-driven)
  * 数据展示分离架构：fetch JSON → 渲染 → 交互
+ * Reads all project-specific config from global APP_CONFIG object.
  */
 'use strict';
 
@@ -13,47 +14,18 @@ const State = {
   currentSubcategory: 'all',
   showFavoritesOnly: false,
   searchQuery: '',
-  favorites: new Set(JSON.parse(localStorage.getItem('ai-interview.favorites') || '[]')),
-  viewed: new Set(JSON.parse(localStorage.getItem('ai-interview.viewed') || '[]')),
-  theme: localStorage.getItem('ai-interview.theme') || 'light',
-  sortOrder: localStorage.getItem('ai-interview.sortOrder') || 'easy-first', // 'easy-first' | 'hard-first' | 'default'
+  favorites: new Set(JSON.parse(localStorage.getItem(APP_CONFIG.storagePrefix + '.favorites') || '[]')),
+  viewed: new Set(JSON.parse(localStorage.getItem(APP_CONFIG.storagePrefix + '.viewed') || '[]')),
+  theme: localStorage.getItem(APP_CONFIG.storagePrefix + '.theme') || 'light',
+  sortOrder: localStorage.getItem(APP_CONFIG.storagePrefix + '.sortOrder') || 'easy-first', // 'easy-first' | 'hard-first' | 'default'
 };
 
 // ============ Category Config ============
 // 7 大分类，每个分类可包含多个数据文件
-const CATEGORIES = {
-  'all':              { label: '全部', icon: '📚', color: '#0071e3', files: null },
-  'llm-core':         { label: 'LLM 核心', icon: '🔥', color: '#ff3b30', files: ['data/llm-100.json', 'data/llm-notes.json', 'data/new-llm-core.json'] },
-  'ai-agent':         { label: 'AI Agent', icon: '🤖', color: '#af52de', files: ['data/ai-agent.json', 'data/agent-concept.json', 'data/agent-framework.json', 'data/agent-multi.json', 'data/new-agent-arch.json', 'data/agent-rag.json', 'data/agent-tools.json', 'data/agent-memory.json', 'data/agent-prompt.json', 'data/agent-llm.json', 'data/new-agent-skill.json'] },
-  'ai-harness':       { label: 'AI Harness', icon: '🏗️', color: '#5856d6', files: ['data/ai-harness.json', 'data/agent-eng.json'] },
-  'fde':              { label: 'FDE', icon: '🚀', color: '#00c7be', files: ['data/fde.json'] },
-  'eng-practice':     { label: '工程化实战', icon: '⚙️', color: '#ff9500', files: ['data/agent-interview-qa.json', 'data/new-eng-practice.json'] },
-  'ai-basics':        { label: 'AI 基础', icon: '🧠', color: '#34c759', files: ['data/ai-basics.json', 'data/new-ai-basics.json'] },
-};
+const CATEGORIES = APP_CONFIG.categories;
 
 // ============ Subcategory Group Mapping (78 raw → 10 clean modules, aligned with 5 categories) ============
-const SUBCAT_GROUPS = {
-  // LLM 核心
-  'Transformer': ['Transformer架构', '注意力机制', '位置编码', '归一化', '激活函数', '模型结构', '模型架构'],
-  '训练与微调': ['训练与微调', '训练优化', 'LoRA与微调', '参数高效微调', '微调策略', 'SFT与RLHF', '对齐技术', '对齐训练', '训练理论', '分布式训练'],
-  'LLM前沿': ['LLM前沿', 'DeepSeek-R1', '强化学习', 'Tokenizer', '多模态', 'Text2SQL', 'LLM推荐', '实验管理'],
-
-  // AI Agent（合并原 Agent架构 + Agent技能）
-  'AI Agent': ['Agent基础概念', 'Agent核心框架', 'Agent架构', 'Agent稳定性', 'Agent评估', '工具调用', 'Function Calling', '工具使用', '记忆系统', 'Agent记忆', '规划与推理', '多智能体', '多智能体系统', '多Agent系统', 'Prompt工程', 'Prompt Engineering'],
-  'RAG': ['RAG技术', 'RAG进阶', 'RAG与向量检索', '向量检索'],
-
-  // AI Harness（合并原 推理与部署 + 评测与安全）
-  'AI Harness': ['推理优化', '推理与部署', '生产工程化', '生产化部署', '模型服务', '模型部署', '部署架构', '工程化', '工程化实践', '工程实践', 'Agent工程化', 'Agent框架', 'LLM框架', 'RAG工程化', '向量数据库', '可观测性', '评估与安全', '评估', '评估指标', '评测与质量', 'Agent安全', '安全'],
-
-  // AI 基础
-  '大模型基础': ['大模型基础', '大模型架构', '大模型原理', '大模型综合', '大模型应用', '基础知识', '预训练模型', '表示学习', '长上下文'],
-
-  // FDE（前沿部署工程师）
-  'FDE': ['FDE基础概念', 'FDE工作实践', 'AI解决方案设计', 'AI部署实施', '数据安全与合规'],
-
-  // 工程化实战
-  '面试实战': ['企业面试问答', '手撕代码', 'AI编程', '文档处理'],
-};
+const SUBCAT_GROUPS = APP_CONFIG.subcatGroups;
 
 // Reverse lookup: raw subcategory → group name
 const SUBCAT_REVERSE = {};
@@ -65,8 +37,31 @@ function getSubcatGroup(subcategory) {
   return SUBCAT_REVERSE[subcategory] || '其他';
 }
 
+// ============ Render Category Tabs (from config) ============
+function renderCategoryTabs() {
+  const container = document.querySelector('.category-tabs');
+  if (!container) return;
+  container.innerHTML = Object.entries(CATEGORIES).map(([key, cfg]) => {
+    const active = key === 'all' ? 'active' : '';
+    return `<button class="category-tab ${active}" data-cat="${key}" onclick="setCategory('${key}')">${cfg.icon} ${cfg.label} <span class="count">0</span></button>`;
+  }).join('');
+}
+
+// ============ Render About (from config) ============
+function renderAbout() {
+  const about = document.getElementById('aboutText');
+  if (about && APP_CONFIG.aboutText) {
+    about.innerHTML = APP_CONFIG.aboutText.replace(/\n/g, '<br>') +
+      `<br><br><span style="color:var(--text-tertiary);">${APP_CONFIG.aboutTarget || ''}</span>`;
+  }
+}
+
 // ============ Init ============
 async function init() {
+  renderCategoryTabs();
+  renderAbout();
+  // Set document title from config
+  if (APP_CONFIG.appName) document.title = APP_CONFIG.appName + ' · 精讲';
   applyTheme();
   // Restore sort button label
   const sortLabels = {'easy-first': '↑ 由浅入深', 'hard-first': '↓ 由深入浅', 'default': '↕ 默认排序'};
@@ -140,7 +135,7 @@ function toggleSort() {
   const order = ['easy-first', 'hard-first', 'default'];
   const idx = order.indexOf(State.sortOrder);
   State.sortOrder = order[(idx + 1) % order.length];
-  localStorage.setItem('ai-interview.sortOrder', State.sortOrder);
+  localStorage.setItem(APP_CONFIG.storagePrefix + '.sortOrder', State.sortOrder);
   const btn = document.getElementById('sortToggle');
   const labels = {'easy-first': '↑ 由浅入深', 'hard-first': '↓ 由深入浅', 'default': '↕ 默认排序'};
   btn.textContent = labels[State.sortOrder];
@@ -262,7 +257,7 @@ function openModal(id) {
   if (!q) return;
   _currentModalIndex = State.filtered.findIndex(x => x.id === id);
   State.viewed.add(id);
-  localStorage.setItem('ai-interview.viewed', JSON.stringify([...State.viewed]));
+  localStorage.setItem(APP_CONFIG.storagePrefix + '.viewed', JSON.stringify([...State.viewed]));
   updateProgress();
 
   const cat = CATEGORIES[q._category];
@@ -465,7 +460,7 @@ function toggleFavorite(id, btnEl) {
   } else {
     State.favorites.add(id);
   }
-  localStorage.setItem('ai-interview.favorites', JSON.stringify([...State.favorites]));
+  localStorage.setItem(APP_CONFIG.storagePrefix + '.favorites', JSON.stringify([...State.favorites]));
   if (btnEl) {
     const isFav = State.favorites.has(id);
     btnEl.classList.toggle('active', isFav);
@@ -526,7 +521,7 @@ function applyTheme() {
 }
 function toggleTheme() {
   State.theme = State.theme === 'dark' ? 'light' : 'dark';
-  localStorage.setItem('ai-interview.theme', State.theme);
+  localStorage.setItem(APP_CONFIG.storagePrefix + '.theme', State.theme);
   applyTheme();
 }
 
@@ -676,18 +671,18 @@ function exportProgress() {
   const viewed = State.viewed.size;
   const fav = State.favorites.size;
   const pct = (viewed / total * 100).toFixed(1);
-  const ratings = JSON.parse(localStorage.getItem('ai-interview.ratings') || '{}');
+  const ratings = JSON.parse(localStorage.getItem(APP_CONFIG.storagePrefix + '.ratings') || '{}');
   const rated = Object.keys(ratings).length;
   const avgRating = rated > 0 ? (Object.values(ratings).reduce((a,b) => a+b, 0) / rated).toFixed(1) : 'N/A';
   
-  const reviewData = JSON.parse(localStorage.getItem('ai-interview.reviewItems') || '{}');
+  const reviewData = JSON.parse(localStorage.getItem(APP_CONFIG.storagePrefix + '.reviewItems') || '{}');
   const mastered = Object.values(reviewData).filter(r => 
     (r.algo === 'leitner' && r.box >= 4) ||
     (r.algo === 'ebbinghaus' && r.phase >= 5) ||
     (r.algo === 'sm2' && r.interval >= 21)
   ).length;
   
-  const text = `📖 AI面试题库学习进度报告
+  const text = `📖 ${APP_CONFIG.appName}学习进度报告
 
 📊 总览:
 - 题库总量: ${total} 题
@@ -697,7 +692,7 @@ function exportProgress() {
 - 已掌握: ${mastered} 题
 
 📅 生成时间: ${new Date().toLocaleString('zh-CN')}
-🔗 题库地址: https://sunarthur86.github.io/ai-interview/`;
+🔗 题库地址: ${APP_CONFIG.githubUrl}`;
 
   navigator.clipboard.writeText(text).then(() => {
     showToast('进度报告已复制到剪贴板！');
@@ -728,7 +723,7 @@ function showToast(msg) {
 function copyAnswer(id) {
   const q = State.allQuestions.find(x => x.id === id);
   if (!q) return;
-  const text = `Q: ${q.question}\n\nA: ${q.answer}\n\n来源: AI面试题库 (https://sunarthur86.github.io/ai-interview/)`;
+  const text = `Q: ${q.question}\n\nA: ${q.answer}\n\n来源: ${APP_CONFIG.appName} (${APP_CONFIG.githubUrl})`;
   navigator.clipboard.writeText(text).then(() => {
     showToast('答案已复制到剪贴板！');
   }).catch(() => {
@@ -739,9 +734,9 @@ function copyAnswer(id) {
 function shareQuestion(id) {
   const q = State.allQuestions.find(x => x.id === id);
   if (!q) return;
-  const text = `AI面试题: ${q.question}\n\n来源: https://sunarthur86.github.io/ai-interview/`;
+  const text = `${APP_CONFIG.appName}: ${q.question}\n\n来源: ${APP_CONFIG.githubUrl}`;
   if (navigator.share) {
-    navigator.share({ title: 'AI面试题', text }).catch(() => {});
+    navigator.share({ title: '${APP_CONFIG.appName}', text }).catch(() => {});
   } else {
     navigator.clipboard.writeText(text).then(() => showToast('分享内容已复制！'));
   }
@@ -804,7 +799,7 @@ function bindEvents() {
   if (resetBtn) resetBtn.addEventListener('click', () => {
     if (confirm('确定要重置学习进度吗？此操作不可撤销。')) {
       State.viewed.clear();
-      localStorage.removeItem('ai-interview.viewed');
+      localStorage.removeItem(APP_CONFIG.storagePrefix + '.viewed');
       updateProgress();
       renderCards();
       updateStats();
