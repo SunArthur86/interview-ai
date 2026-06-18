@@ -847,7 +847,7 @@
       "vLLM和TensorRT-LLM有什么区别?"
     ],
     "images": [
-      "llm100_p050_img1.png"
+      "llm100_p050_img1.jpg"
     ],
     "feynman": {
       "essence": "VLLM (Versatile Large Language Model)是一个专门为大规模语言模型 (LLM) 推理设计的开源加速 框架,通过创新的内存管理和",
@@ -1294,7 +1294,7 @@
     "images": [
       "llm100_p091_img1.png",
       "llm100_p092_img1.png",
-      "llm100_p092_img2.png",
+      "llm100_p092_img2.jpg",
       "llm100_p093_img1.png",
       "llm100_p093_img2.png",
       "llm100_p093_img3.png",

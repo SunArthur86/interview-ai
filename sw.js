@@ -1,5 +1,5 @@
 // AI Interview — Service Worker
-const CACHE_NAME = 'ai-interview-v13';
+const CACHE_NAME = 'ai-interview-v14';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -11,15 +11,42 @@ const STATIC_ASSETS = [
   './js/study.js',
   './js/forgetting.js',
   './manifest.json',
-  './data/ai-basics.json',
+  // All 35 data files
+  './data/llm-100.json',
+  './data/llm-notes.json',
+  './data/new-llm-core.json',
+  './data/agent-concept.json',
+  './data/agent-framework.json',
+  './data/agent-multi.json',
+  './data/agent-rag.json',
+  './data/agent-tools.json',
+  './data/agent-memory.json',
+  './data/agent-prompt.json',
+  './data/agent-llm.json',
+  './data/agent-eng.json',
+  './data/agent-interview-qa.json',
   './data/ai-agent.json',
   './data/ai-harness.json',
+  './data/ai-basics.json',
+  './data/ai-scenario.json',
   './data/fde.json',
-  './data/new-llm-core.json',
   './data/new-agent-arch.json',
   './data/new-agent-skill.json',
   './data/new-eng-practice.json',
   './data/new-ai-basics.json',
+  './data/supp-llm-transformer.json',
+  './data/supp-llm-training.json',
+  './data/supp-llm-frontier.json',
+  './data/supp-llm-advanced.json',
+  './data/supp-finetuning.json',
+  './data/supp-agent-arch.json',
+  './data/supp-agent-rag.json',
+  './data/supp-agent-frameworks.json',
+  './data/supp-advanced-rag.json',
+  './data/supp-harness-inference.json',
+  './data/supp-eng-practice.json',
+  './data/supp-ai-basics.json',
+  './data/supp-multimodal.json',
 ];
 
 // Install — cache static assets

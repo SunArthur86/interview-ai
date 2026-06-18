@@ -1,6 +1,6 @@
 # 🧠 AI 面试题库
 
-> **839 道精选面试题** · 含50道AI场景设计题 · 遗忘曲线智能复习系统 · 三大间隔重复算法 · 搜索高亮 + 键盘快捷键
+> **862 道精选面试题** · 含50道AI场景设计题 · 费曼学习法+第一性原理 · 遗忘曲线智能复习系统 · 三大间隔重复算法
 >
 > 对标 **阿里 P7 / 字节 2-2 / 腾讯 T9 / 小红书**
 
@@ -9,12 +9,15 @@
 ## ✨ 核心功能
 
 ### 📚 题库系统
-- **839 道题目**：覆盖 AI 基础、Agent 架构、RAG 工程、LLM 面试 100 问、AI场景设计、工程化实践等
-- **21 个数据文件**：数据展示分离架构，JSON 可独立编辑
+- **862 道题目**：覆盖 LLM核心、AI Agent、AI Harness、AI场景设计、工程化实战、AI基础七大方向
+- **35 个数据文件**：数据展示分离架构，JSON 可独立编辑
 - **来源**：小林coding、JavaGuide、卡码笔记、牛客、小红书/B站/掘金面经等
+- **费曼学习法**：每题含 🎯本质→🧒类比→📊要点，用大白话讲懂复杂概念
+- **第一性原理**：每题含问题分解→公理推导→从零重建，训练深度思维
+- **配图**：159张精选技术配图（公式图、架构图、流程图、SVG概念图）
 - **搜索高亮**：关键词匹配自动高亮，标签可点击快捷过滤
 - **筛选**：按分类、难度（L1-L5）、子分类、收藏、关键词搜索
-- **详情模态**：Markdown 渲染、代码高亮、延伸追问、上下题导航（←→）、答案复制、分享
+- **详情模态**：Markdown 渲染、代码高亮、费曼/第一性原理卡片、延伸追问、上下题导航（←→）、答案复制、分享
 
 ### 🎮 快捷操作（v3.2 新增）
 - **🎲 随机一题**：L 键或按钮触发，随机抽查
@@ -60,7 +63,7 @@
 ### 🎨 UI/UX
 - **Apple 风格设计**：衬线标题、磨砂导航栏、圆角卡片
 - **深色模式**：一键切换，localStorage 持久化
-- **PWA**：可安装到手机桌面，离线可用
+- **PWA**：可安装到手机桌面，全量离线缓存（35个数据文件）
 - **响应式**：桌面/平板/手机全适配
 - **无障碍**：ARIA 标签、focus-visible、reduced-motion 支持
 
@@ -68,19 +71,25 @@
 
 ```
 ai-interview/
-├── data/                   # 15 个 JSON 题库文件（665 题）
+├── config.js                # 项目配置（分类映射、子分类组、品牌信息）
+├── data/                    # 35 个 JSON 题库文件（862 题）
+├── images/                  # 159 张技术配图（公式图/架构图/SVG概念图）
 ├── js/
-│   ├── app.js              # 主逻辑：渲染/搜索/筛选/模态/收藏
-│   ├── study.js            # 刷题模式：Flashcard/自评/仪表盘
-│   └── forgetting.js       # 🔁 遗忘曲线引擎（SM-2/Leitner/Ebbinghaus）
+│   ├── app.js               # 主逻辑：渲染/搜索/筛选/模态/收藏/费曼/第一性原理
+│   ├── study.js             # 刷题模式：Flashcard/自评/仪表盘
+│   └── forgetting.js        # 🔁 遗忘曲线引擎（SM-2/Leitner/Ebbinghaus）
 ├── css/
-│   ├── style.css           # 主样式（Apple 风格 + 深色模式）
-│   ├── study.css           # 刷题模式样式
-│   └── forgetting.css      # 复习系统样式
-├── index.html              # 展示层
-├── manifest.json           # PWA manifest
-├── sw.js                   # Service Worker (v3)
-└── .github/workflows/      # GitHub Pages 自动部署
+│   ├── style.css            # 主样式（Apple 风格 + 深色模式）
+│   ├── study.css            # 刷题模式样式
+│   └── forgetting.css       # 复习系统样式
+├── scripts/
+│   ├── gen_feynman_fp.py    # 费曼+第一性原理批量生成器
+│   └── sync.sh              # interview-framework 同步脚本
+├── docs/                    # 项目文档
+├── index.html               # 展示层
+├── manifest.json            # PWA manifest
+├── sw.js                    # Service Worker (v14)
+└── .github/workflows/       # GitHub Pages 自动部署
 ```
 
 ## ⌨️ 快捷键
@@ -94,21 +103,25 @@ ai-interview/
 | `Space` | 展开/收起答案 |
 | `1 2 3` | 刷题评分（会/模糊/不会）|
 | `1 2 3 4` | 复习评分（忘了/模糊/记住/轻松）|
+| `L` | 随机一题 |
+| `?` | 快捷键面板 |
 | `Esc` | 退出 |
 
 ## 📊 数据统计
 
-- **15 个分类**，665 道题目
+- **7 大分类**：LLM核心 / AI Agent / AI Harness / AI场景设计 / FDE / 工程化实战 / AI基础
+- **862 道题目**，35 个数据文件
 - **5 个难度等级**（L1 入门 ~ L5 专家）
-- **59 项自动化测试**（Playwright headless）
+- **100% 费曼学习法 + 第一性原理覆盖**
+- **159 张技术配图**
 - **0 JavaScript 错误**
 
 ## 🛠️ 技术栈
 
 - **纯前端**：vanilla ES6+，零框架依赖
-- **数据展示分离**：JSON → JS 渲染 → HTML 展示
-- **PWA**：Service Worker + Web App Manifest
-- **Playwright**：headless 自动化测试
+- **数据展示分离**：JSON → config.js 映射 → JS 渲染 → HTML 展示
+- **PWA**：Service Worker + Web App Manifest（全量离线缓存）
+- **Open Graph**：社交媒体分享优化
 
 ## 📄 License
 
