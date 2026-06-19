@@ -98,7 +98,9 @@
     "question": "RoPE旋转位置编码的原理是什么？",
     "answer": "RoPE（Rotary Position Embedding）通过旋转矩阵将位置信息编码到Q和K中。\n\n核心思想：在二维空间中，将Q和K向量按照其位置旋转一定角度。两个token的attention内积只依赖于它们的相对位置差。\n\n公式：对于位置m的向量q，乘以旋转矩阵R(m)：\nq_m' = R(m) · q_m\n其中R(m)是分块对角矩阵，每个2x2块是一个角度为m·θ_i的旋转矩阵。\n\n优势：\n1. 相对位置编码：attention结果自动包含相对位置信息\n2. 长度外推：训练时4K上下文，推理时可扩展到8K+（配合NTK-aware scaling）\n3. 计算高效：只需逐元素乘法\n4. 支持LongRoPE/YaRN等外推方法扩展到100K+\n\nLlama、Qwen、DeepSeek等主流模型均使用RoPE。",
     "follow_up": [],
-    "images": [],
+    "images": [
+      "svg_rope.svg"
+    ],
     "feynman": {
       "essence": "RoPE（Rotary Position Embedding）通过旋转矩阵将位置信息编码到Q和K中。",
       "analogy": "RoPE 就像时钟指针——不同位置用不同角度旋转，相对位置就是两根指针的角度差，天然编码了「距离」信息。",

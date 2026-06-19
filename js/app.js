@@ -432,7 +432,15 @@ function openModal(id) {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
             分享
           </button>
+          <button class="followup-item" style="flex:1;justify-content:center;" onclick="reportQuestion('${q.id}')" title="反馈题目错误">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+            报错
+          </button>
         </div>
+      </div>
+      <div class="modal__section">
+        <div class="modal__label">📝 我的笔记</div>
+        <textarea class="modal__note" id="noteArea_${q.id}" placeholder="在这里记录你的理解、补充或疑问（自动保存到本地）..." oninput="saveNote('${q.id}', this.value)">${escapeHtml(getNote('${q.id}'))}</textarea>
       </div>
       <div class="modal__nav">
         <button class="modal__nav-btn" onclick="navModal(-1)" title="上一题 (←)">‹ 上一题</button>
@@ -800,6 +808,7 @@ function exportProgress() {
     (r.algo === 'ebbinghaus' && r.phase >= 5) ||
     (r.algo === 'sm2' && r.interval >= 21)
   ).length;
+  const notesCount = Object.keys(getNotes()).length;
   
   const text = `📖 ${APP_CONFIG.appName}学习进度报告
 
@@ -809,9 +818,10 @@ function exportProgress() {
 - 已收藏: ${fav} 题
 - 已评分: ${rated} 题 (平均 ${avgRating}⭐)
 - 已掌握: ${mastered} 题
+- 个人笔记: ${notesCount} 条
 
 📅 生成时间: ${new Date().toLocaleString('zh-CN')}
-🔗 题库地址: ${APP_CONFIG.githubUrl}`;
+🔗 题库地址: ${APP_CONFIG.githubUrl}${notesCount > 0 ? '\n\n' + exportNotes() : ''}`;
 
   navigator.clipboard.writeText(text).then(() => {
     showToast('进度报告已复制到剪贴板！');
@@ -859,6 +869,89 @@ function shareQuestion(id) {
   } else {
     navigator.clipboard.writeText(text).then(() => showToast('分享内容已复制！'));
   }
+}
+
+// ============ Report Issue (题目纠错反馈) ============
+function reportQuestion(id) {
+  const q = State.allQuestions.find(x => x.id === id);
+  if (!q) return;
+  const repoUrl = APP_CONFIG.repoUrl || APP_CONFIG.githubUrl;
+  const title = `[题目纠错] ${q.id}: ${q.question.slice(0, 50)}`;
+  const body = `## 题目信息
+- **题号**: ${q.id}
+- **分类**: ${q.category}
+- **问题**: ${q.question}
+
+## 反馈类型
+- [ ] 题目/答案有错误
+- [ ] 答案不完整/截断
+- [ ] 排版/公式显示异常
+- [ ] 内容过时需更新
+- [ ] 其他
+
+## 详细描述
+（请描述具体问题，例如哪句话有误、正确内容应该是什么）
+
+## 原文摘录
+\`\`\`
+${q.answer.slice(0, 500)}
+\`\`\`
+`;
+  const url = `${repoUrl}/issues/new?title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}&labels=题目纠错`;
+  window.open(url, '_blank');
+  showToast('已打开 GitHub 反馈页，感谢您的指正！');
+}
+
+// ============ Personal Notes (个人笔记) ============
+function getNotes() {
+  try { return JSON.parse(localStorage.getItem(APP_CONFIG.storagePrefix + '.notes') || '{}'); }
+  catch { return {}; }
+}
+function saveNotes(notes) {
+  localStorage.setItem(APP_CONFIG.storagePrefix + '.notes', JSON.stringify(notes));
+}
+function getNote(id) {
+  return getNotes()[id] || '';
+}
+function saveNote(id, text) {
+  const notes = getNotes();
+  if (text && text.trim()) {
+    notes[id] = text.trim();
+  } else {
+    delete notes[id];
+  }
+  saveNotes(notes);
+  // Update card badge if visible
+  const card = document.querySelector(`[data-id="${id}"]`);
+  if (card) {
+    let badge = card.querySelector('.card__note-badge');
+    if (text && text.trim()) {
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'card__note-badge';
+        badge.textContent = '📝';
+        badge.title = '有笔记';
+        card.querySelector('.card__footer')?.appendChild(badge) || card.appendChild(badge);
+      }
+    } else if (badge) {
+      badge.remove();
+    }
+  }
+  showToast(text && text.trim() ? '笔记已保存' : '笔记已删除');
+}
+function exportNotes() {
+  const notes = getNotes();
+  const count = Object.keys(notes).length;
+  if (count === 0) { showToast('暂无笔记可导出'); return ''; }
+  let text = `📝 ${APP_CONFIG.appName} - 我的笔记 (${count} 条)\n`;
+  text += `📅 导出时间: ${new Date().toLocaleString('zh-CN')}\n`;
+  text += `${'='.repeat(50)}\n\n`;
+  Object.entries(notes).forEach(([id, note]) => {
+    const q = State.allQuestions.find(x => x.id === id);
+    const qtext = q ? q.question : '(题目已删除)';
+    text += `【${id}】${qtext}\n${note}\n\n`;
+  });
+  return text;
 }
 
 let _currentModalIndex = -1;

@@ -21,6 +21,7 @@ const APP_CONFIG = {
 
   // ===== URLs =====
   githubUrl: 'https://sunarthur86.github.io/ai-interview/',
+  repoUrl: 'https://github.com/SunArthur86/ai-interview',
 
   // ===== Theme =====
   themeColor: '#0071e3',

@@ -1009,3 +1009,34 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
 .modal__nav-btn:hover { background: var(--blue); color: #fff; border-color: var(--blue); }
 .modal__nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 .modal__nav-pos { font-size: 0.75rem; color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+
+/* ============ Personal Note Textarea (个人笔记) ============ */
+.modal__note {
+  width: 100%;
+  min-height: 80px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-active);
+  color: var(--text);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  font-family: inherit;
+  resize: vertical;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.modal__note:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.12);
+}
+.modal__note::placeholder { color: var(--text-tertiary); }
+
+/* ============ Card Note Badge (卡片笔记标记) ============ */
+.card__note-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.875rem;
+  margin-left: 4px;
+  opacity: 0.7;
+}
