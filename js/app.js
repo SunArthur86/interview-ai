@@ -76,6 +76,8 @@ async function init() {
   updateStudyDashboard();
   updateReviewDashboard();
   hideLoader();
+  // 深度链接：打开 #q=id 指定的题目
+  openQuestionFromHash();
 }
 
 // ============ Data Loading ============
@@ -458,6 +460,8 @@ function openModal(id) {
     </div>`;
 
   overlay.classList.add('active');
+  // 动态更新 meta 标签 + URL hash（深度链接/SEO）
+  updateMetaForQuestion(q);
   // Scroll modal to top — use setTimeout to ensure DOM has painted
   setTimeout(() => {
     const modalEl = document.getElementById('modal');
@@ -871,11 +875,58 @@ function copyAnswer(id) {
 function shareQuestion(id) {
   const q = State.allQuestions.find(x => x.id === id);
   if (!q) return;
-  const text = `${APP_CONFIG.appName}: ${q.question}\n\n来源: ${APP_CONFIG.githubUrl}`;
+  // 生成带 hash 的深度链接，便于他人直达本题
+  const url = `${APP_CONFIG.githubUrl}#q=${q.id}`;
+  // 富文本分享卡片：题目 + 费曼本质（一句话） + 难度 + 来源链接
+  const essence = (q.feynman && q.feynman.essence) ? q.feynman.essence.slice(0, 80) : '';
+  const diff = q.difficulty || '';
+  let text = `${APP_CONFIG.appName} ｜ ${diff} ${q.question}`;
+  if (essence) text += `\n\n💡 ${essence}${q.feynman.essence.length > 80 ? '...' : ''}`;
+  text += `\n\n🔗 ${url}`;
   if (navigator.share) {
-    navigator.share({ title: '${APP_CONFIG.appName}', text }).catch(() => {});
+    navigator.share({ title: `${q.question.slice(0, 40)}${q.question.length > 40 ? '...' : ''}`, text, url }).catch(() => {});
   } else {
-    navigator.clipboard.writeText(text).then(() => showToast('分享内容已复制！'));
+    navigator.clipboard.writeText(text).then(() => showToast('分享卡片已复制（含直达链接）！'));
+  }
+}
+
+// ============ Deep Linking (深度链接 #q=id) ============
+function updateMetaForQuestion(q) {
+  // 动态更新 meta 标签，让分享链接在社交平台有正确的预览
+  if (!q) return;
+  const title = `${q.question.slice(0, 50)}${q.question.length > 50 ? '...' : ''} | ${APP_CONFIG.appName}`;
+  const desc = (q.feynman && q.feynman.essence) ? q.feynman.essence.slice(0, 120) : q.answer.slice(0, 120);
+  document.title = title;
+  const setMeta = (selector, attr, val) => {
+    const el = document.querySelector(selector);
+    if (el) el.setAttribute(attr, val);
+  };
+  setMeta('meta[name="description"]', 'content', desc);
+  setMeta('meta[property="og:title"]', 'content', title);
+  setMeta('meta[property="og:description"]', 'content', desc);
+  setMeta('meta[name="twitter:title"]', 'content', title);
+  setMeta('meta[name="twitter:description"]', 'content', desc);
+  // 更新 URL hash（不触发滚动）
+  if (history.replaceState) history.replaceState(null, title, `#q=${q.id}`);
+}
+
+function openQuestionFromHash() {
+  const hash = location.hash;
+  const m = hash.match(/^#q=(.+)$/);
+  if (m && m[1]) {
+    const id = decodeURIComponent(m[1]);
+    // 等数据加载完
+    const tryOpen = (retries) => {
+      if (State.allQuestions.length > 0) {
+        const q = State.allQuestions.find(x => x.id === id);
+        if (q) {
+          openModal(id);
+        }
+      } else if (retries > 0) {
+        setTimeout(() => tryOpen(retries - 1), 200);
+      }
+    };
+    tryOpen(25); // 最多等 5 秒
   }
 }
 
