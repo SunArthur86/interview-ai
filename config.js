@@ -32,7 +32,7 @@ const APP_CONFIG = {
     'all':          { label: '全部', icon: '📚', color: '#0071e3', files: null },
     'llm-core':     { label: 'LLM 核心', icon: '🔥', color: '#ff3b30', files: ['data/llm-100.json', 'data/llm-notes.json', 'data/new-llm-core.json', 'data/supp-llm-transformer.json', 'data/supp-llm-training.json', 'data/supp-llm-frontier.json', 'data/supp-llm-advanced.json', 'data/supp-finetuning.json'] },
     'ai-agent':     { label: 'AI Agent', icon: '🤖', color: '#af52de', files: ['data/ai-agent.json', 'data/agent-concept.json', 'data/agent-framework.json', 'data/agent-multi.json', 'data/new-agent-arch.json', 'data/agent-rag.json', 'data/agent-tools.json', 'data/agent-memory.json', 'data/agent-prompt.json', 'data/agent-llm.json', 'data/new-agent-skill.json', 'data/supp-agent-arch.json', 'data/supp-agent-rag.json', 'data/supp-agent-frameworks.json', 'data/supp-advanced-rag.json'] },
-    'ai-harness':   { label: 'AI Harness', icon: '🏗️', color: '#5856d6', files: ['data/ai-harness.json', 'data/agent-eng.json', 'data/supp-harness-inference.json'] },
+    'ai-harness':   { label: 'AI Harness', icon: '🏗️', color: '#5856d6', files: ['data/ai-harness.json', 'data/agent-eng.json', 'data/supp-harness-inference.json', 'data/xhs-ai-infra.json'] },
     'fde':          { label: 'FDE', icon: '🚀', color: '#00c7be', files: ['data/fde.json'] },
     'eng-practice': { label: '工程化实战', icon: '⚙️', color: '#ff9500', files: ['data/agent-interview-qa.json', 'data/new-eng-practice.json', 'data/supp-eng-practice.json'] },
     'ai-basics':    { label: 'AI 基础', icon: '🧠', color: '#34c759', files: ['data/ai-basics.json', 'data/new-ai-basics.json', 'data/supp-ai-basics.json', 'data/supp-multimodal.json'] },
