@@ -328,7 +328,9 @@
       ],
       "rebuild": "从 AI 系统出发：① 核心挑战是什么？② 现有方案如何解决？③ 有哪些 trade-off？④ 如果重新设计你会怎么做？"
     },
-    "images": []
+    "images": [
+      "svg_transformer_blocks.svg"
+    ]
   },
   {
     "id": "lln-011",

@@ -954,6 +954,56 @@ function exportNotes() {
   return text;
 }
 
+// ============ Wrong-Answer Book Export (错题本导出) ============
+function exportWrongBook() {
+  const ratings = JSON.parse(localStorage.getItem(APP_CONFIG.storagePrefix + '.ratings') || '{}');
+  // 错题 = 评为「不会」(dont) 或「模糊」(fuzzy) 的题目
+  const wrong = Object.entries(ratings)
+    .filter(([_, r]) => r === 'dont' || r === 'fuzzy')
+    .map(([id, r]) => ({ id, rating: r }));
+  const dontCount = wrong.filter(w => w.rating === 'dont').length;
+  const fuzzyCount = wrong.filter(w => w.rating === 'fuzzy').length;
+  if (wrong.length === 0) {
+    showToast('错题本为空，去刷题标记「不会」或「模糊」吧！');
+    return;
+  }
+  let text = `❌ ${APP_CONFIG.appName} - 我的错题本 (${wrong.length} 题)\n`;
+  text += `📅 导出时间: ${new Date().toLocaleString('zh-CN')}\n`;
+  text += `📊 统计: 不会 ${dontCount} 题 / 模糊 ${fuzzyCount} 题\n`;
+  text += `${'='.repeat(50)}\n\n`;
+  // 按分类分组，便于针对性复习
+  const byCategory = {};
+  wrong.forEach(({ id, rating }) => {
+    const q = State.allQuestions.find(x => x.id === id);
+    if (!q) return;
+    const cat = q._category || q.category || '未分类';
+    if (!byCategory[cat]) byCategory[cat] = [];
+    byCategory[cat].push({ id, rating, q });
+  });
+  Object.entries(byCategory).forEach(([cat, items]) => {
+    text += `\n━━━ ${cat} (${items.length} 题) ━━━\n\n`;
+    items.forEach(({ id, rating, q }) => {
+      const mark = rating === 'dont' ? '❌' : '🤔';
+      const label = rating === 'dont' ? '不会' : '模糊';
+      text += `${mark}【${id}】[${label}] ${q.question}\n`;
+      // 附带简短答案（前 150 字），方便复习
+      const ans = (q.answer || '').replace(/\n+/g, ' ').slice(0, 150);
+      text += `   答: ${ans}${q.answer && q.answer.length > 150 ? '...' : ''}\n\n`;
+    });
+  });
+  text += `\n💡 建议: 优先复习「不会」的题目，配合遗忘曲线复习系统巩固。`;
+  navigator.clipboard.writeText(text).then(() => {
+    showToast(`错题本已复制！共 ${wrong.length} 题`);
+  }).catch(() => {
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `错题本-${new Date().toISOString().slice(0,10)}.txt`;
+    a.click();
+    showToast(`错题本已下载！共 ${wrong.length} 题`);
+  });
+}
+
 let _currentModalIndex = -1;
 function navModal(dir) {
   if (_currentModalIndex < 0) return;

@@ -393,7 +393,9 @@
       ],
       "rebuild": "从工程化出发：① 为什么 LLM 应用需要 Harness？② 可观测性的核心指标？③ 如何做评测和回归？④ 理想的 AI 工程平台是什么样？"
     },
-    "images": []
+    "images": [
+      "svg_rag_pipeline.svg"
+    ]
   },
   {
     "id": "ai-h-012",

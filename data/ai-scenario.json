@@ -195,7 +195,9 @@
   {
     "question": "如何设计RAG系统的混合检索方案？结合BM25关键词检索和Dense向量检索的优势。",
     "answer": "【场景分析】\n纯向量检索擅长语义匹配但弱于精确关键词（产品名、错误码）；纯BM25擅长精确匹配但不懂同义改写。混合检索取两者之长。\n\n【双路检索架构】\n1. Sparse路径（BM25）：\n   - Elasticsearch/OpenSearch全文本索引\n   - 分词器：IK中文分词 + 标准英文分词\n   - 优势：精确匹配、缩写、专有名词、错误码\n   - 返回Top-50候选\n2. Dense路径（向量）：\n   - Embedding模型 → Milvus/Qdrant HNSW检索\n   - 优势：语义相似、同义词、跨语言\n   - 返回Top-50候选\n3. 融合策略：\n   - RRF（Reciprocal Rank Fusion）：score = Σ 1/(k+rank_i)，k=60\n   - 加权融合：α×BM25_score + (1-α)×Dense_score\n   - 线性插值需要先归一化两路分数（min-max或softmax）\n\n【Query路由优化】\n- 意图分类：关键词型查询 → BM25权重↑；语义型查询 → Dense权重↑\n- 混合型：动态调整权重\n- 短查询（<3词）倾向BM25，长查询倾向Dense\n\n【Rerank精排】\n- 融合后Top-50 → Cross-encoder Reranker精排\n- 模型：bge-reranker-v2-m3 / Cohere Rerank\n- 输出Top-5给LLM生成\n- Rerank提升MRR通常20%~40%\n\n【评测对比】\n| 策略 | Recall@10 | MRR | 延迟 |\n|------|-----------|-----|------|\n| 纯BM25 | 62% | 0.45 | 5ms |\n| 纯Dense | 71% | 0.52 | 12ms |\n| 混合+Rerank | 85% | 0.68 | 35ms |",
-    "images": [],
+    "images": [
+      "svg_rag_pipeline.svg"
+    ],
     "difficulty": "L2",
     "id": "ai-scen-006",
     "category": "scenario",
