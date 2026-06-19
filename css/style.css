@@ -764,6 +764,72 @@ mark.search-hit {
   .start-study-btn { padding: 6px 10px; font-size: 0.75rem; }
 }
 
+/* ============ Mobile Touch & Safe-Area Enhancements (移动端触控+安全区) ============ */
+@supports (padding: env(safe-area-inset-bottom)) {
+  /* 适配刘海屏/底部 Home Indicator */
+  .top-nav {
+    padding-top: env(safe-area-inset-top);
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+  }
+  .modal__nav {
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+  .modal__body {
+    padding-bottom: max(24px, env(safe-area-inset-bottom));
+  }
+  .fab {
+    bottom: calc(88px + env(safe-area-inset-bottom));
+  }
+  .progress-ring {
+    bottom: calc(12px + env(safe-area-inset-bottom));
+  }
+}
+
+/* 触控优化：增大点击区域，禁用文字选择（按钮类） */
+@media (max-width: 768px) and (pointer: coarse) {
+  .card__fav,
+  .category-tab,
+  .filter-chip,
+  .tag-chip,
+  .stat-action-btn,
+  .modal__nav-btn,
+  .followup-item,
+  .top-nav__btn {
+    min-height: 44px; /* Apple HIG 最小触控目标 44pt */
+  }
+  .card__fav { width: 44px; height: 44px; }
+  /* 禁用长按菜单/选中（提升原生 App 感） */
+  .card, .category-tab, .filter-chip, .tag-chip, .stat-action-btn {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* 点击反馈：轻微缩放 */
+  .card:active { transform: scale(0.98); transition: transform 0.1s; }
+  .category-tab:active, .filter-chip:active, .tag-chip:active { opacity: 0.7; }
+  /* 模态框底部留出空间，避免被手势条遮挡 */
+  .modal__nav { padding-bottom: max(12px, env(safe-area-inset-bottom, 12px)); }
+}
+
+/* 滑动关闭手势提示（模态框） */
+.modal--swipeable {
+  touch-action: pan-y;
+}
+.modal__swipe-hint {
+  display: none;
+  width: 36px;
+  height: 4px;
+  background: var(--text-tertiary);
+  opacity: 0.4;
+  border-radius: 2px;
+  margin: 8px auto 0;
+}
+@media (max-width: 768px) and (pointer: coarse) {
+  .modal__swipe-hint { display: block; }
+}
+
 /* ---------- FAB (Floating Action Button) ---------- */
 .fab {
   position: fixed;

@@ -340,6 +340,7 @@ function openModal(id) {
   const modal = document.getElementById('modal');
 
   modal.innerHTML = `
+    <div class="modal__swipe-hint"></div>
     <div class="modal__header">
       <div class="modal__meta">
         <span class="card__id">${q.id.toUpperCase()}</span>
@@ -462,6 +463,8 @@ function openModal(id) {
   overlay.classList.add('active');
   // 动态更新 meta 标签 + URL hash（深度链接/SEO）
   updateMetaForQuestion(q);
+  // 绑定移动端滑动关闭手势
+  bindSwipeToClose();
   // Scroll modal to top — use setTimeout to ensure DOM has painted
   setTimeout(() => {
     const modalEl = document.getElementById('modal');
@@ -486,6 +489,51 @@ function closeModal() {
   }
   State._currentModalId = null;
   updateStats();
+  // 恢复默认 title（离开题目详情）
+  if (APP_CONFIG.appName) document.title = APP_CONFIG.appName + ' · 精讲';
+  if (history.replaceState) history.replaceState(null, '', location.pathname + location.search);
+}
+
+// ============ Swipe-to-close Gesture (移动端滑动关闭) ============
+function bindSwipeToClose() {
+  const modal = document.getElementById('modal');
+  if (!modal || modal._swipeBound) return;
+  modal._swipeBound = true;
+  let startY = 0, currentY = 0, dragging = false;
+  // 仅在触摸设备启用
+  modal.addEventListener('touchstart', (e) => {
+    // 只在模态框顶部 60px 区域（swipe-hint 附近）开始拖拽，避免影响内容滚动
+    if (modal.scrollTop > 0) return;
+    const touch = e.touches[0];
+    const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
+    if (targetEl && (targetEl.closest('.modal__header') || targetEl.classList.contains('modal__swipe-hint'))) {
+      startY = touch.clientY;
+      dragging = true;
+      modal.style.transition = 'none';
+    }
+  }, { passive: true });
+  modal.addEventListener('touchmove', (e) => {
+    if (!dragging) return;
+    const touch = e.touches[0];
+    currentY = touch.clientY - startY;
+    if (currentY > 0) { // 只响应向下滑
+      modal.style.transform = `translateY(${currentY}px)`;
+      modal.style.opacity = String(Math.max(0.3, 1 - currentY / 400));
+    }
+  }, { passive: true });
+  modal.addEventListener('touchend', () => {
+    if (!dragging) return;
+    dragging = false;
+    modal.style.transition = 'transform 0.25s, opacity 0.25s';
+    if (currentY > 120) {
+      // 下滑超过阈值 → 关闭
+      closeModal();
+    }
+    // 重置位置
+    modal.style.transform = '';
+    modal.style.opacity = '';
+    currentY = 0;
+  }, { passive: true });
 }
 
 // ============ Image Fullscreen Viewer ============
