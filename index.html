@@ -46,6 +46,8 @@
   </script>
 </head>
 <body>
+  <!-- 无障碍：跳到主内容 -->
+  <a href="#main" class="skip-link">跳到主内容</a>
 
   <!-- ===== Config (must load before framework) ===== -->
   <script src="config.js"></script>
@@ -79,7 +81,7 @@
       <svg class="top-nav__search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
       </svg>
-      <input type="text" id="searchInput" placeholder="搜索题目、标签、内容… (⌘K)" autocomplete="off">
+      <input type="text" id="searchInput" placeholder="搜索题目、标签、内容… (⌘K)" autocomplete="off" aria-label="搜索题目" role="searchbox">
       <div class="search-history-dropdown" id="searchHistoryDropdown" style="display:none;"></div>
     </div>
     <div class="top-nav__actions">
@@ -121,7 +123,7 @@
   </div>
 
   <!-- ===== Main ===== -->
-  <main class="main">
+  <main class="main" id="main">
     <!-- Stats Row -->
     <div class="stats-row">
       <div class="stat-card">
@@ -199,8 +201,8 @@
   </div>
 
   <!-- ===== Modal ===== -->
-  <div class="modal-overlay" id="modalOverlay">
-    <div class="modal" id="modal"></div>
+  <div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal" id="modal" aria-label="题目详情"></div>
   </div>
 
   <!-- ===== Settings Panel ===== -->

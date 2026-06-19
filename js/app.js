@@ -465,6 +465,12 @@ function openModal(id) {
   updateMetaForQuestion(q);
   // 绑定移动端滑动关闭手势
   bindSwipeToClose();
+  // 无障碍：聚焦到模态框，记录原焦点元素以便恢复
+  State._lastFocused = document.activeElement;
+  setTimeout(() => {
+    const closeBtn = modal.querySelector('.modal__close');
+    if (closeBtn) closeBtn.focus();
+  }, 100);
   // Scroll modal to top — use setTimeout to ensure DOM has painted
   setTimeout(() => {
     const modalEl = document.getElementById('modal');
@@ -489,6 +495,11 @@ function closeModal() {
   }
   State._currentModalId = null;
   updateStats();
+  // 无障碍：恢复焦点到原元素
+  if (State._lastFocused && typeof State._lastFocused.focus === 'function') {
+    State._lastFocused.focus();
+    State._lastFocused = null;
+  }
   // 恢复默认 title（离开题目详情）
   if (APP_CONFIG.appName) document.title = APP_CONFIG.appName + ' · 精讲';
   if (history.replaceState) history.replaceState(null, '', location.pathname + location.search);
