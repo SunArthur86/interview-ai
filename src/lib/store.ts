@@ -16,6 +16,51 @@ interface DailyLog {
   dont: number;
 }
 
+const LEGACY_KEYS: [string, string][] = [
+  ['favorites', 'favorites'],
+  ['viewed', 'viewed'],
+  ['notes', 'notes'],
+  ['ratings', 'ratings'],
+  ['theme', 'theme'],
+  ['sortOrder', 'sortOrder'],
+  ['searchHistory', 'searchHistory'],
+  ['dailyLog', 'dailyLog'],
+  ['lastStudyDate', 'lastStudyDate'],
+  ['streak', 'streak'],
+  ['dailyGoal', 'dailyGoal'],
+  ['reviewData', 'reviewData'],
+  ['reviewAlgorithm', 'reviewAlgorithm'],
+  ['dailyReviewLimit', 'dailyReviewLimit'],
+  ['reviewNotification', 'reviewNotification'],
+  ['autoEnroll', 'autoEnroll'],
+];
+
+/** Migrate the legacy per-field localStorage keys into the single zustand persist blob. */
+function migrateLegacyStorage() {
+  if (typeof window === 'undefined') return;
+  if (localStorage.getItem(P)) return; // already merged
+  const state: Record<string, unknown> = {};
+  for (const [lk, sk] of LEGACY_KEYS) {
+    const raw = localStorage.getItem(P + '.' + lk);
+    if (raw == null) continue;
+    try {
+      state[sk] = JSON.parse(raw);
+    } catch {
+      state[sk] = raw;
+    }
+  }
+  if (Object.keys(state).length) {
+    localStorage.setItem(P, JSON.stringify({ state, version: 0 }));
+  }
+}
+
+// Run migration at module load (synchronously, BEFORE the persist middleware
+// hydrates the store) so legacy per-field keys are merged into the blob the
+// store reads from. Executes only in the browser.
+if (typeof window !== 'undefined') {
+  migrateLegacyStorage();
+}
+
 interface AppState {
   favorites: string[];
   viewed: string[];
@@ -180,53 +225,5 @@ export const useStore = create<AppState>()(
     }
   )
 );
-
-const LEGACY_KEYS: [string, string][] = [
-  ['favorites', 'favorites'],
-  ['viewed', 'viewed'],
-  ['notes', 'notes'],
-  ['ratings', 'ratings'],
-  ['theme', 'theme'],
-  ['sortOrder', 'sortOrder'],
-  ['searchHistory', 'searchHistory'],
-  ['dailyLog', 'dailyLog'],
-  ['lastStudyDate', 'lastStudyDate'],
-  ['streak', 'streak'],
-  ['dailyGoal', 'dailyGoal'],
-  ['reviewData', 'reviewData'],
-  ['reviewAlgorithm', 'reviewAlgorithm'],
-  ['dailyReviewLimit', 'dailyReviewLimit'],
-  ['reviewNotification', 'reviewNotification'],
-  ['autoEnroll', 'autoEnroll'],
-];
-
-/** Migrate the legacy per-field localStorage keys into the single zustand persist blob. */
-function migrateLegacyStorage() {
-  if (typeof window === 'undefined') return;
-  if (localStorage.getItem(P)) return; // already merged
-  const state: Record<string, unknown> = {};
-  for (const [lk, sk] of LEGACY_KEYS) {
-    const raw = localStorage.getItem(P + '.' + lk);
-    if (raw == null) continue;
-    try {
-      state[sk] = JSON.parse(raw);
-    } catch {
-      state[sk] = raw;
-    }
-  }
-  // normalize theme/sortOrder/algorithm to plain strings if JSON-stringified
-  if (typeof state.theme === 'string') state.theme = state.theme;
-  if (typeof state.sortOrder === 'string') state.sortOrder = state.sortOrder;
-  if (typeof state.reviewAlgorithm === 'string') state.reviewAlgorithm = state.reviewAlgorithm;
-  if (Object.keys(state).length) {
-    localStorage.setItem(P, JSON.stringify({ state, version: 0 }));
-  }
-}
-
-export function StoreProvider({ children }: { children: React.ReactNode }) {
-  // Thin wrapper for future context providers; currently a passthrough.
-  // (Kept as a non-JSX function so this file can stay .ts.)
-  return children;
-}
 
 export { migrateLegacyStorage };
