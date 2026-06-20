@@ -16,4 +16,39 @@ feynman:
 
 # 多 Agent 会不会降低「一致性」(同一产品前后端接口对不上)
 
-会，所以需要单一契约源（OpenAPI/JSON Schema）+ 契约测试 Agent 或静态检查 + 状态机门禁。
+多 Agent 系统确实会增加系统复杂度，**会**降低「一致性」。因为不同 Agent（如前端设计 Agent、后端开发 Agent）拥有独立的上下文和 Prompt，容易产生类似「接口对不上」、「字段命名不一致」的问题。
+
+**解决方案**：
+1. **单一契约源**：引入 OpenAPI (Swagger) 或 JSON Schema 作为唯一的 Truth Source，所有 Agent 必须引用该契约，而不是自己臆造。
+2. **契约测试 Agent**：专门设置一个 QA Agent，负责比对前后端的实现是否符合契约。
+3. **静态检查/门禁**：在 Agent 生成代码后，插入编译或 Lint 步骤，强制校验。
+4. **状态机门禁**：使用 LangGraph 等状态机工具，确保关键状态变更符合预定义流程。
+
+**一致性保障流程图**：
+```text
+         [ Shared Context ]
+         (Schema / API Spec)
+              │      │
+        ┌─────┘      └─────┐
+        ▼                    ▼
+ [ Frontend Agent ]   [ Backend Agent ]
+ (Generate UI)        (Generate API)
+        │                    │
+        └───────┬────────────┘
+                ▼
+      [ Integration / QA Agent ]
+      (Compare Spec vs Code)
+                │
+        Mismatch │      Match
+          ┌──────┴──────┐
+          ▼             ▼
+    [ Return Fix ]  [ Accept ]
+```
+
+**关键细节补充**：
+- **全局 Memory**：确保所有 Agent 共享一部分长期记忆，专门存放变量定义、接口文档等元数据。
+- **Reflexion 模式**：当 QA Agent 发现不一致时，反馈具体错误信息给对应的 Agent，要求其自我修正（Self-Reflexion），而不是直接重置。
+
+## 常见考点
+1. **Schema 漂移**：如果需求变更，如何更新 Schema？（答：需有一个「架构师 Agent」负责更新 Schema，并广播通知其他 Agent）。
+2. **上下文限制**：如何把巨大的 API Spec 放入 Context？（答：使用 RAG 检索相关接口，或动态注入 Prompt）。

@@ -21,21 +21,39 @@ follow_up:
 
 # ZeRO (Zero Redundancy Optimizer)的三级优化分别是什么?如何选择
 
-- **ZeRO分布式训练优化:**
+- **ZeRO (Zero Redundancy Optimizer)三级优化:**
 
 | 级别 | 切分对象 | 显存节省 | 通信量 |
 |------|---------|---------|--------|
-| ZeRO-1 | 优化器状态 | 4x | 与DP相同 |
-| ZeRO-2 | + 梯度 | 8x | 略增 |
-| ZeRO-3 | + 模型参数 | **~Nx** | **显著增加** |
+| ZeRO-1 (Os) | 优化器状态 | 4x | 与DP相同 |
+| ZeRO-2 (Os+G) | + 梯度 | 8x | 略增 |
+| ZeRO-3 (Os+G+P) | + 模型参数 | **~Nx** | **显著增加** |
 
-- **ZeRO-3 (Add Parameter Partitioning):**
+- **ZeRO-3 (Add Parameter Partitioning) 架构:**
+```
+GPU 0:  [W0] [G0] [Os0]
+GPU 1:  [W1] [G1] [Os1]
+GPU 2:  [W2] [G2] [Os2]
+GPU 3:  [W3] [G3] [Os3]
+         │
+         │ All-Gather (通信)
+         ▼
+  Forward Pass (临时聚合完整参数)
+         │
+         ▼
+    Backward Pass
+```
 - 模型参数也切分,每张卡只存1/N
 - 前向/反向时动态All-Gather收集参数
 - 适合:**超大模型(>70B)或多卡训练**
 - 代价:通信量约为ZeRO-2的1.5倍
 
 - **选择建议:**
-- 模型<7B:ZeRO-1或纯DP
-- 模型7B-70B:ZeRO-2
-- 模型>70B:ZeRO-3 + CPU Offload
+- 模型<7B: ZeRO-1或纯DP
+- 模型7B-70B: ZeRO-2
+- 模型>70B: ZeRO-3 + CPU Offload
+
+- **## 常见考点:**
+1. ZeRO-3在推理时如何避免频繁的All-Gather导致延迟高？
+2. ZeRO-Offload 是如何利用CPU内存和NVLink/PCIe带宽的？
+3. 相比FSDP (Fully Sharded Data Parallel)，ZeRO有哪些异同？

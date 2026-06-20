@@ -21,19 +21,44 @@ follow_up:
 
 # Flash Attention的原理是什么?为什么能同时加速和省显存
 
-- **Flash Attention核心:减少HBM(显存)读写**
+- **Flash Attention核心原理:**
+减少HBM(显存)读写，利用GPU SRAM进行分块计算。
 
 - **问题:** 标准Attention中QKᵀ产生n*n矩阵,频繁读写HBM(慢)
 
-- **解决方案:Tiling(分块)**
+- **解决方案:Tiling(分块) + 在线Softmax**
 1. 将Q/K/V分成小块加载到SRAM(片上高速缓存)
 2. 在SRAM中计算部分Attention
-3. 使用在线Softmax技巧
+3. **Online Softmax**: 维护分子的累加和分母的max值，避免存储完整的n×n矩阵。
 4. 只将最终结果写回HBM
+
+- **计算流程图:**
+```
+Q, K, V (HBM)
+  │
+  ▼ Tiling (分块加载到 SRAM)
+┌─────────────────────┐
+│ Loop over blocks (j):│
+│   Load Kj, Vj        │
+│   Loop over blocks (i):│
+│     Load Qi          │
+│     Compute Sij = Qi @ Kj.T
+│     Update Softmax stats (m, l)
+│     Update O = O @ Vj│
+└─────────────────────┘
+  │
+  ▼
+O (HBM)
+```
 
 - **效果:**
 - **速度:** 快2-4倍(减少HBM IO)
 - **显存:** O(n) 而非 O(n²)
 - **精确:** 数学上完全等价,非近似
 
-- **Flash Attention v2改进:** 更好的GPU利用率,支持长序列(128K+)
+- **Flash Attention v2改进:** 调整工作负载划分以更好地利用GPU的Warp特性，支持长序列(128K+)
+
+- **## 常见考点:**
+1. 为什么在GPU上计算快但读写慢？（计算单元与显存带宽的差距）
+2. Flash Attention 支持Attention Mask吗？如何实现的？
+3. Flash Attention-3 在H100上使用了什么新的硬件特性（如Tensor Cores或TMA）？

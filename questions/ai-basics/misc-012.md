@@ -26,7 +26,7 @@ follow_up:
 利用RLHF的闭式解,将奖励模型隐式地包含在策略模型中.
 
 - **推导关键步骤:**
-1. RLHF目标:max E[r(x,y)] - beta * KL(pi||pi_ref)
+1. RLHF目标: max E[r(x,y)] - beta * KL(pi||pi_ref)
 2. 最优策略闭式解可反解出奖励函数
 3. 代入Bradley-Terry偏好模型
 4. 得到**无需RM的损失函数**
@@ -35,8 +35,7 @@ follow_up:
 
 其中 y_w=偏好回答, y_l=不偏好回答
 
-- **优势:**
-- 只需2个模型(当前策略+参考策略),PPO需要4个
-- 无需训练和推理奖励模型
-- 训练更稳定(无reward hacking)
-- 效果接近PPO
+- **## 常见考点:**
+1. DPO中的参考模型 pi_ref 有什么作用？如果不加会怎样？
+2. beta (temperature) 参数如何调整？它对训练有何影响？
+3. 相比PPO，DPO在处理长上下文时有哪些潜在劣势？
