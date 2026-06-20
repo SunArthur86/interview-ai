@@ -43,14 +43,23 @@ export default function QuestionCard({ q, isFav, isViewed, rating, highlight, on
       style={{
         background: 'var(--card)',
         border: '1px solid var(--border)',
-        borderRadius: '12px',
-        padding: '14px',
+        borderRadius: 'var(--radius-md)',
+        padding: '16px',
         cursor: 'pointer',
         position: 'relative',
-        transition: 'border-color 0.15s, transform 0.1s',
+        transition: 'transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s',
+        boxShadow: 'var(--shadow-sm)',
       }}
-      onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--primary)')}
-      onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = 'translateY(-2px)';
+        e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+        e.currentTarget.style.borderColor = 'var(--primary)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'translateY(0)';
+        e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+        e.currentTarget.style.borderColor = 'var(--border)';
+      }}
     >
       <div style={{ display: 'flex', gap: '6px', marginBottom: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
         <span style={{ background: 'var(--primary)', color: '#fff', borderRadius: '5px', padding: '1px 6px', fontSize: '11px' }}>{q.difficulty}</span>

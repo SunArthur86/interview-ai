@@ -25,13 +25,18 @@ export default function QuestionContent({ q, onFollowUp, showNotes = true }: Pro
   return (
     <div>
       {/* meta row */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '10px', alignItems: 'center' }}>
-        <span style={{ background: 'var(--bg-soft)', border: '1px solid var(--border)', borderRadius: '6px', padding: '2px 8px', fontSize: '12px', color: 'var(--text-tertiary)' }}>{q.id}</span>
-        <span style={{ background: 'var(--primary)', color: '#fff', borderRadius: '6px', padding: '2px 8px', fontSize: '12px' }}>{q.difficulty}</span>
-        <span style={{ background: catCfg.color, color: '#fff', borderRadius: '6px', padding: '2px 8px', fontSize: '12px' }}>{catCfg.icon} {catCfg.label}</span>
-        {q.subcategory && (
-          <span style={{ background: 'var(--bg-soft)', border: '1px solid var(--border)', borderRadius: '6px', padding: '2px 8px', fontSize: '12px' }}>{q.subcategory}</span>
-        )}
+      <div className="q-meta">
+        <span className="q-meta-id">{q.id}</span>
+        <span className="q-meta-diff">{q.difficulty}</span>
+        <span className="q-meta-cat" style={{ background: catCfg.color }}>{catCfg.icon} {catCfg.label}</span>
+        {q.subcategory && <span className="q-meta-sub">{q.subcategory}</span>}
+        <style>{`
+          .q-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; align-items: center; }
+          .q-meta-id { background: var(--card-secondary); border: 1px solid var(--border); border-radius: 6px; padding: 2px 9px; font-size: 12px; color: var(--text-tertiary); font-family: "SF Mono", monospace; }
+          .q-meta-diff { background: var(--primary); color: #fff; border-radius: 6px; padding: 2px 9px; font-size: 12px; font-weight: 600; }
+          .q-meta-cat { color: #fff; border-radius: 6px; padding: 2px 9px; font-size: 12px; font-weight: 500; }
+          .q-meta-sub { background: var(--card-secondary); border: 1px solid var(--border); border-radius: 6px; padding: 2px 9px; font-size: 12px; color: var(--text-secondary); }
+        `}</style>
       </div>
 
       <FeynmanCard feynman={q.feynman || {}} />

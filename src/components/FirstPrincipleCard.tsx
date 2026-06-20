@@ -5,15 +5,16 @@ export default function FirstPrincipleCard({ fp }: { fp: FirstPrinciple }) {
   return (
     <div
       style={{
-        background: 'var(--card)',
+        background: 'linear-gradient(135deg, rgba(175,82,222,0.06), rgba(175,82,222,0.02))',
         border: '1px solid var(--border)',
         borderLeft: '4px solid var(--accent)',
-        borderRadius: '12px',
-        padding: '14px 16px',
-        margin: '12px 0',
+        borderRadius: 'var(--radius-md)',
+        padding: '16px 18px',
+        margin: '14px 0',
+        boxShadow: 'var(--shadow-sm)',
       }}
     >
-      <div style={{ fontWeight: 600, fontSize: '15px', marginBottom: '8px' }}>
+      <div style={{ fontWeight: 600, fontSize: '15px', marginBottom: '10px', color: 'var(--text)', letterSpacing: '-0.01em' }}>
         🏗️ 第一性原理
       </div>
       {fp.problem && (

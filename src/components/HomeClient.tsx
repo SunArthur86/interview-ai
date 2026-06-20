@@ -244,7 +244,7 @@ export default function HomeClient({ questions }: { questions: Question[] }) {
     <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '12px 16px calc(env(safe-area-inset-bottom, 0) + 24px)' }}>
       {/* top bar */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px', flexWrap: 'wrap' }}>
-        <div style={{ fontSize: '20px', fontWeight: 700, flex: 1, minWidth: '120px' }}>
+        <div style={{ fontSize: '22px', fontWeight: 700, flex: 1, minWidth: '120px', letterSpacing: '-0.02em' }}>
           {APP_CONFIG.appIcon} {APP_CONFIG.appName}
         </div>
         <SearchBar
@@ -319,7 +319,7 @@ export default function HomeClient({ questions }: { questions: Question[] }) {
           没有找到匹配的题目
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '10px', marginTop: '12px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))', gap: '12px', marginTop: '14px' }}>
           {visible.map((q) => (
             <QuestionCard
               key={q.id}
@@ -366,14 +366,16 @@ export default function HomeClient({ questions }: { questions: Question[] }) {
 const iconBtn: React.CSSProperties = {
   background: 'var(--bg-soft)',
   border: '1px solid var(--border)',
-  borderRadius: '8px',
-  padding: '6px 10px',
+  borderRadius: '999px',
+  padding: '7px 12px',
   cursor: 'pointer',
   color: 'var(--text)',
   fontSize: '13px',
+  fontWeight: 500,
+  boxShadow: 'var(--shadow-sm)',
 };
 function iconBtnActive(active: boolean): React.CSSProperties {
-  return { ...iconBtn, background: active ? 'var(--warning)' : 'var(--bg-soft)', color: active ? '#fff' : 'var(--text)' };
+  return { ...iconBtn, background: active ? 'var(--warning)' : 'var(--bg-soft)', color: active ? '#fff' : 'var(--text)', borderColor: active ? 'var(--warning)' : 'var(--border)' };
 }
 function modeBtn(color: string): React.CSSProperties {
   return {
@@ -381,8 +383,10 @@ function modeBtn(color: string): React.CSSProperties {
     border: `1px solid ${color}`,
     color: 'var(--text)',
     borderRadius: '999px',
-    padding: '6px 14px',
+    padding: '8px 16px',
     cursor: 'pointer',
     fontSize: '13px',
+    fontWeight: 500,
+    boxShadow: 'var(--shadow-sm)',
   };
 }
