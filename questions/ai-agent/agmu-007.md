@@ -31,6 +31,24 @@ feynman:
 **工程实践**：
 常混合使用：**主干是 Pipeline**（保证基本流程），**关键节点插入动态分配**（如某个步骤需调用工具链或进行复杂的子任务搜索）。
 
+**实战案例**：
+在一个自动化运维系统开发中，最初使用固定 Pipeline 处理报错，但面对未知故障时经常卡在“重启服务”这一步死循环。后来引入动态分配，Boss Agent 根据报错日志动态生成任务（如“查看磁盘”、“检查内存”），才成功解决了 0-day 故障的排查难题。
+
+**代码示例**：
+```python
+# Python: 动态任务分配示例
+def boss_agent(issue):
+    tasks = []
+    if "network" in issue:
+        tasks.append({"task": "check_ping", "target": issue["host"]})
+    if "disk" in issue:
+        tasks.append({"task": "check_disk_space", "target": issue["host"]})
+    
+    # 并行执行
+    results = run_parallel(tasks)
+    return synthesize_results(results)
+```
+
 **架构对比**：
 ```
 Fixed Pipeline:          Dynamic Allocation:

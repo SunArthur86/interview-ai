@@ -45,6 +45,35 @@ feynman:
     [ Return Fix ]  [ Accept ]
 ```
 
+**实战案例**：
+在电商系统重构中，后端 Agent 将 `userId` 改为 `user_id`（蛇形），但前端 Agent 坚持用驼峰 `userId`。通过引入 Schema 强制校验，QA Agent 自动拦截了联调失败，并要求后端 Agent 保持与 OpenAPI 定义一致，避免了上线后大量 400 报错。
+
+**代码示例**：
+```python
+# Schema First Approach (Pydantic v2)
+from pydantic import BaseModel
+
+# Shared Truth Source
+class UserSchema(BaseModel):
+    user_id: int  # Force snake_case definition
+    email: str
+
+# Backend Agent Generation
+mock_api_resp = {"user_id": 123, "email": "test@example.com"}
+assert UserSchema(**mock_api_resp) # Runtime validation
+
+# Frontend Agent Conversion
+frontend_data = UserSchema(**mock_api_resp).model_dump(by_alias=False) # Standardized
+```
+
+**一致性方案对比**：
+
+| 方案 | 优点 | 缺点 | 适用场景 |
+| :--- | :--- | :--- | :--- |
+| **Post-Hoc QA** | 实现简单，不干扰生成 | 反馈周期长，Token 浪费 | 初期验证，非关键路径 |
+| **Schema Injection** | 强一致，生成即准确 | Prompt 容量受限 | 接口字段较少的业务 |
+| **Reflexion Loop** | 自我修复能力强 | 成本高，耗时久 | 复杂逻辑，对准确性要求高 |
+
 **关键细节补充**：
 - **全局 Memory**：确保所有 Agent 共享一部分长期记忆，专门存放变量定义、接口文档等元数据。
 - **Reflexion 模式**：当 QA Agent 发现不一致时，反馈具体错误信息给对应的 Agent，要求其自我修正（Self-Reflexion），而不是直接重置。

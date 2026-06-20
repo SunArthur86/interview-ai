@@ -64,6 +64,36 @@ Original Query: "iPhone 15 Pro Max 电池续航怎么样?"
 └─────────────────────────────────────────────────────┘
 ```
 
+- **实战案例:** 在金融RAG系统中，用户提问“最近美联储加息对房贷的影响”。直接检索容易召回零散新闻。使用HyDE生成包含“利率上升、按揭成本增加、房地产市场降温”等关键词的假设性回答后，向量检索召回了深度分析报告，相关性显著提升。
+
+- **代码示例:**
+```python
+from langchain.prompts import PromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+
+# HyDE 实现逻辑
+def hyde_retrieval(query, llm, vector_store):
+    # 1. 生成假设文档
+    prompt = PromptTemplate.from_template(
+        "Please write a passage to answer the question: {question}"
+    )
+    hyde_prompt = prompt.format(question=query)
+    fake_doc = llm.predict(hyde_prompt) # LLM生成
+    
+    # 2. 使用假设文档进行检索
+    docs = vector_store.similarity_search(fake_doc, k=5)
+    return docs
+```
+
+- **对比表格:**
+
+| 技术方案 | 核心思路 | 适用场景 | 缺点/成本 |
+| :--- | :--- | :--- | :--- |
+| **Query Rewriting** | 修正模糊/错误的表达 | 用户意图不清、指代消解 | 依赖LLM理解能力，可能过度改写 |
+| **HyDE** | 用“答案”搜“答案” | 语义相似度高、事实性查询 | LLM幻觉导致检索偏差；延迟增加 |
+| **Step-Back** | 抽象化/概念化 | 需要推理背景的复杂问题 | 对简单问题可能过度抽象，引入噪音 |
+| **Multi-Query** | 覆盖多维度语义 | 主题发散、多义词查询 | 召回量大，需配合强Reranker；成本高 |
+
 ## 常见考点
 1. **HyDE的局限性是什么？**
    - 如果LLM生成的假想答案包含事实错误或幻觉，可能会检索到错误的信息。此外，增加了额外的LLM推理延迟和成本。

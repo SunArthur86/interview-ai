@@ -31,16 +31,16 @@ feynman:
 任务复杂度分析
       │
       ├─ 任务是否需要多种截然不同的专业视角？
-      │  (如: 一位需要写代码, 一位需要写文案)
-      │  └─ 是 ─> [多 Agent]
-      │
+│  (如: 一位需要写代码, 一位需要写文案)
+│  └─ 是 ─> [多 Agent]
+│
       ├─ 任务是否需要严格的步骤审批与权限控制？
-      │  (如: 代码Agent写完后, Reviewer Agent审核, 最后发布)
-      │  └─ 是 ─> [多 Agent]
-      │
+│  (如: 代码Agent写完后, Reviewer Agent审核, 最后发布)
+│  └─ 是 ─> [多 Agent]
+│
       ├─ 任务是否可以拆分为独立的子任务并行执行以提速？
-      │  └─ 是 ─> [多 Agent]
-      │
+│  └─ 是 ─> [多 Agent]
+│
       └─ 否 ─> [单 Agent (利用 Tool/Function Calling)]
 ```
 
@@ -69,6 +69,18 @@ feynman:
   1.  **精准度**：专用 Agent (Prompt 特化) 比通用 Agent 表现更好。
   2.  **鲁棒性**：单个 Agent 失败不影响全局，可重试特定步骤。
   3.  **可解释性**：可以清楚看到“Reviewer Agent 拒绝了 Coder Agent 的提交”。
+
+### 深化实战
+- **实战案例**：在构建自动周报生成系统时，单 Agent 容易混淆数据分析和文案润色。拆分为 DataAnalyst（只输出 JSON 数据）和 Writer（只读 JSON 写文案）后，代码调试时间减少 60%。
+- **代码示例（Python - LangChain 风格伪代码）**：
+```python
+def research_team(topic):
+    # 并行执行：搜索与汇总
+    searcher = Agent(role="Searcher", task=topic)
+    summarizer = Agent(role="Summarizer", input=searcher.output)
+    # 单 Agent 逻辑很难并行化
+    return run_parallel([searcher, summarizer]) 
+```
 
 ### ## 常见考点
 - 多 Agent 通信用什么协议？（答案：通常结构化 JSON，包含 `to`, `from`, `content`, `action` 字段；或是基于消息队列）

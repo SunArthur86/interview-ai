@@ -40,6 +40,35 @@ feynman:
                   └──────────────────┘
 ```
 
+**实战案例**：
+在开发客服 Agent 时，单纯看最终回复准确率高达 95%，但通过 Trace 评估发现，Agent A（意图识别）多次将「退款」误判为「咨询」，导致 Agent B 不得不进行多轮反问。通过优化 Agent A 的单元评估指标，将系统平均交互轮次从 5.2 轮降至 3.1 轮，大幅降低了 Token 成本。
+
+**代码示例**：
+```python
+# 防止多 Agent 评估时的死循环
+import hashlib
+
+def run_eval_with_guard(agent_step, max_steps=10):
+    seen_states = set()
+    for i in range(max_steps):
+        action = agent_step()
+        # 对 Action 指纹哈希，防止陷入死循环（如 A->B->A）
+        state_hash = hashlib.md5(str(action).encode()).hexdigest()
+        if state_hash in seen_states:
+            return {"status": "failed", "reason": "loop_detected"}
+        seen_states.add(state_hash)
+    return {"status": "completed", "steps": i}
+```
+
+**评估维度对比**：
+
+| 维度 | 单元测试 | 集成测试 | E2E (Golden Set) |
+| :--- | :--- | :--- | :--- |
+| **评估对象** | 单个 Agent | Agent 交互对 | 完整工作流 |
+| **核心指标** | Function Call 正确率 | 消息解析成功率 | 任务完成率 / 总耗时 |
+| **故障定位** | 极快 | 中等 | 慢 (需 Trace) |
+| **成本** | 低 | 中 | 高 (消耗大量 Token) |
+
 **关键细节补充**：
 - **Tracing**：必须使用分布式追踪（如 LangSmith, Arize），可视化每一步的 Token 消耗和中间状态。
 - **Golden Set**：构建高质量的标准问题集，覆盖常见路径和边界情况。
@@ -80,12 +109,5 @@ def run_with_guard(
         transcript.append(action)
         
         # 简单的终止条件检测
-        if "DONE" in action or "TASK_COMPLETE" in action:
-            return transcript
-            
-    raise RuntimeError(f"Max steps ({max_steps}) exceeded without completion.")
-```
-
-## 常见考点
-1. **指标体系**：除了成功率，还应关注什么？（答：Token 效率、平均轮数、工具调用成功率）。
-2. **测试集构建**：如何构建有效的评估集？（答：需覆盖 Corner Cases，如工具失败、权限拒绝等异常流）。
+        if "<DONE>" in action:
+            break

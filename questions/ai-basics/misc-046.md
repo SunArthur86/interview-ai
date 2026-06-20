@@ -42,6 +42,31 @@ follow_up:
 3. 拒绝采样生成SFT数据
 4. 第二轮GRPO(推理+通用)
 
+- **实战案例**：在代码生成任务中，传统模型生成递归函数容易栈溢出。DeepSeek-R1 在推理阶段自动生成了约 2000 个 Token 的思考过程，其中包含“尝试 Python 递归 -> 超时 -> 切换为 C++ 迭代实现 -> 验证边界条件”的反复尝试，最终输出了正确的优化代码。
+
+- **代码示例 (伪代码 - 简化版GRPO)**：
+```pythonn
+# GRPO (Group Relative Policy Optimization) 简化示意
+# 优势：无需训练 Critic 模型，显存占用低
+
+def compute_group_advantage(group_outputs):
+    # group_outputs: 同一个Prompt生成的多个回复及其Reward
+    rewards = [r["reward"] for r in group_outputs]
+    mean_reward = sum(rewards) / len(rewards)
+    
+    advantages = []
+    for r in rewards:
+        # 优势 = 当前样本奖励 - 组内平均奖励
+        advantages.append(r - mean_reward)
+    return advantages
+
+# 训练循环
+log_probs = model.generate_multiple(prompts) # 生成多个样本
+rewards = [rule_based_check(out) for out in outputs]
+loss = -sum(log_prob * compute_group_advantage(rewards))
+loss.backward()
+```
+
 - **关键发现:**
 - RL可以让模型自发学会「反思」「验证」「尝试不同策略」
 - 不需要人类教推理步骤,模型自己探索出来
@@ -68,19 +93,13 @@ follow_up:
                         │       │ NO                │ YES        │
                         │       ▼                   ▼            │
                         │  ┌─────────┐         ┌──────────┐     │
-                        │  │ 尝试路径│ ◄───────│  回溯    │     │
-                        │  │  B      │         │  (重试)  │     │
-                        │  └────┬────┘         └──────────┘     │
-                        │       │ YES                            │
-                        │       ▼                                │
-                        │  ┌─────────────────┐                  │
-                        │  │  最终答案生成   │                  │
-                        │  └─────────────────┘                  │
+                        │  │ 尝试路径│◄────────│ 回溯修正 │     │
+                        │  │  B      │         └──────────┘     │
+                        │  └────┬────┘                            │
+                        │       │ PASS                            │
+                        │       ▼                                 │
+                        │  ┌─────────┐                          │
+                        │  │ 最终答案│                          │
+                        │  └─────────┘                          │
                         └───────────────────────────────────────┘
 ```
-
-- **## 常见考点**：
-  1. **Test-Time Compute (测试时计算) 的权衡？**：虽然延长思考时间能提高准确率，但会增加延迟和推理成本。面试官可能问如何在实际应用中动态决定何时停止思考（Self-Play 裁判机制）。
-  2. **GRPO 相比 PPO 的具体优势？**：除了显存，是否了解 PPO 需要同时训练 Actor 和 Critic，而 GRPO 利用 Group 估计 Baseline，消除了对 Critic 的依赖，更稳定且易实现。
-  3. **为什么需要 SFT 冷启动？**：R1-Zero 虽然证明了可行性，但初期训练不稳定、输出格式乱码、语言混杂。R1 正式版通过加入几千条高质量长链 CoT 数据进行 SFT，引导模型进入良好的状态，后续 RL 才能收敛。
-  4. **这种推理模式对架构有什么要求？**：通常需要较大的 Context Window（支持长上下文）和 Key-Value (KV) Cache 优化，因为 CoT 阶段会产生大量的中间 Token。

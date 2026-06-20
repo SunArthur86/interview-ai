@@ -64,6 +64,25 @@ PPO需要一个Critic模型估计baseline, GRPO用**组内相对奖励**替代Cr
 - 更稳定 - 组内归一化消除奖励尺度问题
 - 效果好 - DeepSeek-R1证明GRPO可训练出顶级推理能力
 
+- **实战案例:**
+在数学推理任务中，如果组大小 G 设置过大（如 G=64），不仅增加推理成本，且组内样本方差增大会导致优势函数趋近噪声，通常需根据模型能力动态调整 G，且对于确定性任务需在优势函数计算中加入 min_std 防止除零。
+
+- **代码示例:**
+```python
+# 优势函数计算片段
+import torch
+
+def compute_group_advantage(rewards):
+    mean = rewards.mean()
+    std = rewards.std()
+    # 防止std为0导致梯度爆炸
+    if std < 1e-6:
+        std = 1.0 
+    # 核心优势：相对组内均值的归一化优势
+    advantages = (rewards - mean) / std
+    return advantages
+```
+
 - **## 常见考点:**
 1. GRPO中的组大小 G 如何选择？太小或太大有什么影响？
 2. 对于确定性输出（如数学题），组内方差较小时，GRPO的梯度更新是否有效？

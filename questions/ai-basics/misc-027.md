@@ -75,6 +75,35 @@ score = alpha * norm(bm25_score) + (1-alpha) * norm(vector_score)
 - Weaviate/Qdrant原生支持混合检索
 - LangChain的EnsembleRetriever封装了RRF
 
+- **实战案例:** 在某医疗问答项目中，用户查询“阿司匹林”。纯向量检索可能召回“止痛药”等语义相关但泛化的内容，混合检索通过BM25的强匹配能力，精准召回说明书中包含“阿司匹林”关键词的段落，解决了专业名词召回不准的问题。
+
+- **代码示例:**
+```python
+from rank_bm25 import BM25Okapi
+from sklearn.preprocessing import MinMaxScaler
+import numpy as np
+
+# 假设 bm25_scores 和 vector_scores 已获取
+# 1. 归一化 (Min-Max)
+scaler = MinMaxScaler()
+bm25_norm = scaler.fit_transform(np.array(bm25_scores).reshape(-1, 1)).flatten()
+vector_norm = scaler.fit_transform(np.array(vector_scores).reshape(-1, 1)).flatten()
+
+# 2. 加权融合 (alpha=0.7偏向BM25)
+alpha = 0.7
+final_scores = alpha * bm25_norm + (1 - alpha) * vector_norm
+```
+
+- **对比表格:**
+
+| 特性 | RRF (倒数排名融合) | 加权平均 | 纯向量/纯BM25 |
+| :--- | :--- | :--- | :--- |
+| **核心逻辑** | 基于排名倒数的求和 | 基于分数的线性加权 | 单一信号源 |
+| **分数归一化** | **不需要** (对数值不敏感) | **必须** (需对齐量纲) | 不适用 |
+| **鲁棒性** | 高 (抗分数波动) | 中 (受归一化参数影响) | 低 (单一短板) |
+| **实现复杂度** | 低 | 中 (需调参alpha) | 最低 |
+| **适用场景** | 通用型，分数分布不一致时 | 分数分布已知且可信时 | 数据特征极其单一时 |
+
 ## 常见考点
 1. **为什么分数需要归一化？**
    - BM25分数范围通常在0-20+，向量余弦相似度在-1到1。直接加权会导致向量检索权重被淹没，必须归一化（如Min-Max或Sigmoid）。

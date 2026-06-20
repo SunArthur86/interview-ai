@@ -58,6 +58,26 @@ O (HBM)
 
 - **Flash Attention v2改进:** 调整工作负载划分以更好地利用GPU的Warp特性，支持长序列(128K+)
 
+- **实战案例:**
+在长文本（如128k context）微调中，若不经意间使用了旧的PyTorch `F.scaled_dot_product_attention`而非Flash Attention后端，显存占用可能会直接溢出；实战排查OOM时，第一步往往是检查kernel是否正确调用了flash_attn_func。
+
+- **代码示例:**
+```python
+import torch
+import flash_attn_func
+
+# q, k, v shape: [batch_size, seq_len, num_heads, head_dim]
+# causal=True 实现因果掩码（如GPT Decoder）
+q, k, v = ... 
+
+# 调用Flash Attention 2核心接口
+out = flash_attn_func(
+    q, k, v, 
+    causal=True,  # 实战：生成任务必须开启
+    softmax_scale=None
+)
+```
+
 - **## 常见考点:**
 1. 为什么在GPU上计算快但读写慢？（计算单元与显存带宽的差距）
 2. Flash Attention 支持Attention Mask吗？如何实现的？

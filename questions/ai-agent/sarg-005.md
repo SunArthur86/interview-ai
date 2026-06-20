@@ -41,6 +41,38 @@ feynman:
 *   **Adaptive RAG (自适应 RAG)**：根据问题的复杂程度路由到不同的处理链路。简单问题直接答，复杂问题走 RAG，模糊问题走 Web Search。
 *   **Long Context RAG**：利用支持 128k-1M 上下文的模型（如 GPT-4-turbo, Claude 3），将大量文档直接塞入 Context Window，省去复杂的检索步骤，适合对精确性要求不高但需全景视角的任务。
 
+### 实战深化
+
+**1. 实战案例**：在处理多轮对话的 RAG 系统时，用户追问“那个多少钱”，直连向量库会检索失败。使用 **Query Rewriting** 结合历史记录，将其重写为“[产品A] 的价格是多少”，检索准确率提升 40% 以上。
+
+**2. 代码示例 (Python)**：
+```python
+# Multi-Query 并行检索示例
+from langchainhub import prompthub
+from langchain.output_parsers import PydanticOutputParser
+
+# 1. 让 LLM 生成多角度的查询
+prompt = hub.pull("rlm/multi-query-retriever")
+queries = llm.invoke(prompt.format(question=user_question))
+
+# 2. 并行检索并去重
+unique_docs = set()
+for q in queries.split("\n"):
+    docs = vectorstore.similarity_search(q)
+    unique_docs.update(docs)
+
+# 3. 将所有去重后的上下文给 LLM
+```
+
+**3. 进阶技术选型对比**：
+
+| 技术 | 核心痛点 | 适用场景 | 实现成本 | Token 消耗
+| :--- | :--- | :--- | :--- | :--- |
+| **HyDE** | Query 与 Doc 语义鸿沟 | 领域知识专业、Doc 风格独特的场景 | 低 (需一次 LLM 调用) | 中 (生成假设答案)
+| **Multi-Query** | Query 表达单一、语义歧义 | 开放式问答、探索性搜索 | 中 (需多次向量检索) | 低 (仅检索)
+| **GraphRAG** | 跨文档关联、全局总结 | 复杂知识库、实体关系密集 | 高 (需构建图谱) | 低 (检索精准)
+| **Long Context** | 检割裂上下文、丢失细节 | 全文总结、小规模文档集 (<万级) | 低 (无需检索) | 极高 (全量输入)
+
 ## 常见考点
 1.  **HyDE 的适用场景是什么？**
     当用户的 Query 非常短或者语义与 Doc 差异很大时，HyDE 效果很好。但如果 LLM 生成的假设答案本身有幻觉，可能会带偏检索方向。

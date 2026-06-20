@@ -31,6 +31,23 @@ feynman:
 - **结构化发言**：强制 Agent 输出格式为 `{观点, 证据, 反对意见}`，减少自然语言废话。
 - **沉默机制**：如果某 Agent 无新观点，允许输出 `PASS`。
 
+**实战案例**：
+在某代码审查系统中，两个 Agent 对代码风格陷入无限争论，导致上下文膨胀。引入「投票+Token预算」双重熔断后，若 3 轮内无法达成一致且消耗超过 5000 tokens，系统自动强制调用更高级别的 LLM 进行仲裁，避免资源空耗。
+
+**代码示例**：
+```python
+# Python: 检查讨论是否陷入死循环
+import numpy as np
+
+def is_stagnating(current_summary, history, threshold=0.95):
+    if not history: return False
+    last_vec = np.array(history[-1]['embedding'])
+    curr_vec = np.array(current_summary['embedding'])
+    # 计算余弦相似度，若过高则视为无新观点
+    similarity = np.dot(last_vec, curr_vec) / (np.linalg.norm(last_vec) * np.linalg.norm(curr_vec))
+    return similarity > threshold
+```
+
 **流程图**：
 ```
 Start Discussion

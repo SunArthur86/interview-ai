@@ -39,12 +39,50 @@ feynman:
    (连乘导致衰减或放大)                 
 ```
 
+- **实战案例**：在做时间序列预测时搭建了一个 10 层的 LSTM，训练初期 Loss 直接变成了 `NaN`。检查发现初始化权重方差过大导致梯度爆炸。在优化器中加入 `clip_grad_norm_(model.parameters(), max_norm=1.0)` 后，模型恢复正常训练。
+
+- **代码示例**：
+```python
+import torch
+import torch.nn as nn
+
+# 1. 梯度裁剪：解决梯度爆炸的利器
+optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
+loss = criterion(output, target)
+loss.backward()
+
+# 在 step() 之前进行梯度裁剪
+torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0) 
+optimizer.step()
+
+# 2. ReLU：解决梯度消失
+class DeepNet(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.layers = nn.Sequential(
+            nn.Linear(100, 100),
+            nn.ReLU(),  # 替换 Sigmoid (其导数最大0.25，多层连乘趋近0)
+            nn.Linear(100, 100),
+            nn.ReLU(),
+            # ... 多层
+        )
+```
+
+- **解决方案对比**
+
+| 问题 | 解决方案 | 原理 | 适用场景 |
+| :--- | :--- | :--- | :--- |
+| **梯度消失** | **ReLU 激活函数** | 正区间导数为 1，切断连乘衰减 | 大部分深层网络 (CV/NLP) |
+| **梯度消失** | **残差连接** | 梯度通过 x 旁路直接传导 (Add identity) | ResNet, Transformer |
+| **梯度爆炸** | **梯度裁剪** | 强制将梯度范数限制在阈值内 | RNN, LSTM, 深层网络 |
+| **两者** | **BatchNorm** | 归一化输入分布，防止数值溢出/归零 | CNN, 深度 MLP |
+
 - **解决方案**
 1. **激活函数选择**：
    - 用 **ReLU** (导数为 0 或 1) 替代 Sigmoid/Tanh (导数最大 0.25)。ReLU 在正区间梯度恒为 1，缓解了连乘衰减。
    - *注意*：ReLu 会导致“Dead ReLU”问题（负区间梯度为0），可用 Leaky ReLU 等变体缓解。
 2. **残差连接**：
-   - 引入 $y = F(x) + x$。反向传播时，梯度可通过 $x$ 这条“旁路”直接传递到浅层：$rac{\partial Loss}{\partial x} = rac{\partial Loss}{\partial y} \cdot (1 + rac{\partial F}{\partial x})$。即使 $rac{\partial F}{\partial x}$ 趋近 0，梯度仍为 1。
+   - 引入 $y = F(x) + x$。反向传播时，梯度可通过 $x$ 这条“旁路”直接传递到浅层：$\frac{\partial Loss}{\partial x} = \frac{\partial Loss}{\partial y} \cdot (1 + \frac{\partial F}{\partial x})$。即使 $\frac{\partial F}{\partial x}$ 趋近 0，梯度仍为 1。
 3. **归一化**：
    - **BatchNorm / LayerNorm**：将每一层的输入归一化到标准正态分布，防止数值过大或过小，稳定梯度分布。
 4. **梯度裁剪**：

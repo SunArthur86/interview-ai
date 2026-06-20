@@ -23,11 +23,11 @@ follow_up:
 
 - **采样策略:**
 
-| 策略 | 作用 | 推荐值 |
-|------|------|--------|
-| Temperature | 控制随机性,T越低越确定 | 代码0.1/创意0.7 |
-| Top-k | 只从概率最高的k个token中采样 | k=40 |
-| Top-p (Nucleus) | 从累积概率超过p的最小token集中采样 | p=0.9 |
+| 策略 | 作用 | 推荐值 | 适用场景 |
+|------|------|--------|---------|
+| Temperature | 控制随机性,T越低越确定 | 代码0.1/创意0.7 | 逻辑任务 vs 创作任务 |
+| Top-k | 只从概率最高的k个token中采样 | k=40 | 过滤极低概率噪声 |
+| Top-p (Nucleus) | 从累积概率超过p的最小token集中采样 | p=0.9 | 动态截断长尾 |
 
 - **原理深度解析:**
   - **Temperature (温度)**: 在 Softmax 之前对 Logits 进行缩放。公式：$Softmax(\frac{logits}{T})$。
@@ -63,6 +63,49 @@ Raw Logits (Model Output)
   - **代码/数学**: T=0.1 (甚至 0), p=0.95 (截断轻微误差)。逻辑任务希望结果确定。
   - **创意写作**: T=0.7 (引入随机性), p=0.9 (允许一定的多样性)
   - **注意**: Top-k 和 Top-p 通常同时开启，起到"双重保险"作用。例如设置 Top-k=40, Top-p=0.9，意味着取两者较小的集合。
+
+- **实战案例:**
+在构建代码生成助手时，初始设置 Temperature=0.7 导致生成的代码片段语法错误率高且包含幻觉API。将 Temperature 调整至 0.1 并开启 Top-p=0.95 后，编译通过率从65%提升至92%，有效减少了非确定性输出带来的风险。
+
+- **代码示例:**
+```python
+import torch
+import torch.nn.functional as F
+
+def sample_with_strategy(logits, temperature=0.7, top_k=40, top_p=0.9):
+    # 1. Temperature Scaling
+    logits = logits / temperature
+    
+    # 2. Softmax
+    probs = F.softmax(logits, dim=-1)
+    
+    # 3. Top-k Filtering
+    values, indices = torch.topk(probs, top_k)
+    # 创建全零mask，只保留top_k位置
+    probs_top_k = torch.zeros_like(probs)
+    probs_top_k.scatter_(1, indices, values)
+    
+    # 4. Top-p (Nucleus) Filtering
+    sorted_probs, sorted_indices = torch.sort(probs_top_k, descending=True)
+    cumulative_probs = torch.cumsum(sorted_probs, dim=-1)
+    
+    # 移除累积概率超过p的token
+    sorted_indices_to_remove = cumulative_probs > top_p
+    # 保留至少一个token
+    sorted_indices_to_remove[..., 1:] = sorted_indices_to_remove[..., :-1].clone()
+    sorted_indices_to_remove[..., 0] = 0
+    
+    # 将移除的token概率置0
+    probs_top_p = probs_top_k.scatter(1, sorted_indices, sorted_probs)
+    probs_top_p[sorted_indices_to_remove] = 0.0
+    
+    # 5. Re-normalize
+    probs_top_p = probs_top_p / probs_top_p.sum(dim=-1, keepdim=True)
+    
+    # 6. Sample
+    next_token = torch.multinomial(probs_top_p, num_samples=1)
+    return next_token
+```
 
 - **## 常见考点**
   1. **Temperature = 0 的实现问题**: 理论上 $T=0$ 会导致除以零。实际代码中通常直接取 `argmax` (贪婪搜索) 而不是经过 Softmax 采样，或者设置一个极小值。

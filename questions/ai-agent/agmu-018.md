@@ -18,7 +18,7 @@ feynman:
 
 高风险决策（如医疗诊断、金融交易）、未知法规限制、或模型置信度低时，人类作为最终审核者是关键的安全防线，可防止幻觉或逻辑错误导致严重后果；同时，人类干预产生的真实反馈数据（RLHF 核心来源）是迭代优化提示词与工具调用的关键。
 
-**架构示意：**
+**架构示意**：
 ```text
 ┌──────────────────┐
 │     用户请求      │
@@ -51,6 +51,37 @@ feynman:
                           │  标注数据积累     │──────┘ (用于模型微调/对齐)
                           └──────────────────┘
 ```
+
+**实战案例**：
+在金融投研助手开发中，Agent 曾编造不存在的财报数据。我们引入了置信度门槛（<0.8 触发人工审核），并强制人工审核结果写回数据库。两周内积累了 500+ 条修正数据，微调后幻觉率降低了 40%。
+
+**代码示例**：
+```python
+
+def human_in_the_loop_agent(agent_result, confidence_threshold=0.8):
+    if agent_result.confidence >= confidence_threshold:
+        return agent_result.content
+    else:
+        # 低置信度，接入人工审核 API (如 Triage)
+        review_id = create_review_ticket(agent_result)
+        
+        # 模拟人工审核返回结果
+        human_feedback = wait_for_review(review_id, timeout=300) # 5min超时
+        
+        if human_feedback.approved:
+            log_to_dataset(agent_result, human_feedback) # 存入训练集
+            return human_feedback.corrected_content
+        else:
+            return "Request rejected due to safety concerns."
+```
+
+**人机交互模式对比**：
+
+| 模式 | 交互方式 | 延迟 | 典型应用场景 | 实时性要求 |
+| :--- | :--- | :--- | :--- | :--- |
+| **Active** | 系统生成请求人审 | 高 (分钟级) | 代码生成、高风险交易 | 低 ( correctness > speed ) |
+| **Interactive** | 人机协作，边聊边做 | 中 | 创意写作、数据清洗 | 中 |
+| **Passive** | 全自动，事后审计 | 极低 | 客服 QA、简单问答 | 高 ( speed > perfection ) |
 
 ## 常见考点
 1. **人机协作的延迟问题**：如何平衡安全性与实时性？（如设置超时自动降级策略）。

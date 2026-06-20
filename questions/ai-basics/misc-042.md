@@ -41,6 +41,24 @@ follow_up:
 
 - **推荐组合:** C-Eval + GSM8K + HumanEval + MT-Bench + 真实用户A/B测试
 
+- **实战案例**：在评估某垂直领域客服模型时，尽管 MMLU 分数很高，但在处理带脏话的真实用户投诉时表现极差。这说明通用 Benchmarks 无法完全代表业务场景，必须构建包含“Bad Case”的内部 Eval 集合。
+
+- **代码示例 (Python)**：
+```python
+# 使用 LM Evaluation Harness 自动化评估
+import lm_eval
+from lm_eval.models.huggingface import HFLM
+
+model = HFLM(pretrained="meta-llama/Llama-2-7b-hf")
+results = lm_eval.simple_evaluate(
+    model=model,
+    tasks=["hellaswag", "gsm8k"],  # 指定评估基准
+    num_fewshot=5,
+    batch_size=4
+)
+print(results["results"])
+```
+
 - **补充关键细节**：
   - **MMLU (Massive Multitask Language Understanding)**: 包含57个学科（STEM、人文、社科等），采用Few-shot（5-shot）设置测试模型的泛化能力。局限性在于多为选择题，无法评估模型的生成流畅度。
   - **GSM8K**: 评测多步数学推理能力，关键看模型是否能生成正确的解题步骤。SOTA模型通常需要使用外部工具（如代码解释器）或思维链才能达到高分。
@@ -63,13 +81,4 @@ follow_up:
 │ GSM8K (数学)  │ ────> │ (裁判打分)    │ ────> │ ( Elo Rating) │
 │ HumanEval(代码)│      │ AlpacaEval    │       │ 真实A/B Test  │
 └───────────────┘       └───────────────┘       └───────────────┘
-        │                       │                       │
-        ▼                       ▼                       ▼
-   [高效/自动化]           [性价比/多轮]           [真实/成本高]
 ```
-
-- **## 常见考点**：
-  1. **数据污染如何检测？**：询问面试者是否了解如k-gram匹配等检测方法，或者通过训练数据截止日期来判断。
-  2. **Pass@1 和 Pass@10 的区别？**：考察对代码评估指标的理解，Pass@1更严格，代表一次生成的准确率。
-  3. **MT-Bench 中的 GPT-4 评分是否可靠？**：考察对评估偏差的认知，以及可能的解决方案（如使用更高级模型做裁判或多个模型投票）。
-  4. **除了准确率，还有什么指标？**：考察对延迟、吞吐量以及显存占用等工程指标的关注。

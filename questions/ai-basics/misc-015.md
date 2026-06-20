@@ -48,6 +48,24 @@ GPU 3:  [W3] [G3] [Os3]
 - 适合:**超大模型(>70B)或多卡训练**
 - 代价:通信量约为ZeRO-2的1.5倍
 
+- **实战案例:**
+在使用DeepSpeed ZeRO-3训练70B模型时，若遇到显存刚好装下但训练速度极慢的情况，通常是因为`bucket_size`配置过小导致All-Gather通信过于频繁；调大`bucket_size`或开启通信 overlap 可以显著提升MFU。
+
+- **代码示例:**
+```python
+# DeepSpeed配置文件 (ZeRO-3 Offload)
+{
+    "bf16": { "enabled": true },
+    "zero_optimization": {
+        "stage": 3,
+        "offload_param": { "device": "cpu" },  # 关键：参数卸载到CPU以省显存
+        "offload_optimizer": { "device": "cpu" },
+        "stage3_prefetch_bucket_size": 5e8,
+        "stage3_param_persistence_threshold": 1e6 # 小参数不切分，减少通信
+    }
+}
+```
+
 - **选择建议:**
 - 模型<7B: ZeRO-1或纯DP
 - 模型7B-70B: ZeRO-2

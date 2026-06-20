@@ -37,6 +37,24 @@ follow_up:
 3. **工具使用** - 代码理解能力是Function Calling的基础
 4. **实证:** Code LLaMA在数学和推理上远超同参数量的LLaMA
 
+- **实战案例:**
+在Qwen或DeepSeek的训练实践中，若将代码比例从10%降至5%，模型的GSM8K数学成绩通常会下降5%以上，且输出JSON格式的稳定性会显著变差，这证明了代码对于"思维链"和格式约束的基础性作用。
+
+- **代码示例:**
+```python
+# 数据混配伪代码
+from torch.utils.data import WeightedRandomSampler
+
+# 假设有不同来源的dataset列表
+datasets = [web_dataset, code_dataset, math_dataset]
+# 权重对应配比：如代码权重设为 20, web设为 40
+weights = [40.0, 20.0, 10.0] 
+
+# 构建采样器，确保每个batch的数据来源符合预设配比
+sampler = WeightedRandomSampler(weights, num_samples=10000, replacement=True)
+dataloader = DataLoader(ConcatDataset(datasets), sampler=sampler)
+```
+
 - **## 常见考点:**
 1. 数据配比中的「教科书质量」具体指什么样的数据清洗标准？
 2. 为什么数学数据不能完全替代代码数据来提升推理能力？

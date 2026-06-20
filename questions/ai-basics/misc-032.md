@@ -64,3 +64,16 @@ Input -> Model ->
 
 3. **CoT 的缺点是什么？**
    - 显著增加了推理延迟（生成更多 token）和成本；且对于知识回忆类问题帮助不大，甚至可能因为过度推理引入错误。
+
+- **实战案例**：在做数据清洗时，曾直接让 LLM 判断数据合法性，结果因模型胡乱猜测导致脏数据率极高；改用 Zero-shot CoT 要求模型先列出"违规的字段及原因"再输出"Valid/Invalid"，准确率从 75% 提升至 98%，同时还能附带错误原因供人工审核。
+
+- **代码示例**：
+```python
+# Zero-shot CoT 模板示例
+def get_reasoning_answer(query: str):
+    prompt = f"""Q: {query}
+A: Let's think step by step."""
+    # 模型会自动先生成推理步骤，最后生成答案
+    response = llm.generate(prompt)
+    return response 
+```

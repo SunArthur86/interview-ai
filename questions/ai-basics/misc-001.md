@@ -35,3 +35,37 @@ Attention(Q,K,V) = softmax(QKᵀ/√d_k)·V
 - **复杂度对比:**
 - Self-Attention: O(n²·d) - 序列长度平方,但可并行
 - RNN: O(n·d²) - 序列长度线性,但必须串行
+
+### 对比表格
+
+| 维度 | RNN (LSTM/GRU) | Self-Attention (Transformer) |
+| :--- | :--- | :--- |
+| **计算并行度** | 串行 (t步依赖t-1步) | 并行 (所有Token同时计算) |
+| **长距离依赖** | O(N) 路径长，信息易衰减 | O(1) 直接连接，无衰减 |
+| **计算复杂度** | O(N · d²) | O(N² · d) (主要瓶颈在矩阵乘法) |
+| **显存占用** | 较低 (线性) | 较高 (需存储N×N注意力矩阵) |
+| **归纳偏置** | 强假设 (局部性、时序性) | 弱假设 (关系需从数据学习) |
+
+### 实战案例
+在早期的**情感分析**任务中，使用LSTM往往难以捕捉段落末尾的关键转折词（如“但是...”）对开篇的影响，导致分类错误。切换到Transformer架构后，模型能直接建立“但是”与前面所有词的连接，准确率显著提升。然而，在处理超长序列（如全基因组测序）时，标准Transformer的O(N²)复杂度会导致显存溢出（OOM），此时必须改用**Linear Attention**或**RNN**等线性复杂度模型，或者切分片段使用滑动窗口机制。
+
+### 代码示例
+```python
+import torch
+import torch.nn as nn
+
+class SelfAttention(nn.Module):
+    def __init__(self, embed_dim, num_heads):
+        super().__init__()
+        self.multihead_attn = nn.MultiheadAttention(embed_dim, num_heads)
+
+    def forward(self, x):
+        # x shape: [Seq_Len, Batch, Dim] (MHA默认需要L第一)
+        attn_output, attn_weights = self.multihead_attn(x, x, x)
+        return attn_output
+
+# 模拟输入：序列长度10，Batch 2，维度512
+input_tensor = torch.randn(10, 2, 512)
+model = SelfAttention(embed_dim=512, num_heads=8)
+output = model(input_tensor)
+```

@@ -30,6 +30,33 @@ follow_up:
 2. **强化学习阶段 (RL-CAI):**
 - 模型A生成回复 → 模型B(遵循宪法)评估哪个更好 → 用偏好对做RL(类似RLHF但RM是模型而非人)
 
+- **实战案例**：在构建金融合规模型时，使用 RLHF 需要专家标注大量“合规/不合规”样本，成本极高且标准不一。引入 CAI 后，将“必须引用法规”、“不得提供投资建议”等写入宪法，模型能自动修正违规回复，显著降低专家介入成本。
+
+- **代码示例 (伪代码 - SL-CAI 生成流程)**：
+```python
+# 模拟 Constitutional AI 自我修正过程
+def generate_cai_response(prompt, model, constitution):
+    # 1. 初始生成
+    raw_response = model.generate(prompt)
+    
+    # 2. 根据宪法批评
+    critique_prompt = f"""
+    Principles: {constitution}
+    Response: {raw_response}
+    Critique the response based on principles.
+    """
+    critique = model.generate(critique_prompt)
+    
+    # 3. 根据批评修正
+    revision_prompt = f"""
+    Original Response: {raw_response}
+    Critique: {critique}
+    Revise the response based on the critique.
+    """
+    final_response = model.generate(revision_prompt)
+    return (prompt, final_response) # 作为 SFT 数据
+```
+
 - **CAI vs RLHF:**
 | | RLHF | CAI |
 |--|------|-----|
@@ -73,19 +100,11 @@ follow_up:
 └───────────────────┘      │ (Response A & B)  │
                           └─────────┬─────────┘
                                     │
-                                    ▼ (基于宪法原则)
-                          ┌───────────────────┐
-                          │ AI 偏好模型 (评判) │ ──> 选出更好的回答
+                          ┌─────────▼─────────┐
+                          │ AI 基于宪法评分    │
                           └─────────┬─────────┘
-                                    │
                                     ▼
                           ┌───────────────────┐
-                          │   PPO 训练        │
+                          │ RL 训练 (PPO)      │
                           └───────────────────┘
 ```
-
-- **## 常见考点**：
-  1. **CAI 能完全替代 RLHF 吗？**：目前通常不能完全替代。最先进的方法（如Claude 3）往往结合了RLHF和CAI，RLHF用于对齐人类的基本意图（如有用性），CAI用于处理复杂的安全边界和可扩展性。
-  2. **如果宪法本身有矛盾怎么办？**：考察对权重排序或元原则的理解。宪法通常会设定优先级，或者通过AI自我评估来决定在特定冲突场景下遵循哪条原则。
-  3. **CAI 对模型有什么要求？**：执行CAI的模型必须具备足够的阅读理解和推理能力，才能理解宪法原则并进行有效的自我批评。因此CAI通常用于中等规模以上的模型。
-  4. **RLAIF 的缺点？**：可能存在“偏好漂移”，即AI评判模型可能形成与人类价值观微妙偏差的闭环。需要定期的少量人类审计。

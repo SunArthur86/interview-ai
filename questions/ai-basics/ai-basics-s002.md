@@ -40,7 +40,35 @@ feynman:
 - LLM训练：本质上是一个超大规模的多分类任务（词汇表大小V通常为50k+），因此必然使用Cross-Entropy。
 - Label Smoothing：Cross-Entropy的改进版，将标签从硬标签（0/1）改为软标签（如0.1/0.9），防止模型过自信，提升泛化能力。
 
----
+### 对比表格
+
+| 特性 | 均方误差 (MSE) | 交叉熵损失 (Cross-Entropy) |
+| :--- | :--- | :--- |
+| **应用场景** | 回归问题（房价预测、坐标回归） | 分类任务（图像分类、文本分类） |
+| **损失分布假设** | 假设误差服从高斯分布 | 假设标签服从伯努利/多项式分布 |
+| **梯度行为** | 随误差减小而减小（饱和区易停滞） | 梯度与误差成正比（收敛快，难停滞） |
+| **对数概率** | 无直接对应 | 最大似然估计的直接体现 |
+
+### 实战案例
+在训练**人脸关键点检测**（回归）任务时，初学者如果误用BCE（二分类交叉熵）将坐标归一化后作为概率处理，会导致模型预测倾向于向0.5集中，因为BCE希望结果接近0或1，而坐标是连续的。反之，在**极不平衡的分类任务**（如欺诈检测，正样本0.1%）中，若强行改为MSE回归，模型容易因为负样本的绝对误差主导梯度而忽略正样本，必须使用加权交叉熵或Focal Loss。
+
+### 代码示例
+```python
+import torch
+import torch.nn as nn
+
+# MSE for Regression
+mse_loss = nn.MSELoss()
+predictions = torch.randn(3, 5, requires_grad=True) # 回归值
+targets = torch.randn(3, 5) 
+loss = mse_loss(predictions, targets)
+
+# CrossEntropy for Classification (includes LogSoftmax internally)
+ce_loss = nn.CrossEntropyLoss()
+logits = torch.randn(3, 10, requires_grad=True) # 未经过Softmax的输出
+class_targets = torch.tensor([1, 5, 9]) # 类别索引
+loss = ce_loss(logits, class_targets)
+```
 
 ## 常见考点
 1. **为什么Cross-Entropy比MSE收敛快？**（答：MSE梯度包含导数项，导致平坦区；CE梯度与误差线性相关）

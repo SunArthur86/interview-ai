@@ -26,7 +26,7 @@ follow_up:
 
 1. **随机选择** - 基线,效果不稳定
 2. **相似度选择** - 用embedding找与输入最相似的示例
-3. **投票选择** - 多组示例投票,选一致性最高的(Self-Consistency)
+3. **投票选择** - 多组示例投票,选一致性最高的
 4. **多样性选择** - 选择覆盖不同模式的示例
 
 - **关键发现:**
@@ -67,3 +67,19 @@ Prompt Context Window:
 
 3. **为什么 KNN（K近邻）常被用来解释 ICL？**
    - 研究表明 ICL 的行为很大程度上类似于 KNN 分类器：模型倾向于关注与测试输入最相似的示例，且随着相似示例数量的增加，性能显著提升。
+
+- **实战案例**：在构建文本分类器时，直接随机抽取 3 个示例导致模型对长文本分类极差；改用基于 Embedding 余弦相似度检索最相似的 Top-3 示例后，长难句的分类 F1 分数提升了约 20 个百分点，解决了模型被简单示例带偏的问题。
+
+- **代码示例**：
+```python
+from sklearn.metrics.pairwise import cosine_similarity
+import numpy as np
+
+# 基于相似度选择 Top-K 示例
+def select_few_shot_examples(query, corpus_embeddings, k=3):
+    query_emb = get_embedding(query) 
+    # 计算余弦相似度并获取 Top-K 索引
+    scores = cosine_similarity([query_emb], corpus_embeddings)[0]
+    top_indices = np.argsort(scores)[-k:][::-1] 
+    return [examples[i] for i in top_indices]
+```

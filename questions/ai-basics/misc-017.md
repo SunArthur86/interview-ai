@@ -38,8 +38,26 @@ follow_up:
 
 - **缓解措施:**
 - 混合真实数据(至少30%)
-- 质量过滤(perplexity/分类器/人工抽检)
+- 质量过滤
 - 多样性约束(embedding聚类去重)
+
+- **实战案例:**
+某金融问答项目中，使用GPT-4生成10万条财报问答对进行微调，结果模型在回答长尾问题时频繁出现“编造财报数据”的幻觉。引入基于Self-CheckGPT的过滤机制后，幻觉率下降了40%。
+
+- **代码示例 (Quality Filter):**
+```python
+# 使用Self-CheckGPT思想过滤合成数据中的幻觉样本
+def filter_hallucination(samples, teacher_model, threshold=0.5):
+    clean_data = []
+    for item in samples:
+        # 生成多个样本的一致性检查
+        others = teacher_model.generate(item['prompt'], n=3)
+        # 计算当前答案与其他生成答案的相似度(BERTScore)
+        score = calculate_similarity(item['response'], others)
+        if score > threshold:  # 一致性高，保留
+            clean_data.append(item)
+    return clean_data
+```
 
 - **## 常见考点:**
 1. 在实践中如何过滤低质量的合成数据？

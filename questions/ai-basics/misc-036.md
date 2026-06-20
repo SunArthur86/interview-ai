@@ -68,4 +68,24 @@ follow_up:
 - **Token 长度限制怎么办？**：将长篇 System Prompt 压缩，或使用向量检索提取最相关的规则片段，但要注意 Core Identity（身份和核心规则）必须始终保留在上下文窗口顶部。
 - **Few-shot（少样本）和 Zero-shot（零样本）如何选择？**：如果任务格式复杂或需要特定风格，Few-shot 效果更好；如果只是通用逻辑，Zero-shot 节省 Token 成本。
 - **如何测试 System Prompt 的有效性？**：构建包含 Corner Cases（极端情况）和 Adversarial Inputs（对抗性输入）的测试集，进行自动化评估或人工打分。
-- **模型出现“遗忘”系统指令怎么办？**：随着对话轮次增加，系统指令权重可能降低。解决方法包括：在每一轮对话中重新注入系统指令（显式拼接），或使用支持 `system` 角色的 API 接口（该角色权重通常更高）。
+- **模型出现「遗忘」系统指令怎么办？**：随着对话轮次增加，系统指令权重可能降低。解决方法包括：在每一轮对话中重新注入系统指令（显式拼接），或使用支持 `system` 角色的对话 API。
+
+- **实战案例**：在设计 SQL 生成 Agent 时，最初提示词仅为「你是 SQL 专家」，模型常在遇到未知表名时瞎编。后来在 System Prompt 中显式增加规则：「遇到未在 Schema 中定义的表，直接报错，不要猜测」，这一改动让无效 SQL 的生成率降低了 90%。
+
+- **代码示例**：
+```python
+# 结构化 System Prompt 构建
+def build_system_prompt(config: dict):
+    return f"""
+# IDENTITY
+You are an expert {config['role']} with 10+ years of experience.
+
+# CONSTRAINTS
+1. Always output in {config['language']}.
+2. If the answer is not in the context, reply "I don't know".
+3. Never output harmful content.
+
+# FORMAT
+Output result strictly in JSON format: {{"answer": "...", "source": "..."}}
+""".strip()
+```

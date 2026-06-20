@@ -55,6 +55,27 @@ User Query ──> Embedding Model ──> 向量库
 *   **BAAI/bge-reranker-v2-m3**：支持多语言，轻量级。
 *   **Cohere Rerank (API)**：效果极佳，商业可用，支持多语言。
 
+### 实战深化
+
+**1. 实战案例**：在客服问答场景中，用户问“如何退款”，向量库可能同时召回“退款流程”和“不支持退款说明”的片段。若“不支持退款”的向量距离更近（仅因为词频高），直接传给 LLM 会导致回答错误。接入 Reranker 后，模型能捕捉“退款流程”与意图的强匹配，将其排在首位，避免误导用户。
+
+**2. 代码示例 (Python)**：
+```python
+from FlagEmbedding import FlagReranker
+reranker = FlagReranker('BAAI/bge-reranker-v2-m3', use_fp16=True)
+
+# 假设从向量库召回的 Top-K 候选文档
+candidates = ["退款流程是点击右上角...", "本商品特殊不支持退款..."]
+query = "怎么申请退款"
+
+# 计算分数 (Cross-Encoder 需要两两输入)
+pairs = [[query, doc] for doc in candidates]
+scores = reranker.compute_score(pairs) 
+
+# 根据分数重新排序后取 Top-1
+sorted_docs = [doc for _, doc in sorted(zip(scores, candidates), reverse=True)]
+```
+
 ## 常见考点
 1.  **Rerank 会对 RAG 系统的延迟产生多大影响？**
     通常 Rerank 仅处理前 50-100 个文档，增加的延迟在几百毫秒级（取决于模型大小），相比 LLM 生成的时间（秒级）通常是可以接受的。

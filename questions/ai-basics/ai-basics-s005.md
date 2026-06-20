@@ -17,7 +17,7 @@ feynman:
 
 # 什么是注意力机制？为什么在NLP中有效？
 
-**注意力机制**：源于人类视觉，即关注图像的特定部分而忽略其他无关信息。在深度学习中，它允许模型在处理序列中的某个元素（Token）时，动态地参考其他所有元素，并根据相关性分配权重。
+**注意力机制**：源于人类视觉，即关注图像的特定部分而忽略其他无关信息。在深度学习中，它允许模型在处理序列中的某个元素时，动态地参考其他所有元素，并根据相关性分配权重。
 
 **核心原理与公式**：
 Scaled Dot-Product Attention:
@@ -60,6 +60,30 @@ Scaled Dot-Product Attention:
               输出 Context
 ```
 
+### 实战案例
+在**机器翻译**任务中，当翻译句子“The animal didn't cross the street because it was too tired”时，注意力机制能让模型在生成“it”时，将高权重分配给“animal”而非“street”。如果没有注意力，RNN编码后的固定向量往往会丢失这种长距离的主谓一致性。在实际的大模型推理中，若忽略Mask机制（如因果掩码），模型在生成第t个词时会“看到”未来的词，导致训练坍塌或推理结果胡言乱语。
+
+### 代码示例
+```python
+import torch
+import torch.nn.functional as F
+
+def scaled_dot_product_attention(query, key, value, mask=None):
+    d_k = query.size(-1)
+    # 1. Score = QK^T
+    scores = torch.matmul(query, key.transpose(-2, -1)) 
+    # 2. Scale
+    scores = scores / (d_k ** 0.5)
+    # 3. Mask (Optional)
+    if mask is not None:
+        scores = scores.masked_fill(mask == 0, -1e9)
+    # 4. Softmax
+    attn_weights = F.softmax(scores, dim=-1)
+    # 5. Weighted Sum
+    output = torch.matmul(attn_weights, value)
+    return output, attn_weights
+```
+
 **为什么在 NLP 中有效？**
 1. **解决长距离依赖**：
    - RNN：距离为 O(N)，信息随时间步传递容易丢失。
@@ -72,8 +96,6 @@ Scaled Dot-Product Attention:
    - Attention Map 可以直接可视化，帮助理解模型决策。
 4. **多头机制**：
    - 不同的 Head 关注不同的子空间（如一个头关注语法结构，一个头关注语义关联），增强表达能力。
-
----
 
 ## 常见考点
 1. **为什么要除以 √d_k？**（答：防止点积过大导致Softmax梯度消失，起到调节方差的作用）

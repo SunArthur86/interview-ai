@@ -21,7 +21,7 @@ feynman:
 
 若任务只需统一策略按序调用不同 API，单 Agent + 工具调度即可，架构简单、上下文连贯、成本低；若任务复杂，需要角色隔离（如分别设程序员、产品经理、测试员）、并行处理（多线程执行子任务）、对抗评审（红蓝军对抗）或复杂的组织流程协作，多 Agent 架构更合适。
 
-**架构对比：**
+**架构对比**：
 ```text
 【单 Agent + 工具模式】
 ┌─────────────┐
@@ -44,6 +44,44 @@ feynman:
 │  Tool   │            │  Tool   │
 └─────────┘            └─────────┘
 ```
+
+**实战案例**：
+初期构建文档生成器时使用单 Agent，它既能查 API 又能写 Markdown，但当文档篇幅超过 2000 tokens 时，它经常忘记开头定义的术语。改为多 Agent（Searcher 专注查资料，Writer 专注写作，Editor 专注校对）后，文档结构一致性提升明显，且查资料与写作可并行，耗时缩短 30%。
+
+**代码示例**：
+```python
+# Pseudo-code for Multi-Agent dispatch
+from typing import Literal
+
+def dispatch_task(task_type: str) -> str:
+    # 单 Agent 简单逻辑
+    if task_type == "simple_query":
+        return single_agent_with_tools.run(task_type)
+    
+    # 多 Agent 协作逻辑
+    agents = {
+        "coder": CodeAgent(),
+        "reviewer": ReviewerAgent()
+    }
+    
+    # 1. Coder generates code
+    code_result = agents["coder"].run(task_type)
+    
+    # 2. Reviewer validates (并行或串行)
+    review = agents["reviewer"].run(code_result)
+    
+    return review.final_output
+```
+
+**架构选型对比**：
+
+| 维度 | 单 Agent + Tools | 多 Agent 系统 |
+| :--- | :--- | :--- |
+| **上下文连贯性** | 高 (单一 Memory) | 中 (需共享/同步 Memory) |
+| **Token 成本** | 低 (一次 Prompt) | 高 (多次交互 + 解析) |
+| **扩展性** | 低 (加工具需重训 Prompt) | 高 (加 Agent 无需改动现有) |
+| **容错能力** | 差 (一处错全盘输) | 好 (单个 Agent 失败可重试/降级) |
+| **适用场景** | FAQ、简单指令执行 | 软件开发、复杂流程审批 |
 
 ## 常见考点
 1. **通信成本**：多 Agent 间消息传递会造成大量 Token 消耗，如何优化？（如消息摘要、共享记忆库）。

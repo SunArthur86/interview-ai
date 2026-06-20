@@ -53,13 +53,42 @@ feynman:
    - **Boosting**：如XGBoost，串行训练修正前一个模型的错误（降低偏差）。
    - **Snapshot Ensembling**：一个训练周期内保存不同Cycle的模型权重进行集成。
 
+### 对比表格
+
+| 方法 | 核心机制 | 适用场景 | 副作用/注意事项 |
+| :--- | :--- | :--- | :--- |
+| **Dropout** | 随机失活神经元，模拟集成 | 全连接层、CNN | 推理时需关闭，训练时收敛变慢 |
+| **L2正则化** | 限制权重数值大小（Weight Decay） | 通用所有模型 | 权重趋向于均匀分布，不会变为0 |
+| **Early Stopping** | 验证集性能不提升即停止 | 所有迭代训练模型 | 需保存Checkpoints，增加IO开销 |
+| **数据增强** | 增加训练样本多样性 | 图像、CV最有效 | NLP中增强较难，需保证语义不变 |
+
+### 实战案例
+在**目标检测（如YOLO）**训练中，如果训练集背景过于单一（如全是白天高速路），模型会过拟合亮度特征。加入**Mosaic增强**（4张图拼贴）和**HSV色彩抖动**是标准操作，强制模型学习形状而非颜色。另一个常见坑是在**小样本场景**下（如医疗影像只有几十张），即使加了Dropout，模型依然会死记硬背训练样本的噪声伪影，此时必须使用**迁移学习**（冻结Backbone）或**Focal Loss**来缓解。
+
+### 代码示例
+```python
+import torch.nn as nn
+
+class Net(nn.Module):
+    def __init__(self):
+        super().__init__()
+        # 叠加Dropout防止全连接层过拟合
+        self.classifier = nn.Sequential(
+            nn.Linear(512, 256),
+            nn.ReLU(),
+            nn.Dropout(p=0.5), # 训练时随机Drop 50%神经元
+            nn.Linear(256, 10)
+        )
+
+    def forward(self, x):
+        return self.classifier(x)
+```
+
 **偏差-方差权衡**：
 ```text
 高偏差 (欠拟合)  <-------> 理想平衡 <-------> 高方差 (过拟合)
 模型太简单      模型适中      模型太复杂/数据太少
 ```
-
----
 
 ## 常见考点
 1. **Dropout在训练和推理时的区别？**（答：训练时随机Drop并scale，推理时全连接且保留scale）

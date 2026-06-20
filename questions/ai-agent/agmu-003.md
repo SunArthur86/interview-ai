@@ -52,6 +52,29 @@ feynman:
 **追问应对**：
 若问「会不会互相甩锅？」——答：会。解决方案包括：明确每个 Agent 的输入输出契约、引入主席/仲裁机制裁决、记录全过程可观测日志用于事后定责。
 
+### 深化实战
+- **实战案例**：在生产环境中，API 解析 Agent 偶发因格式变化崩溃。由于没有熔断机制，导致下游调用该 Agent 的主流程不断重试，单小时消耗数千美元成本。后增加“失败计数器”，超过 3 次直接跳过该步骤返回默认值。
+- **代码示例（Python - 带熔断的重试）**：
+```python
+from tenacity import retry, stop_after_attempt, wait_exponential
+
+class CircuitBreaker:
+    def __init__(self, threshold=3):
+        self.fail_count = 0
+        self.threshold = threshold
+    
+    def call_agent(self, agent_func, *args):
+        if self.fail_count >= self.threshold:
+            return "Fallback Response: Service Unavailable"
+        try:
+            res = agent_func(*args)
+            self.fail_count = 0 # Reset on success
+            return res
+        except Exception:
+            self.fail_count += 1
+            raise
+```
+
 ## 常见考点
 1. **断路器在 Agent 系统中的参数怎么设置？**
    答：通常根据任务耗时和成本设定，例如连续 3 次超时或 5 次幻觉错误即熔断，熔断持续时间设为 1-5 分钟。

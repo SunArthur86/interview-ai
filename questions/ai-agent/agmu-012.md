@@ -49,6 +49,35 @@ MetaGPT 的核心卖点是引入了 **「SOP（标准作业程序）」** 和 **
 - **Global Memory**：它通常维护一个共享的消息队列或文档仓库，所有 Agent 围绕这些文档增量工作。
 - **生产痛点**：MetaGPT 往往会触发长链路 LLM 调用，导致耗时极长（几分钟到几十分钟）；且每个角色调用都会产生 Cost，缺乏细粒度的 Token 预算熔断机制。
 
+**实战案例**：曾尝试用 MetaGPT 生成内部工具的原型代码，结果跑一次全流程耗时 15 分钟且消耗 $5+ 费用。更严重的是，生成的代码偶尔引用了公司内部不存在的包名，导致后续人工 Debug 时间比自己写还长。因此现在仅将其用于「技术预研」阶段的文档草拟，而不直接用于产出交付级代码。
+
+**代码示例**：
+```python
+# MetaGPT: 启动公司角色进行开发
+from metagpt.software_company import SoftwareCompany
+import asyncio
+
+async def main():
+    company = SoftwareCompany()
+    # 投资一个新项目，自动启动 PM -> Architect -> Engineer -> QA
+    await company.invest("Develop a snake game using Python")
+    
+    # 结果会生成 docs/ (PRD/Design) 和 repo/ (Source Code/Test)
+    # 生产环境需拦截 run() 或修改内部 Action 增加超时控制
+
+asyncio.run(main())
+```
+
+**框架选型对比**：
+
+| 维度 | MetaGPT | CrewAI | AutoGen |
+| :--- | :--- | :--- | :--- |
+| **核心理念** | 模拟软件公司 SOP | 角色任务组 | 对话式社交 |
+| **输出产物** | 完整文档 + 代码文件 | 特定任务结果 | 对话内容 / 数据 |
+| **结构化程度** | 极高 (固定文档格式) | 中 (Task 链) | 低 (自由对话) |
+| **生产就绪度** | 低 (慢、贵、幻觉多) | 中 (可控但缺状态机) | 低 (难恢复) |
+| **最佳场景** | Demo演示 / 原型验证 | 垂直业务自动化 | 研究探索 / 谈判模拟 |
+
 **追问应对**：若问「和 CrewAI 选哪个？」——答：先看团队熟悉度与是否需要强图编排/检查点（偏 LangGraph）或快速角色任务叙事（偏 CrewAI）。MetaGPT 更适合「从0到1生成代码原型」，CrewAI 更适合「执行特定业务任务流」。
 
 ## 常见考点

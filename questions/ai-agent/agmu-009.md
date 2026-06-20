@@ -27,6 +27,28 @@ feynman:
 - **防止跑偏**：LLM 倾向于发散，状态机限制了合法的状态转移路径，提供**护栏**。
 - **明确终止**：自然语言对话容易无限循环，状态机定义了明确的终态。
 
+**实战案例**：
+早期开发客服 Agent 时，完全依赖 LLM 理解对话意图判断是否转人工，导致用户一直在“正在为您转接”和“请继续描述问题”之间无限循环。后来引入状态机，定义 `TRIAGE` -> `SOLVING` -> `ESCALATING` 的严格流转，一旦进入 `ESCALATING` 状态，LLM 仅被允许输出固定话术并调用 API，彻底解决了死循环问题。
+
+**代码示例**：
+```python
+# Python: 简单的状态机流转控制
+class AgentStateMachine:
+    def __init__(self):
+        self.state = "IDLE"
+        self.transitions = {
+            "IDLE": ["PROCESSING"],
+            "PROCESSING": ["DONE", "ERROR", "HUMAN_REVIEW"],
+            "HUMAN_REVIEW": ["PROCESSING", "DONE"]
+        }
+
+    def transition(self, new_state):
+        if new_state in self.transitions[self.state]:
+            self.state = new_state
+            return True
+        return False # 非法流转，拒绝
+```
+
 **架构对比**：
 ```
 纯自然语言 (乱序, 隐式):        状态机 (有序, 显式):

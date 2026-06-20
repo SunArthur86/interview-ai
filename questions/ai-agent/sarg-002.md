@@ -49,6 +49,34 @@ feynman:
 *   `chunk_size`：通常在 **256 - 1024 tokens** 之间。常见值为 500。
 *   `chunk_overlap`：重叠区域，通常为 `10%-20%`。作用是防止关键信息正好被切断在边界。
 
+### 实战案例
+*   **API 文档问答踩坑**：某团队用固定大小切分 API 文档，导致参数说明在 Chunk A，参数示例在 Chunk B。LLM 只看到 A，编造了错误的示例。改为“语义切分”或“代码结构感知”后，将参数和对应的示例锁定在同一个 Chunk，准确率大幅提升。
+*   **法律合同审查**：在处理长篇合同时，若不保留“父级上下文”（如章节标题），LLM 仅看到“第3条：不可撤销”，不知道这是属于“终止条款”还是“付款条款”。通过“元数据过滤”或“带回标题的切分”解决了此歧义。
+
+### 代码示例 (Python - LangChain 语义切分)
+```python
+from langchain_experimental.text_splitter import SemanticChunker
+from langchain.embeddings import OpenAIEmbeddings
+
+# 基于语义相似度进行切分
+embeddings = OpenAIEmbeddings()
+text_splitter = SemanticChunker(
+    embeddings, 
+    breakpoint_threshold_type="percentile" # 设定切分阈值
+)
+
+docs = text_splitter.create_documents([long_legal_text])
+# 结果：文档被按语义逻辑切分，而非生硬按长度截断
+```
+
+### Chunking 策略对比
+| 策略 | 切分依据 | 检索精准度 | 计算成本 | 适用场景 |
+|------|---------|-----------|---------|----------|
+| **固定长度** | Token 数量 | 低 (容易切断语义) | 极低 | 通用日志、简单文本 |
+| **递归分割** | 分隔符 (\n, .) | 中 | 低 | 通用文章，保持句子完整 |
+| **语义切分** | 句向量相似度 | 高 (边界清晰) | 高 (需推理) | 论文、技术文档、小说 |
+| **父子索引** | 小块检索，大块返回 | 极高 (兼顾精准与上下文) | 中 (需维护映射) | 需要大量背景信息的问答 |
+
 ## 常见考点
 1.  **为什么要设置 Overlap（重叠）？**
     保证上下文的连续性，避免关键信息（如一个句子被分成两半）丢失，同时也增加检索的命中率。

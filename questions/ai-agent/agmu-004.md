@@ -40,10 +40,33 @@ Input ──▶ [A] ──▶ [B] ──▶ Output      [Boss]──────
                                              [Result]
 ```
 
+**对比表格**：
+| 维度 | Pipeline (流水线) | Boss-Worker (主从) |
+| :--- | :--- | :--- |
+| **控制逻辑** | 集中式/硬编码流程 | 中心化调度(动态决策) |
+| **依赖关系** | 强依赖（Stage N 依赖 N-1 输出） | 弱依赖（Worker 间通常独立） |
+| **并行度** | 受限于最长 Stage | 高度并行（Worker 水平扩展） |
+| **适用场景** | ETL、标准化审核流程 | 数据处理、分布式爬虫、弹性任务 |
+
 **追问应对**：
 若问「能混合吗？」——答：非常常见。宏观上是 Boss 架构，Boss 定义好阶段，每个阶段内部跑 Pipeline；或者 Boss 动态插入节点，节点间同步执行。
 
-## 常见考点
+### 深化实战
+- **实战案例**：在开发文档生成系统时，最初用 Pipeline（提取->转写->生成），只要提取失败，后续全挂。后改为 Boss 模式，Boss 针对不同类型的文档分发给不同的 Worker 专精处理，某 Worker 挂了只影响那一类文档，整体可用性提升。
+- **代码示例（Python - Boss 逻辑）**：
+```pythonnclass BossAgent:
+    def dispatch(self, task):
+        # 根据任务动态分配，而非固定链条
+        if task.type == 'simple':
+            return WorkerA().run(task) # 走快速通道
+        elif task.type == 'complex':
+            # 并行调用多个 Worker 汇总
+            res1 = WorkerB().run_async(task)
+            res2 = WorkerC().run_async(task)
+            return aggregate(res1, res2)
+```
+
+### ## 常见考点
 1. **Pipeline 的背压如何处理？**
    答：在 Agent 语境下通常体现为队列积压，需限制并发数或丢弃低优先级任务，防止上下游速度不匹配导致资源耗尽。
 2. **Boss-Worker 模式中 Worker 的输出格式如何统一？**

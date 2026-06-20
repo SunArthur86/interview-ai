@@ -62,6 +62,43 @@ Source Texts
 
 - **代价:** 图谱构建成本高(大量LLM调用)
 
+- **实战案例:** 在分析某大型企业数百份内部政策文档时，传统RAG难以回答“公司关于数据安全的整体策略框架是什么”这类跨文档宏观问题。GraphRAG通过构建“政策-部门-合规要求”的知识图谱并生成社区摘要，成功整合了分散在各部门文档中的安全策略。
+
+- **代码示例:**
+```python
+# 模拟 GraphRAG 的社区检测与索引构建 (使用 networkx)
+import networkx as nx
+from community import community_louvain
+
+def build_graph_index(entities_relations):
+    G = nx.Graph()
+    for ent, rel in entities_relations:
+        G.add_edge(ent['source'], ent['target'], relation=rel)
+    
+    # 社区检测 (类似 Leiden 算法)
+    partition = community_louvain.best_partition(G)
+    
+    # 为每个社区生成摘要 (通常调用 LLM)
+    community_summaries = {}
+    for comm_id in set(partition.values()):
+        nodes = [n for n in partition if partition[n] == comm_id]
+        # summary = llm.generate(f"Summarize connections for: {nodes}")
+        community_summaries[comm_id] = f"Summary of community {comm_id}..."
+    
+    return G, community_summaries
+```
+
+- **对比表格:**
+
+| 特性 | 传统 Vector RAG | GraphRAG (Microsoft) | Vector RAG + Metadata Filter |
+| :--- | :--- | :--- | :--- |
+| **数据结构** | 独立的文本块 | 实体关系图 (图谱) | 文本块 + 标签/字段 |
+| **全局理解能力** | 弱 (依赖Top-K拼接) | **强** (基于社区摘要) | 弱 |
+| **多跳推理** | 差 (语义断裂) | **优** (显式路径) | 差 |
+| **构建成本** | 低 | **极高** (需图谱构建+LLM抽取) | 低 |
+| **可解释性** | 低 (黑盒向量) | 高 (结构化路径) | 中 |
+| **适用问题类型** | 事实查询、具体问题 | 宏观总结、复杂推理 | 带有明确筛选条件的查询 |
+
 ## 常见考点
 1. **GraphRAG 和单纯的 Knowledge Graph RAG (如 Neo4j) 有什么区别？**
    - GraphRAG 特指微软提出的利用 LLM 进行图谱构建和社区摘要的流程，核心在于「社区摘要」的预计算，以解决全局性问题的回答；传统 KG RAG 更多侧重于利用显式结构做精确查询。

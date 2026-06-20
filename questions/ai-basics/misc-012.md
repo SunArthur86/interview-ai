@@ -35,6 +35,23 @@ follow_up:
 
 其中 y_w=偏好回答, y_l=不偏好回答
 
+- **实战案例:**
+在RLHF微调阶段，若训练数据中存在标注噪声（如两条回答质量相近），DPO模型容易出现"伪发散"（即只提高chosen的logits而不降低rejected的），实战中常需在损失函数中加入sigmoid的margin或对log-ratio进行clip来增强鲁棒性。
+
+- **代码示例:**
+```python
+# PyTorch风格伪代码
+def dpo_loss(policy_chosen_logps, policy_rejected_logps, ref_chosen_logps, ref_rejected_logps, beta):
+    # 计算log策略比率
+    log_pi_ratio = policy_chosen_logps - policy_rejected_logps
+    log_ref_ratio = ref_chosen_logps - ref_rejected_logps
+    # DPO核心隐式奖励差
+    logits = beta * (log_pi_ratio - log_ref_ratio)
+    # 简单的二元交叉熵损失
+    loss = -F.logsigmoid(logits).mean()
+    return loss
+```
+
 - **## 常见考点:**
 1. DPO中的参考模型 pi_ref 有什么作用？如果不加会怎样？
 2. beta (temperature) 参数如何调整？它对训练有何影响？

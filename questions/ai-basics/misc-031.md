@@ -63,6 +63,41 @@ Context   Answer
 
 - **其他评估工具:** TruLens、LlamaIndex Evaluation、LangSmith
 
+- **实战案例:** 在某客服RAG上线前，使用Ragas进行批量评估。发现Faithfulness分数仅为0.6，经分析发现模型常利用预训练知识回答而非基于检索内容。通过调整Prompt增加“请仅根据上下文回答”的强约束后，Faithfulness提升至0.92。
+
+- **代码示例:**
+```python
+from ragas import evaluate
+from ragas.metrics import faithfulness, answer_relevancy, context_precision
+from datasets import Dataset
+
+# 准备评估数据
+data_samples = {
+    'question': ['用户如何重置密码？'],
+    'answer': ['用户可以在设置页面点击重置...'],
+    'contexts' [['设置页面的重置指引...']],
+    'ground_truth': ['在设置页面点击忘记密码...'] # 可选
+}
+dataset = Dataset.from_dict(data_samples)
+
+# 运行评估
+result = evaluate(
+    dataset=dataset,
+    metrics=[context_precision, faithfulness, answer_relevancy]
+)
+
+print(result.to_pandas())
+```
+
+- **对比表格:**
+
+| 指标 | 评估维度 | 理想分数 | 计算原理 (Ragas) | 关注点 |
+| :--- | :--- | :--- | :--- | :--- |
+| **Context Precision** | 检索 | 高 (1.0) | 检索结果中相关文档的排序权重 | 是否把垃圾信息排在前面？ |
+| **Context Recall** | 检索 | 高 (1.0) | 标准答案中的句子能否在Context中找到 | 是否遗漏了关键信息？ |
+| **Faithfulness** | 生成 | 高 (1.0) | 答案中的陈述是否被Context支持 | 是否在“胡编乱造”？(幻觉) |
+| **Answer Relevancy** | 生成 | 高 (1.0) | 答案反推的问题与原问题的Embedding相似度 | 是否“答非所问”？ |
+
 ## 常见考点
 1. **Context Recall 和 Context Precision 的计算逻辑是什么？**
    - **Precision** = 检索到的文档中，被标注为相关的比例（不查错）。

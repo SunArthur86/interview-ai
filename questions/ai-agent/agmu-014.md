@@ -48,6 +48,47 @@ feynman:
 - **滑动窗口**：有些循环是周期性的（A->B->C->A），需要维护一个固定大小的历史状态窗口（如最近 5 步）进行比对。
 - **人为介入**：在触发熔断前，可以尝试插入一个「人类审核」节点，确认是否真的陷入死循环。
 
+**实战案例**：在一次实现 Agent 自动纠错代码的迭代中，遇到模型在「修复报错」和「回滚修改」之间来回拉锯的死循环。因为每次生成的代码略有不同，简单的字符串对比失效。后来改用对「工具调用的 JSON 参数」做 MD5 哈希去重，成功检测到了该无限循环并自动触发中断，节省了大量 API 费用。
+
+**代码示例**：
+```python
+import hashlib
+
+class LoopGuard:
+    def __init__(self, max_steps=20, history_len=5):
+        self.max_steps = max_steps
+        self.state_history = []  # 滑动窗口
+        self.step_count = 0
+
+    def check_break(self, current_action: dict) -> bool:
+        self.step_count += 1
+        
+        # 1. 全局步数熔断
+        if self.step_count > self.max_steps:
+            return True
+        
+        # 2. 状态哈希去重 (只比对关键参数)
+        action_sig = hashlib.md5(str(current_action).encode()).hexdigest()
+        if action_sig in self.state_history:
+            return True
+            
+        # 维护滑动窗口
+        self.state_history.append(action_sig)
+        if len(self.state_history) > self.history_len:
+            self.state_history.pop(0)
+            
+        return False
+```
+
+**检测策略对比**：
+
+| 策略 | 优点 | 缺点 | 适用场景 |
+| :--- | :--- | :--- | :--- |
+| **步数上限** | 实现简单，零漏报 | 可能误杀正常长流程 | 所有流程的兜底防线 |
+| **状态哈希** | 精准识别重复逻辑 | 对微小差异不敏感 (需规范化) | 代码纠错、工具调用循环 |
+| **无进展检测** | 更符合业务逻辑 | 定义“进展”指标困难 | 创作类、分析类任务 |
+| **预算熔断** | 直接保护成本 | 无法区分正常与异常消耗 | 严格控制预算的场合 |
+
 **追问应对**：若问「误杀怎么办？」——答：提高进展定义粒度、允许人类确认继续，或者增加恢复策略（如切换 Prompt 模板重试）。
 
 ## 常见考点

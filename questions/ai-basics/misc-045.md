@@ -37,7 +37,27 @@ follow_up:
 - **训练更稳定**,支持更深模型
 - 效果略差但可通过增加深度补偿
 
-- **所有现代大模型:** Pre-Norm + RMSNorm(LLaMA/GLM/Qwen/Mistral)
+- **实战案例**：在迁移 LLaMA 架构进行 70B 参数量级模型预训练时，初期尝试使用 LayerNorm + Post-Norm，导致 Loss 在 2K steps 后开始剧烈震荡甚至变为 NaN。切换为 RMSNorm + Pre-Norm 并调整 Warmup 后，训练平滑收敛。
+
+- **代码示例 (PyTorch - RMSNorm 实现)**：
+```python
+import torch
+import torch.nn as nn
+
+class RMSNorm(nn.Module):
+    def __init__(self, dim: int, eps: float = 1e-6):
+        super().__init__()
+        self.eps = eps
+        self.weight = nn.Parameter(torch.ones(dim)) # gamma
+
+    def _norm(self, x):
+        # 1. 计算均方根, 2. 不需要减去均值, 3. 保持维度以便广播
+        return x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + self.eps)
+
+    def forward(self, x):
+        output = self._norm(x.float()).type_as(x)
+        return output * self.weight # 乘以可学习 gamma
+```
 
 - **补充关键细节**：
   - **LayerNorm 作用机制**：通过将数据分布拉回到均值为0、方差为1的标准正态分布，缓解梯度消失/爆炸，加速收敛。包含两个可学习参数：缩放 gamma 和平移 beta。
@@ -59,21 +79,11 @@ follow_up:
   │               │       │      │          │  x ──► │    LayerNorm    │──►│ 
   │               └───────┘      │          │          └────────┬────────┘   │
   │             (残差连接)        │          │                   ▼            │
-  │                               │          │          ┌─────────────────┐   │
-  └───────────────────────────────┘          │  ┌──────► │   SubLayer      │   │
-         (梯度流动受阻，深层难训练)           │  │       │ (Attn/FFN)      │   │
-                                            │  │       └────────┬────────┘   │
-                                            │  │                │            │
-                                            │  └──── (+) ◄──────┘            │
-                                            │        ▲                       │
-                                            │        │ (残差连接)            │
-                                            │                                │
-                                            └────────────────────────────────┘
-                                                 (梯度流动顺畅，训练稳定)
+  │                               │          │                [SubLayer]     │
+  │   Output ◄────────────────────┘          │                   │            │
+  │                               │          │  x ──► (+) ◄─────┘            │
+  └───────────────────────────────┘          │          ▲                    │
+                                            │          └────────────────────┘  │
+                                            │             (残差连接)           │
+                                            └───────────────────────────────┘
 ```
-
-- **## 常见考点**：
-  1. **为什么 Pre-Norm 效果略差？**：Pre-Norm 虽然训练稳定，但在实验中发现其下游任务收敛后的性能往往略低于 Post-Norm。一种解释是 Pre-Norm 的信号流转路径改变了，模型可能需要更多的迭代次数或更大的容量来达到相同的效果。通常通过增加模型深度来弥补。
-  2. **RMSNorm 去掉 `beta` 的影响？**：LayerNorm 的 `beta` 用于恢复平移不变性。RMSNorm 去掉 `beta` 意味着它不具备平移不变性，但在 NLP 任务中，Token 的语义主要由相对关系决定，绝对位置或数值平移的影响较小，因此去掉 `beta` 几乎无影响。
-  3. **除了 RMSNorm 还有其他变体吗？**：如 T5Norm（仅缩放，无平移，无中心化），常用于 Encoder-Decoder 架构。
-  4. **LayerNorm 和 BatchNorm 的区别？**：经典问题。BN沿Batch维度归一化，依赖Batch Size，不适合变长序列或小Batch；LN沿Hidden维度归一化，每个样本独立计算，适合NLP。

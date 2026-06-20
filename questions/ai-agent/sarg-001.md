@@ -54,6 +54,37 @@ RAG（Retrieval-Augmented Generation）= 检索 + 生成。旨在解决大模型
 *   **RAG**：适合知识密集型、动态变化的数据。无需训练，部署快。
 *   **微调**：适合调整模型风格、格式或特定领域的推理能力。需要大量算力和数据。
 
+### 实战案例
+*   **金融研报生成**：某投行构建 RAG 系统读取每日 500+ 份研报。曾遇到模型将“2023年数据”与“2024年预测”混淆。解决方案：在 Prompt 中强制要求“仅根据检索到的 [2024] 标签文档作答”，并在 Metadata 中过滤时间，时效性提升 40%。
+*   **企业知识库“漂移”**：公司政策更新后，旧文档未及时下架。RAG 检索到旧政策导致回答错误。实战中需引入“时间加权排序”或 Rerank 模块优先展示最新版本。
+
+### 代码示例 (Python - 简易 RAG 流程)
+```python
+from langchain.vectorstores import FAISS
+from langchain.embeddings import OpenAIEmbeddings
+from langchain.chat_models import ChatOpenAI
+
+# 1. 离线/在线初始化
+embeddings = OpenAIEmbeddings()
+db = FAISS.load_local("faiss_index", embeddings)
+llm = ChatOpenAI(model="gpt-4")
+
+# 2. 检索
+docs = db.similarity_search("公司差旅报销政策是什么？", k=3)
+
+# 3. 生成
+context = "\n".join([d.page_content for d in docs])
+prompt = f"基于以下上下文回答问题：\n{context}\n问题：公司差旅报销政策是什么？"
+answer = llm.predict(prompt)
+```
+
+### 架构优化对比 (进阶)
+| 优化方向 | 基础 RAG | 优化后方案 (如 Advanced RAG) | 优势 |
+|---------|---------|--------------------------|------|
+| **检索质量** | 单次向量检索 | 混合检索 + Rerank (重排序) | 解决语义模糊，精准度提升 |
+| **查询理解** | 直接检索用户问题 | Query Rewriting (查询改写/分解) | 处理复杂问题，指代消解 |
+| **上下文窗口** | 直接拼接 Top-K | 长上下文压缩/摘要 | 降低 Token 消耗，减少噪声 |
+
 ## 常见考点
 1.  **RAG 如何缓解幻觉？**
     通过将检索到的高置信度上下文放入 Prompt，限制模型生成范围，强制模型基于事实回答，而非依赖内部概率记忆。

@@ -40,6 +40,38 @@ CrewAI 的「Crew」抽象本质上是将 **「角色分工 + 任务依赖 + 执
 - **Task 属性**：每个 Task 可以指定 `description`（用于 LLM 理解）、`expected_output`（用于格式化输出）以及具体的 `agent`。通过 Context 机制，前一个任务的输出可以自动传递给下一个任务。
 - **Tools 集成**：虽然结构化了，但工具权限还是挂载在具体的 Agent 实例上，Crew 本身不提供工具沙箱，依赖 Agent 自身的工具定义。
 
+**实战案例**：曾在一个自动研报生成项目中使用 CrewAI，将研究员、数据分析师、写手三个 Agent 组成 Crew。踩坑点是当任务链过长时，中间 Task 输出的格式若稍有偏差（如 JSON 缺字段），下游 Agent 就会直接报错卡死，后来不得不在 Task 之间增加 Python 格式校验的「回调钩子」来清洗数据。
+
+**代码示例**：
+```python
+from crewai import Agent, Task, Crew, Process
+
+# 定义角色与工具绑定
+researcher = Agent(
+    role='Research Analyst',
+    goal='Discover trending tech',
+    tools=[search_tool, serper_dev_tool], # 绑定搜索工具
+    llm='gpt-4'
+)
+
+# 定义任务上下文传递
+task1 = Task(description='Search AI news', expected_output='Bullet points', agent=researcher)
+task2 = Task(description='Write summary based on {task1.output}', agent=writer)
+
+# 启动层级流程
+crew = Crew(agents=[researcher, writer], tasks=[task1, task2], process=Process.hierarchical)
+result = crew.kickoff()
+```
+
+**流程模式对比**：
+
+| 特性 | Sequential (顺序) | Hierarchical (层级) |
+| :--- | :--- | :--- |
+| **执行逻辑** | 线性执行，Task 按列表顺序串行 | Manager Agent 动态规划并分发任务 |
+| **并行能力** | 无 (强依赖顺序) | 理论支持并行分发 (受限于 Manager) |
+| **适用场景** | 简单流水线、依赖明确的链条 | 复杂任务分解、需要动态决策的场景 |
+| **成本消耗** | 较低 (固定次数 LLM 调用) | 较高 (Manager 持续参与规划) |
+
 **追问应对**：若问缺点？答：抽象与真实权限/数据边界仍需自己把控；复杂分支可能要下沉到代码，Crew 的流程编排能力相比 LangGraph 的图结构较弱。
 
 ## 常见考点

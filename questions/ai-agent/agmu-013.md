@@ -45,6 +45,42 @@ feynman:
 - **落账与合规**：涉及资金变更、权限授予等操作，必须在 BPM 侧或传统代码中完成，不能仅依赖 Agent 的工具调用，以满足合规要求。
 - **异常处理**：如果 Agent 超时或幻觉，BPM 需要有网关处理异常，转入人工审批节点。
 
+**实战案例**：在构建「智能信贷审批」系统时，BPM 负责主流程，将用户提交的非结构化流水单据传给 Agent 系统。Agent 识别出异常交易后输出 JSON 标记风险。有一次 Agent 产生幻觉，将正常的工资薪金标记为洗钱风险。幸好 BPM 配置了「高风险强制人工复核」网关，拦截了该错误决策，避免了合规事故。
+
+**代码示例**：
+```python
+# BPM (伪代码) 调用 Agent 服务接口
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+@app.route('/bpm/audit_risk', methods=['POST'])
+def audit_risk():
+    data = request.json
+    docs = data['documents']
+    
+    # 调用外部 Agent 服务 (LangGraph 部署)
+    agent_response = requests.post(
+        "http://agent-service/invoke",
+        json={"input": docs}
+    ).json()
+    
+    risk_level = agent_response.get('output', {}).get('risk_level', 'LOW')
+    
+    # BPM 根据结构化结果进行网关路由，不信任 Agent 的自然语言解释
+    return jsonify({"risk_level": risk_level})
+```
+
+**能力与职责对比**：
+
+| 维度 | 传统工作流引擎 (BPM) | 多 Agent 系统 (MAS) |
+| :--- | :--- | :--- |
+| **核心职责** | 流程编排、事务状态、人工审批 | 意图理解、非结构化处理、工具调用 |
+| **处理确定性** | 强 (硬编码逻辑/规则引擎) | 弱 (概率性生成) |
+| **数据结构** | 结构化变量 (JSON/DB) | 半结构化 (自然语言 + JSON) |
+| **审计追踪** | 天然支持 (Event Log) | 需额外设计 (Trace/Checkpoint) |
+| **最佳位置** | 系统骨架 / 控制层 | 特定任务的感知与决策层 |
+
 **追问应对**：若问「谁主谁辅？」——答：强合规流程 BPM 主；强探索任务 Agent 主，但要有护栏（Guardrails）。
 
 ## 常见考点
