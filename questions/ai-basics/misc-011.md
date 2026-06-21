@@ -36,3 +36,33 @@ follow_up:
 1. 也就是常说的「数据飞轮」，SFT数据质量不好会对模型造成什么不可逆影响？
 2. 在SFT阶段，如何平衡多轮对话数据和单轮指令数据？
 3. 什么是Evol-Instruct？它在SFT数据构建中起什么作用？
+
+**3. 实战案例与代码**
+
+* **实战踩坑**：在构建多轮对话数据时，如果直接将多轮历史拼接成一条长样本进行 SFT，模型容易在长上下文中丢失指令核心或过度模仿历史语气。**最佳实践**是训练时 Mask 掉历史部分的 Loss，只计算当前回复部分的梯度（Assistant Mask），并适当降低系统提示词的占比。
+
+* **代码示例 (数据处理与 Mask)**:
+```python
+import torch
+
+def compute_sft_loss(logits, labels, user_mask):
+    """
+    logits: [batch, seq_len, vocab_size]
+    labels: [batch, seq_len] (包含 user 和 assistant 内容)
+    user_mask: [batch, seq_len] (1为user输入，0为assistant输出)
+    """
+    # 计算 CrossEntropy (通常 shift logits and labels)
+    shift_logits = logits[..., :-1, :].contiguous()
+    shift_labels = labels[..., 1:].contiguous()
+    
+    # 创建 Loss Mask: 只有 Assistant 的部分才计算 loss
+    # 注意 mask 维度要对齐，通常 user_mask 也要 shift
+    loss_mask = ~user_mask[..., 1:].contiguous() 
+    
+    loss_fct = torch.nn.CrossEntropyLoss(reduction='none')
+    loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
+    
+    # 应用 mask 并求平均
+    loss = (loss * loss_mask.view(-1)).sum() / loss_mask.sum()
+    return loss
+```

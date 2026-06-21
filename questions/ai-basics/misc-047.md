@@ -41,6 +41,14 @@ follow_up:
         *   **T = 1**：原始分布。
         *   **T < 1**：分布尖锐，趋于 One-hot。
 
+| 维度 | 硬标签 | 软标签 |
+| :--- | :--- | :--- |
+| **数据形式** | One-hot 编码 (如 [0, 1, 0]) | 概率分布 (如 [0.1, 0.8, 0.1]) |
+| **信息熵** | 低 (确定性高) | 高 (包含不确定性信息) |
+| **包含信息** | 仅正确类别 | 类间相似度、Dark Knowledge |
+| **作用** | 指向最终答案 | 指导“如何思考”，挖掘特征关联 |
+| **平滑度** | 尖锐 | 可通过 Temperature 调节 |
+
 ---
 
 ### 2. 大模型蒸馏方案架构
@@ -71,38 +79,27 @@ follow_up:
 └─────────────────────────────────────────────────────────────┘
 ```
 
----
+### 3. 实战与代码
 
-### 3. 大模型中的三种蒸馏范式
+*   **实战案例**：在对 70B 参数模型进行蒸馏至 7B 模型时，如果 Teacher 模型存在严重的“幻觉”（即对错误类别输出较高的置信度），直接使用其软标签会误导 Student 模型。通常需要引入辅助损失或对软标签进行截断处理。
 
-#### (1) 输出蒸馏
-*   **机制**: Student 直接拟合 Teacher 的最终输出概率分布。
-*   **损失函数**: 
-    *   `L = α * KL(Soft_T || Soft_S) + (1-α) * CE(Hard_T, Hard_S)` (通常结合软标签Loss和硬标签Loss)
-*   **应用**: 通用能力压缩，保留大部分通用知识。
+*   **代码示例 (PyTorch)**:
 
-#### (2) 特征蒸馏
-*   **机制**: 强迫 Student 的中间隐藏层状态拟合 Teacher 的对应层。
-*   **难点**: 当 Student 层数较少时，需要定义层映射关系（如Student的第L层对应Teacher的第2L层）。
-*   **优势**: 能学到更细粒度的特征表示。
+```python
+import torch.nn.functional as F
 
-#### (3) CoT 蒸馏 - *大模型特有*
-*   **机制**: 不只蒸馏“答案”，更重要的是蒸馏“思维过程”。
-*   **流程**:
-    1. Teacher 生成 CoT (Chain of Thought)。
-    2. Student 输入相同问题，学习预测 Teacher 的 CoT 和最终答案。
-*   **案例**: DeepSeek-R1-Distill。将 R1 的推理能力蒸馏到 Qwen/Llama 等基座模型中，使得 7B/32B 小模型具备极强的数理和逻辑推理能力。
-
-### 4. 效果与价值
-*   **性能保留**: R1-Distill-7B 在 AIME 数学竞赛中达到 55.5%（接近 o1-mini 的 56.4%），远超同尺寸基座模型。
-*   **推理成本**: 用极低的推理成本（小模型）接近超大模型的效果。
-
----
-
-### ## 常见考点
-1.  **Loss 公式细节**: 为什么通常要混合 KL Divergence (软标签) 和 Cross Entropy (硬标签)？
-    *   *解析*: 软标签提供类间关系，硬标签保证 Ground Truth 的准确性，防止 Student 过拟合到 Teacher 的错误。
-2.  **温度系数 T 的选择**: T 如何影响蒸馏效果？
-    *   *解析*: T 过大分布过于平滑信息量变少，T 过小退化为 One-hot。通常在 2.0 - 5.0 之间调整。
-3.  **Logits 匹配问题**: 如果 Teacher 和 Student 的词表大小不同怎么办？
-    *   *解析*: 需要做词表对齐，或者只对齐公共子集的 Logits，或者蒸馏最后一层隐状态而非 Logits。
+# temperature: 控制软标签平滑度, alpha: 蒸馏损失权重
+def distillation_loss(student_logits, teacher_logits, labels, temperature=5.0, alpha=0.7):
+    # 1. 计算软标签损失 (KL Divergence)
+    soft_loss = F.kl_div(
+        F.log_softmax(student_logits / temperature, dim=1),
+        F.softmax(teacher_logits / temperature, dim=1),
+        reduction='batchmean'
+    ) * (temperature ** 2) # 缩放因 T^2 影响
+    
+    # 2. 计算硬标签损失 (交叉熵)
+    hard_loss = F.cross_entropy(student_logits, labels)
+    
+    # 3. 加权融合
+    return alpha * soft_loss + (1.0 - alpha) * hard_loss
+```

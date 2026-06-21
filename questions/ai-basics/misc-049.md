@@ -30,8 +30,6 @@ follow_up:
 *   **注意力机制局限**: Transformer 的注意力机制虽然有全局感受野，但在实际推理中，显式的注意力权重往往更容易集中在 Tokens 的序列边界附近（类似人类的首因效应和近因效应）。
 *   **位置编码**: 虽然 RoPE、ALiBi 等相对位置编码支持长文本，但模型在长序列训练时的数据分布往往未充分覆盖“关键信息在极长中间”的情况。
 
----
-
 ### 2. 现象示意图
 
 ```text
@@ -49,7 +47,7 @@ Key: ░ = Performance Level
 
 ---
 
-### 3. 缓解策略
+### 3. 缓解策略与实战
 
 #### (1) 重排
 *   **原理**: 既然模型喜欢两头，就把最重要的文档“人为”地放在开头或结尾。
@@ -72,12 +70,32 @@ Key: ░ = Performance Level
     *   **训练数据构造**: 在 SFT (Supervised Fine-tuning) 阶段，构造大量“关键信息在中间”的训练样本，强制模型学会关注中间部分。
     *   **NHA (Needle In A Haystack)** 测试集微调：专门针对大海捞针任务进行强化。
 
----
+| 策略 | 难度 | 效果 | 副作用 |
+| :--- | :--- | :--- | :--- |
+| **重排** | 低 | 高 | 增加了推理耗时和排序成本 |
+| **文档压缩 (LLMLingua)** | 中 | 中 | 可能丢失细节，引入额外压缩步骤 |
+| **结构化 Prompt** | 低 | 低 | 无法根本解决注意力分散，仅起辅助作用 |
+| **长上下文微调** | 高 | 高 | 需要训练资源，可能导致过拟合 |
 
-### ## 常见考点
-1.  **KV Cache 影响**: Lost in the Middle 和 KV Cache 有关系吗？
-    *   *解析*: 理论上是模型架构问题，但在推理时，极其复杂的上下文可能导致 KV Cache 中的历史信息被“淹没”或难以被精确 Attention 到，加剧了该现象。某些 KV Cache 压缩技术（如 StreamingLLM）会保留最初的 KV，如果保留方式不当可能影响中间信息读取。
-2.  **CoT (思维链) 能缓解吗？**
-    *   *解析*: 一定程度上可以。通过让模型进行推理，模型可能会回溯上下文寻找证据，但并不能从根本上解决注意力机制的 U 型偏好，最佳实践仍是结合 Reranking 优化输入顺序。
-3.  **评测方法**: 如何检测模型是否有这个问题？
-    *   *解析*: 使用 **"Needle In A Haystack"** 测试。将一个特定的短句（如“魔法数字是895”）插入到不同长度的上下文不同位置，测试模型能否准确提取该数字。
+**实战案例**：在构建企业知识库问答时，直接将检索到的 20 个文档拼接喂给 LLM，导致位于第 10-12 个文档中的关键条款被忽略。解决方案是：**只取前 5 个最相关的文档**，并使用 XML 标签明确分隔，同时在 Prompt 中显式要求“请仔细阅读所有文档内容，特别注意中间部分的细节”，成功规避了中间信息丢失。
+
+**代码示例 (结构化 Prompt 拼接)**:
+
+```pythonndef build_rag_prompt(query, retrieved_docs):
+    context_parts = []
+    for idx, doc in enumerate(retrieved_docs):
+        # 使用 XML 标签增强文档边界感，帮助模型定位
+        context_parts.append(f"<document id="{idx}">\n{doc['content']}\n</document>")
+    
+    context_str = "\n\n".join(context_parts)
+    
+    prompt = f"""Answer the question based on the following documents.
+Documents:
+{context_str}
+
+Question: {query}
+
+Instruction: Please check ALL documents, especially the middle ones, before answering.
+Answer:"""
+    return prompt
+```

@@ -76,3 +76,33 @@ h = Wx + ΔA·ΔB·x
 1. LoRA为什么要初始化B为0、A为随机分布？
 2. LoRA适合应用在Attention层的所有矩阵还是仅部分？
 3. 为什么一般r设置得较小（如8或16）？
+
+**4. 实战案例与代码**
+
+* **实战踩坑**：在使用 QLoRA 微调时，发现模型下游任务效果极差，检查发现是因为训练数据集中存在大量与预训练分布差异巨大的噪声数据（如乱码），导致量化后的 4-bit 权重无法精确表达新特征的梯度方向。**解决方法**：增加 Warmup steps 并适当提高 LoRA 的 rank (如从 8 提到 16)，给模型更多“容错空间”。
+
+* **代码示例 (LoRA 注入)**:
+```python
+import torch.nn as nn
+
+class LoRALinear(nn.Module):
+    def __init__(self, in_features, out_features, rank=8, alpha=16):
+        super().__init__()
+        # 原始冻结权重 (实际场景中通常替换现有层)
+        self.linear = nn.Linear(in_features, out_features)
+        self.linear.weight.requires_grad = False
+        
+        # LoRA 低秩分解
+        self.lora_down = nn.Linear(in_features, rank, bias=False)
+        self.lora_up = nn.Linear(rank, out_features, bias=False)
+        
+        # 初始化: A为随机, B为0
+        nn.init.kaiming_uniform_(self.lora_down.weight, a=math.sqrt(5))
+        nn.init.zeros_(self.lora_up.weight)
+        
+        self.scaling = alpha / rank
+
+    def forward(self, x):
+        # Y = Wx + BAx * scaling
+        return self.linear(x) + self.lora_up(self.lora_down(x)) * self.scaling
+```

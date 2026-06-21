@@ -30,6 +30,9 @@ follow_up:
 【场景分析】
 纯自主Agent在高风险场景不可接受（医疗、金融、法律）。Human-in-the-Loop在保持效率的同时确保安全性和准确性。
 
+【实战案例】
+在金融风控Agent中，直接执行“冻结账户”操作曾导致误冻VIP客户，引发投诉。后增加“高危动作双因素确认”机制，超过10万元的操作必须由安全员在独立的审核系统中输入Token放行。
+
 【人机协作架构】
 ```text
 ┌──────────────────┐
@@ -60,6 +63,26 @@ follow_up:
 └──────────────────┘
 ```
 
+【代码示例：风险拦截与异步等待】
+```python
+def execute_with_guardrails(action):
+    risk_score = risk_engine.calculate(action)
+    if risk_score > THRESHOLD:
+        # 发送审核事件并挂起任务
+        review_id = audit_service.create_request(action)
+        # 状态机进入 WAITING_APPROVAL 状态
+        return State(status="WAITING", review_id=review_id)
+    
+    # 低风险直接执行
+    return tool_executor.run(action)
+
+# 人工审核回调处理
+def handle_approval(review_id, approved):
+    if approved:
+        task = db.get_task_by_review(review_id)
+        tool_executor.run(task.pending_action)
+```
+
 【人机协作模式】
 1. Review-then-Act（先审后行）：
    - Agent生成执行计划 → 人工审核确认 → 自动执行
@@ -75,6 +98,14 @@ follow_up:
 4. Interactive Correction（交互修正）：
    - Agent输出初稿 → 用户修改 → Agent学习用户偏好
    - 适用：内容创作、代码生成
+
+【协作模式对比】
+| 模式 | 安全性 | 实时性 | 成本(人力) | 关键应用 |
+| :--- | :--- | :--- | :--- | :--- |
+| Review-then-Act | 极高 | 低（阻塞性） | 高 | 线上变更、资金交易 |
+| Act-then-Review | 中 | 高 | 中 | 内容审核、日志分析 |
+| Shadow Mode | 极高（无损） | 低（并行） | 高 | 灰度发布、模型评估 |
+| Interactive | 中 | 中（交互式） | 低 | 辅助编程、文案写作 |
 
 【触发审核的条件】
 - 风险评分：操作风险等级 >= HIGH → 强制人工审核
@@ -104,3 +135,4 @@ follow_up:
 2. **冷启动问题**：在没有任何历史数据时，如何设定初始的风险阈值？
 3. **延迟权衡**：如何设计机制平衡审核带来的安全性增加与响应时间延迟？
 4. **样本构建**：如何将人工的审核记录转化为高质量的 RLHF（人类反馈强化学习）数据？
+

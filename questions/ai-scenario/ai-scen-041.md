@@ -60,6 +60,43 @@ AI简历筛选系统需求：日均处理10000+简历，自动匹配岗位要求
    - **HR Workbench**：提供搜索、过滤、以及AI生成的面试问题建议。
    - **相似推荐**：利用向量检索找到"与当前高绩效员工相似的候选人"。
 
+【实战案例】
+- **踩坑经验**：在早期版本中，简单的关键词匹配导致大量误判（如要求"Java"，简历中出现"JavaScript"也被匹配）。引入技能图谱层级树和Embedding语义距离阈值后，解决了"包含但不等于"的误判问题。
+
+【关键代码实现（工作年限计算）】
+```python
+from dateutil.relativedelta import relativedelta
+from datetime import datetime
+
+def calculate_work_experience(start_date_str, end_date_str="Present"):
+    """
+    计算工作年限，处理'Present'及日期格式容错
+    """
+    start = datetime.strptime(start_date_str, "%Y-%m")
+    end = datetime.now() if end_date_str == "Present" else datetime.strptime(end_date_str, "%Y-%m")
+    
+    diff = relativedelta(end, start)
+    total_years = diff.years + diff.months / 12.0
+    return round(total_years, 1)
+
+# 示例：处理硬性条件过滤
+def is_qualified(resume_json, jd_requirements):
+    if resume_json['education_degree'] not in jd_requirements['allowed_degrees']:
+        return False
+    if calculate_work_experience(resume_json['start_date']) < jd_requirements['min_years']:
+        return False
+    return True
+```
+
+【解析方案对比】
+| 维度 | 方案A: LayoutLMv3 (微调) | 方案B: LLM (Few-shot) | 方案C: 正则/规则 |
+| :--- | :--- | :--- | :--- |
+| **准确率** | 高（尤其对排版复杂的简历） | 极高（具备泛化推理能力） | 低（极其依赖模板） |
+| **成本** | 中（训练一次，推理便宜） | 高（每次推理Token消耗大） | 低（仅CPU计算） |
+| **速度** | 快（<1s） | 慢（3-5s，受限于LLM API） | 极快（ms级） |
+| **维护性** | 中（需标注数据微调） | 易（修改Prompt即可） | 差（新模板需重写Regex） |
+| **推荐策略** | **首选：作为实体抽取基础服务** | 辅助：用于关键信息的二次校验 | 淘汰：仅用于特定字段清洗 |
+
 【系统处理流程图】
 ```text
 [Resume Upload]  [JD Input]
@@ -67,7 +104,7 @@ AI简历筛选系统需求：日均处理10000+简历，自动匹配岗位要求
       ▼               ▼
 ┌───────────┐   ┌───────────┐
 │ OCR/Text  │   │ JD Parser │
-│  Extract  │   │ (LLM/Rules)│
+│  Extract  │   │(LLM/Rules)│
 └─────┬─────┘   └─────┬─────┘
       │               │
       ▼               │
@@ -94,30 +131,5 @@ AI简历筛选系统需求：日均处理10000+简历，自动匹配岗位要求
              ▼
     ┌──────────────────┐
     │   Scoring & Rank │
-    └────────┬─────────┘
-             │
-             ▼
-    Top-N Candidates List + Reports
+    └──────────────────┘
 ```
-
-【公平性与合规】
-- **偏见消除**：在解析和匹配阶段，Explicitly Mask掉性别、年龄、种族、照片、姓名（或仅保留ID）。Prompt中明确指令："不要基于性别或年龄做判断"。
-- **可解释性**：每次筛选决策必须输出JSON理由（"匹配原因"：有3年React经验；"不匹配原因"：学历为专科"），支持人工审计。
-- **人工复核**：HR可一键"查看评分理由"，并保留"手动调整"按钮覆盖AI结果，作为Fine-tuning的Negative Feedback。
-- **定期审计**：计算 disparate impact（不同群体通过率比值），确保无系统性歧视。
-
-【效果指标】
-- **筛选准确率**：AI推荐候选人中HR认可的比例（或Offer率）。
-- **召回率**：不应被淘汰但被AI过滤掉的比例（越低越好）。
-- **时间节省**：相比人工初筛的时间节约（如：平均每份简历处理时间从3分钟降至10秒）。
-- **候选人体验**：解析成功率（防止文件格式错误导致拒收）。
-
-【## 常见考点】
-1. **如何解决简历中的虚假信息（吹牛）问题？**
-   - 答：LLM可以进行逻辑一致性检查（如：项目时间是否重叠，项目规模与公司规模是否匹配）。对于关键岗位，结合背景调查服务API。
-2. **LLM处理长简历（如10页PDF）会丢失上下文怎么办？**
-   - 答：采用Map-Reduce策略。先分块提取各部分摘要，再将摘要输入LLM进行最终评估。或者利用长窗口模型（如Claude 3, GPT-4-Turbo）。
-3. **如何保证不同行业的JD匹配效果？**
-   - 答：需要领域特定的Prompt模板或微调模型。例如，销售岗位看重"业绩数字"，程序员岗位看重"技术栈"，两者的Prompt和提取特征权重不同。
-4. **系统如何应对高频更新（新技能，如AI工程师）？**
-   - 答：依赖LLM的泛化能力。Skill Taxonomy定期更新，同时利用LLM将新技能映射到现有的向量空间中，无需频繁重新训练整个模型。

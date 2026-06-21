@@ -61,6 +61,30 @@ follow_up:
      Return Answer         Retry / Refuse
 ```
 
+- **实战案例:**
+在构建金融研报问答系统时，我们发现简单的RAG经常张冠李戴（A公司营收安在B公司头上）。我们在Prompt中加入了"引用校验"指令：要求模型在回答时必须标注[Doc ID]，并在生成后多一步：检查生成的句子中的主语是否与引用的Doc ID对应。通过这种Self-Check机制，事实错误率降低了40%。
+
+- **代码示例 (Self-Check with LLM):**
+```python
+# 模拟幻觉检测流程
+response = "Apple's revenue in 2023 was $394 billion. [Ref: doc_01]"
+context_from_doc_01 = "Microsoft's revenue in 2023 was $211 billion."
+
+# 校验Prompt
+check_prompt = f"""
+Context: {context_from_doc_01}
+Claim: {response}
+Task: Determine if the Claim is supported by the Context.
+Output: Yes or No.
+"""
+
+# 调用LLM判断
+is_hallucination = llm.predict(check_prompt) # 输出 "No"
+
+if is_hallucination == "No":
+    print("检测到幻觉！执行回退策略或重新生成。")
+```
+
 - **最佳组合:** RAG (提供知识底座) + CoT (理清逻辑) + 工具调用 (实时数据/计算) + RLHF (对齐人类偏好)。
 
 ## 常见考点

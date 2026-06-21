@@ -52,7 +52,31 @@ follow_up:
 将 KV 传给下一台 GPU，最终 Q 看到了所有的 K。
 ```
 
+- **实战案例:** 处理 128K 长文本总结时，若直接使用 vLLM 的 PagedAttention 默认块大小（如 16 token），会导致 Block Table 过大，Meta data 占用过多显存且增加查找开销。**踩坑经验**：对于长文本场景，将 `block_size` 调大至 128 或 256，可显著减少内部管理开销并提升命中率。
+
+- **代码示例 (vLLM 块大小配置):**
+```python
+from vllm import LLM, SamplingParams
+
+# 针对长上下文优化：增大 block_size 减少元数据开销
+llm = LLM(
+    model="meta-llama/Llama-2-70b-chat-hf",
+    block_size=256,  # 默认通常是 16，长文本下调大可提升性能
+    enable_prefix_caching=True, # 开启共享前缀缓存
+    gpu_memory_utilization=0.9
+)
+```
+
+- **对比表格 (常见长文本方案):**
+
+| 方案 | 显存占用 | 计算复杂度 | 上下文长度 | 适用场景 |
+| :--- | :--- | :--- | :--- | :--- |
+| **Native (FlashAttn2)** | $O(N)$ 高 | $O(N^2)$ | ~100K | 通用，短文首选 |
+| **PagedAttention** | $O(N)$ 中 (碎片优化) | $O(N^2)$ | ~100K | 高并发，生产环境 |
+| **Ring Attention** | $O(N/G)$ 低 | $O(N^2/G)$ | 1M+ | 超长书/基因组分析 |
+| **StreamingLLM** | $O(W)$ 固定 | $O(W)$ | 无限 (流式) | 实时语音/监控流 |
+
 - **## 常见考点**
 1. **Attention Sink 的原理**：为什么丢弃中间 token 会导致生成崩塌，而保留开头几个 token 就能稳定输出？(Softmax 归一化特性)
 2. **PagedAttention 的计算复杂度**：在连续生成时，PagedAttention 相比传统显存管理在算子层面有哪些额外开销？(Block table 读取)
-3. **FlashAttention 的地位**：在长上下文优化中，FlashAttention (IO 感识) 是基础，其他策略主要解决的是显存容量和多卡扩展问题。
+3. **FlashAttention 的地位**：在长上下文优化中，FlashAttention (IO 意识) 是基础，其他策略主要解决的是显存容量和多卡扩展问题。

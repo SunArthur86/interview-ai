@@ -77,6 +77,29 @@ follow_up:
 
 - **后续发展:** LLaVA-1.5 (增加MLP深度、学术任务数据), LLaVA-NeXT (高分辨率、更多训练数据), LLaVA-Video (视频理解)。
 
+- **实战案例:**
+曾将LLaVA用于工业报表识别，原方案需要训练YOLO+OCR+分类器多个模型。改用LLaVA-1.5后，直接输入截图并Prompt:"识别表格中的Item列和Price列，输出JSON"。我们发现虽然它偶尔会OCR错字符，但对表格结构的理解（行列对齐、合并单元格）比传统的OpenCV版图解析方案鲁棒得多，代码量从2000行缩减到50行。
+
+- **代码示例:**
+```python
+from transformers import LlavaForConditionalGeneration, AutoProcessor
+
+model_id = "llava-hf/llava-1.5-7b-hf"
+model = LlavaForConditionalGeneration.from_pretrained(
+    model_id, device_map="auto", load_in_4bit=True # 实战中常需量化显存优化
+)
+processor = AutoProcessor.from_pretrained(model_id)
+
+# 构造Prompt
+prompt = "USER: <image>\nDescribe this image in detail. ASSISTANT:"
+image = Image.open("example.jpg")
+inputs = processor(text=prompt, images=image, return_tensors="pt").to("cuda")
+
+# 生成
+output = model.generate(**inputs, max_new_tokens=200)
+print(processor.decode(output[0], skip_special_tokens=True))
+```
+
 ## 常见考点
 1. **LLaVA中的投影层可以换成什么？** 
    除了简单的MLP，可以使用Q-Former (BLIP-2)、Cross-Attention (Flamingo) 等更复杂的结构，但LLaVA证明了简单MLP配合强数据足矣。

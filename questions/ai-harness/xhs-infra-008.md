@@ -42,11 +42,11 @@ Client
 +-----------+-----------+              |
             |           +--------------v--------------+
             +----------->|   GPU Inference Cluster   |
-                        | +------+   +------+   +----+|
+                        | +------+   +------+   +----+||
                         | |vLLM  |   |TGI   |   |TRT-LLM||
                         | |(Paged|   |(Flash|   |(Tensor||
                         | |Attn)|   |Attn)|   |Core) ||
-                        | +------+   +------+   +----+|
+                        | +------+   +------+   +----+||
                         +------------------------------+
                         | KV Cache (GPU/CPUDisagg)    |
                         +------------------------------+
@@ -61,6 +61,9 @@ Client
 - **会话亲和**：
   - 确保同一用户的连续请求（尤其是多轮对话）尽可能落在同一节点，直接命中 KV Cache，避免重新 Prefill。
   - 若节点负载过高，支持 KV Cache 的迁移或重建（Copy-on-write 机制）。
+
+**实战案例**：
+在推荐理由生成的场景中，高峰期尾部延迟 P99 飙升。排查发现 LB 轮询导致长 Context 请求堆积在少数节点上。改为加权最小连接数算法，并单独设立“长文本专用节点池”后，P99 降低了 40%。
 
 ### 2. 批处理与调度策略
 - **Continuous Batching (vLLM/Orca)**：
@@ -87,20 +90,27 @@ Client
   - **Rank 阶段**：传统双塔模型，CPU/GPU 快速召回。
   - **Rerank 阶段**：LLM 重排 Top-K 候选集（利用 LLM 的语义理解能力）。
 - **Batch Rerank**：
-  - 将多个 Item 拼接成一个 Prompt 送入 LLM，一次性重排，减少推理次数。
-  - 示例：`User: x; Items: [A, B, C]; Output: Ranked List`.
-- **冷启动解决**：利用 LLM 生成 Item 的 Embedding 或描述文本，补全冷启动 Item 的特征。
+  - 将多个 Item 拼接成一个 Prompt 送入 LLM，一次性重排，减少推理 Overhead。
 
-## 监控指标
-- **系统指标**：QPS, P99/P95 Latency (TTFT - Time To First Token, TPOT - Time Per Output Token), GPU Utilization.
-- **效率指标**：
-  - **KV Cache Hit Rate**：直接反映会话复用效果。
-  - **Preemption Rate**：Spot 实例的中断率。
-  - **Decode/Prefill Ratio**：衡量请求长尾分布。
-- **成本指标**：Cost per 1k Requests, Cost per Token。
+**代码示例**：
+```python
+# 伪代码：推荐场景批量 Rerank Prompt 构建
+def build_rerank_prompt(user_query, candidates):
+    items_text = "\n".join([f"{i+1}. {item['title']}" for i, item in enumerate(candidates)])
+    prompt = f"""User Query: {user_query}
+Candidates:
+{items_text}
 
-## 常见考点
-1. **PagedAttention 的核心思想**：借鉴操作系统的虚拟内存，将 KV Cache 切分为固定大小的 Blocks，存储在非连续显存中，解决显存碎片化问题，极大提升 Batch Size 上限。
-2. **Continuous Batching vs Static Batching**： Static Batching 必须等 Batch 中最长的序列生成完才能释放资源，Continuous Batching 可以动态进出，为何对高并发场景至关重要？
-3. **TTFT (Time To First Token) vs TPOT**：TTFT 受限于 Prefill 阶段速度和带宽（可优化），TPOT 受限于 Decode 阶段的显存带宽（瓶颈通常在此）。如何针对性优化？
-4. **多模态（VLM）推理的挑战**：图像 Token 化后通常极长（如 256-576 tokens），导致 Prefill 时间极长，如何压缩图像特征或采用异步流式处理？
+Please rank the candidates by relevance to the query. Return only the sorted IDs."""
+    return prompt
+# 将多个 User 的 Rerank 任务拼接到一个大 Batch 中送入 vLLM
+```
+
+### 技术选型对比
+| 组件 | 方案 A (vLLM) | 方案 B (TGI) | 方案 C (TRT-LLM) |
+| :--- | :--- | :--- | :--- |
+| **核心优势** | 开源活跃，PagedAttention 内存管理极佳，易部署 | HuggingFace 生态集成度高，Telemetry 完善 | 极致性能，利用 Tensor Core 深度优化，FP8 支持 |
+| **适用场景** | 通用在线 Serving，快速迭代 | 需要模型库快速转换和监控的场景 | 对延迟极度敏感，主要使用 NVIDIA 硬件栈 |
+| **调度能力** | Continuous Batching (非常成熟) | Continuous Batching (较好) | In-flight Batching (高性能) |
+| **部署难度** | 低 (Python 为主) | 中 (容器化) | 高 (需编译 TensorRT 引擎) |
+| **成本效益** | 高 (显存利用率高) | 中 | 极高 (吞吐量大，但开发维护成本高) |

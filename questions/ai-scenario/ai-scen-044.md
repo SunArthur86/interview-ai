@@ -102,8 +102,44 @@ AI代码审查系统：自动Review PR/MR，检测Bug、安全漏洞、性能问
 - PR自动Review：PR创建时自动触发
 - 质量门禁：Critical问题阻断合并
 
-【## 常见考点】
-1. **Diff上下文构建**：如何只获取变更相关代码而非整个文件，避免Token浪费和注意力分散。
-2. **静态工具与LLM的协同**：如何将SonarQube等工具的报错结果转化为LLM的Prompt输入。
-3. **长Diff的切分策略**：当PR修改超过500行时，如何分块Review并保持上下文连贯性。
-4. **误报处理机制**：如何利用用户反馈（Dismiss/Like）来微调Prompt或后处理规则。
+### 实战案例
+某金融项目在接入AI审查后，模型频繁误报关于“硬编码密钥”的Critical错误，实则是代码中的测试常量。通过引入**路径白名单机制**和**文件后缀过滤**（如排除`*_test.go`文件），并优化Prompt要求“仅关注生产环境代码”，误报率降低了70%。
+
+### 关键代码示例 (Python: Diff 提取与 LLM 分析)
+```python
+import difflib
+
+# 1. 提取关键变更片段
+def get_relevant_diffs(old_code, new_code):
+    diff = difflib.unified_diff(old_code.splitlines(), new_code.splitlines())
+    # 仅提取新增或修改的行，过滤删除行以节省Token
+    changed_lines = [line for line in diff if line.startswith('+') and not line.startswith('+++')]
+    return "\n".join(changed_lines)
+
+# 2. 构造审查 Prompt
+def review_pr(diff_context, file_path):
+    prompt = f"""
+    文件路径: {file_path}
+    变更内容:
+    {diff_context}
+    
+    请分析上述代码是否存在逻辑错误或安全风险。
+    输出JSON格式: {{"level": "Critical/Warning", "line": 10, "msg": "...", "fix": "..."}}
+    """
+    response = llm.generate(prompt)
+    return parse_llm_response(response)
+```
+
+### 审查工具对比
+
+| 维度 | 传统静态分析 (SAST) | LLM 智能审查 | 融合方案 (推荐) |
+| :--- | :--- | :--- | :---
+| **检出类型** | 模式匹配，已知漏洞 | 逻辑推理，未知风险 | 覆盖已知 + 未知风险 |
+| **误报率** | 低 (规则明确) | 高 (易产生幻觉) | SAST过滤噪音 + LLM确认 |
+| **解释性** | 规则引用强 | 自然语言解释好 | 结合规则代码和自然语言 |
+| **执行成本** | 低 (本地运行) | 高 (API调用) | SAST前置筛选，减少LLM调用 |
+
+### 常见考点
+1. **Diff上下文构建**：如何只获取变更相关代码而非整个文件，避免Token浪费。
+2. **长Diff处理**：当PR包含1000+行变更时，如何分块审查。
+3. **降低误报**：如何利用代码库的Git历史和开发者反馈来校准LLM的输出。

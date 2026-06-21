@@ -84,7 +84,33 @@ PD分离将推理的两个阶段分开调度到不同GPU上，是当前解决大
 - **负载均衡更复杂**：需要动态调整Prefill和Decode集群的比例，否则会出现 Decode 队列积压 或 Prefill 节点空闲。
 - **一致性**：在连续批处理中，如何将完成Prefill的请求无缝插入到Decode节点的Batch中，需要复杂的调度器设计（如vLLM的Prefix Caching支持）。
 
+## 实战案例
+在处理某SaaS客户的RAG检索增强场景时，我们发现当Prompt长度超过4k且并发请求激增时，耦合架构下的TTFT（首字延迟）会出现剧烈抖动。采用PD分离架构后，我们将8张A100拆分为2张Prefill（高算力）和6张Decode（高带宽），TTFT P99延迟降低了40%，但遇到了偶发的RDMA丢包导致KV Cache传输失败的问题，最终通过增加IB网卡的冗余链路解决。
+
+## 代码示例 (Python - vLLM调度逻辑模拟)
+```python
+class PDSeparationScheduler:
+    def __init__(self, prefill_rpc_client, decode_node_queues):
+        self.prefill_client = prefill_rpc_client  # Prefill节点RPC客户端
+        self.decode_queues = decode_node_queues    # Decode节点本地队列
+
+    def on_prefill_complete(self, req_id, kv_cache_tensor):
+        # 关键：Prefill完成后，通过RDMA传输KV Cache指针
+        # 此处仅做逻辑示意，实际通过IB Verbs发送内存地址
+        target_node = self.select_decode_node()
+        
+        # 异步传输KV Cache，不阻塞Prefill GPU
+        self.prefill_client.send_kv_remote(
+            dest_addr=target_node.ip,
+            rkey=kv_cache_tensor.rkey, 
+            addr=kv_cache_tensor.data_ptr()
+        )
+        
+        # 将请求元数据推入Decode节点的调度队列
+        self.decode_queues[target_node.id].enqueue(req_id)
+```
+
 ## 常见考点
 1. **追问**：在什么情况下 PD 分离反而会降低性能？（答：Prompt极短、网络带宽不足、KV Cache过大导致传输时间长于计算时间）。
 2. **追问**：如何解决 Prefill 和 Decode 节点之间的 KV Cache 传输延迟问题？（答：使用 RDMA/InfiniBand，或者计算-传输流水线重叠）。
-3. **追问**：除了分离 GPU，调度层面有什么优化？（答：Continuous Batching，也就是迭代级调度，将不同阶段的请求混合在一个 Batch 中处理）。
+3. **追问**：除了分离 GPU，调度层面有什么优化？（答：Continuous Batching、Iteration Level Scheduling）。

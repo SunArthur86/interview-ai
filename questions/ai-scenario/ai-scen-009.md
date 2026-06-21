@@ -30,6 +30,8 @@ follow_up:
 【场景分析】
 多Agent协作核心挑战：任务分解、Agent间通信、结果聚合、错误传播控制、死锁检测。
 
+**实战案例**：在构建自动化投研系统时，我们将研究员、数据分析师和报告撰写者设为独立Agent。曾遇到过Analyst Agent因为数据格式异常陷入重试死循环，导致整个系统挂起。引入Review Agent作为监控者检测心跳，并设置超时熔断机制后才解决。
+
 【架构设计】
 1. Agent角色定义：
    - Orchestrator（编排者）：接收任务 → 分解子任务 → 分配 → 聚合结果
@@ -45,6 +47,24 @@ follow_up:
    - DAG任务图：任务依赖关系建模
    - 串行/并行混合：独立任务并行，有依赖的串行
    - 动态分配：根据Agent能力和负载动态调度
+
+**代码示例**：
+```python
+def orchestrator_loop(task, max_steps=10):
+    context = {"goal": task, "history": []}
+    for _ in range(max_steps):
+        # 1. Router决定下一步动作
+        action = router_agent.decide(context)
+        if action.type == "FINAL":
+            return context["result"]
+        
+        # 2. 执行对应Agent
+        result = execute_agent(action.agent_name, action.input)
+        
+        # 3. 更新共享状态
+        context["history"].append({"agent": action.agent_name, "output": result})
+    return "Error: Max steps reached"
+```
 
 【多Agent协作状态流转图】
 ┌──────────────┐
@@ -87,12 +107,9 @@ follow_up:
 - 人工介入：连续失败3次或置信度低时自动升级到人工
 
 【技术选型】
-- 框架：LangGraph（有状态多Agent，支持循环）/ CrewAI（基于角色的）/ AutoGen（对话式）/ Microsoft Semantic Kernel
-- 通信：Redis Pub-Sub / RabbitMQ / Kafka
-- 状态管理：集中式状态存储（PostgreSQL/Redis）
-
-## 常见考点
-1. **多Agent与单Agent+Tools的区别**：什么情况下必须用多Agent？（答：任务跨度大、需要不同领域专家角色、需要并行处理且逻辑复杂时）
-2. **如何解决Agent间上下文爆炸问题**？（答：不传递完整历史，只传递Observation摘要；使用引用机制，让Agent自己去读取共享存储中的详细数据）
-3. **状态一致性管理**：如果Agent B 依赖 Agent A 的结果，但 A 失败了，编排器如何处理？（答：DAG中定义重试策略，若重试失败则标记整个分支失败，Orchestrator根据策略决定跳过或中止）
-4. **通信机制选型**：共享黑板vs消息队列的优缺点？（答：黑板实现简单，适合状态共享；MQ更适合解耦和异步，但实现复杂度高）
+| 框架 | 核心特性 | 适用场景 |
+|------|----------|----------|
+| LangGraph | 有状态图（StateGraph），支持循环、边条件 | 复杂逻辑流、需精确控制步骤 |
+| AutoGen | 对话式交互，支持人类介入 | 讨论、辩论类场景 |
+| CrewAI | 角色扮演（Role-Play），过程驱动 | 层级分明的任务流水线 |
+| Semantic Kernel | 企业级集成，Planner能力强 | 企业内部现有系统集成 |

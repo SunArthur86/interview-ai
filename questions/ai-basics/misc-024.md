@@ -62,6 +62,29 @@ follow_up:
 └─────────┘  └──────────┘
 ```
 
+- **实战案例:** 在机器翻译任务中，使用 Beam Search 确实提升了 BLEU 分数，但在生成 RAG 回答时，Beam Search (width=4) 经常出现忽略 Prompt 指令、直接照抄检索原文的情况。**踩坑经验**：对于问答和摘要任务，优先尝试 `Contrastive Search` (top_k=4, alpha=0.6) 或 `Temperature=0.1` 的 Sampling，Beam Search 往往过于保守。
+
+- **代码示例 (HuggingFace Contrastive Search):**
+```python
+# transformers 原生支持 Contrastive Search
+output = model.generate(
+    input_ids,
+    max_new_tokens=256,
+    do_sample=False, # 必须设为 False
+    top_k=4,         # 候选集大小
+    penalty_alpha=0.6 # 退化惩罚系数
+)
+```
+
+- **对比表格 (解码策略核心指标):**
+
+| 策略 | 多样性 | 事实准确性 | 重复率 | 计算开销 | 适用场景 |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Greedy** | 极低 | 高 | 高 | 最低 | 数学/代码/翻译 |
+| **Beam Search** | 低 | 高 (相对) | 中 | 高 (Beam倍数) | 机器翻译/摘要 |
+| **Nucleus (p=0.9)** | 高 | 中 | 低 | 低 | 创意写作/对话 |
+| **Contrastive Search** | 中 | **极高** | **极低** | 中 (需算相似度) | **长文本生成/RAG** |
+
 - **## 常见考点**
 1. **为何 Beam Search 在人类评估中常不如 Sampling？**（因为 Beam Search 倾向于保守、高概率但“无聊”的文本）
 2. **Contrastive Search 中 $\alpha$ 参数的作用**？($\alpha$ 过大导致不连贯，过小导致重复)

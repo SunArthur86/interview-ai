@@ -66,7 +66,7 @@ Embedding 模型将文本转化为高维向量，用于语义检索、聚类和 
 
 ---
 
-### 3. 选择建议与评估
+### 3. 选择建议、评估与实战
 
 **选择策略：**
 1.  **中文场景 (推荐)**: 
@@ -79,16 +79,22 @@ Embedding 模型将文本转化为高维向量，用于语义检索、聚类和 
 4.  **资源受限/低延迟**: 
     *   可考虑 **bge-small-zh** 或通过 **Matryoshka** 技术截断维度（如 text-embedding-3 可降维至 256 而保持较好效果）。
 
+**实战案例**：
+在法律合同检索场景中，我们发现 BGE-M3 对长段落整体语义理解较好，但容易漏掉“金额”、“日期”等关键短实体。最终方案是：利用 BGE-M3 做粗排，再针对文档中的关键实体字段建立 ES (Elasticsearch) 倒排索引，通过混合检索提升精准率。
+
+**代码示例 (混合检索打分)**:
+
+```python
+# 假设 dense_score 为向量检索相似度, bm25_score 为关键词检索分数
+def hybrid_score(dense_score, bm25_score, alpha=0.7):
+    # 1. 归一化处理
+    dense_norm = (dense_score - dense_score.min()) / (dense_score.max() - dense_score.min() + 1e-6)
+    bm25_norm = (bm25_score - bm25_score.min()) / (bm25_score.max() - bm25_score.min() + 1e-6)
+    
+    # 2. 加权融合，alpha 通常通过验证集调优
+    final_score = alpha * dense_norm + (1 - alpha) * bm25_norm
+    return final_score
+```
+
 **评估指标：**
-*   **MTEB (Massive Text Embedding Benchmark)**: 目前最权威的榜单，涵盖检索 (Retrieval)、重排序 (Reranking)、分类 (Classification) 等 56+ 任务。
-*   **C-MTEB**: 中文场景的必看榜单。
-
----
-
-### ## 常见考点
-1.  **指令微调**: 为什么 E5 模型输入时需要加 instruction (如 "query: ...", "passage: ...")？
-    *   *解析*: E5 在训练时引入了指令前缀，使用时如果不加指令，向量空间可能无法对齐，导致检索效果大幅下降。BGE 通常不需要（v1.5 之后支持无指令或弱指令）。
-2.  **维度权衡**: Embedding 维度越高越好吗？
-    *   *解析*: 不是。更高维度通常能承载更多信息（精度高），但会增加计算和存储成本（索引变大，检索变慢）。需要根据延迟和显存预算权衡，通常 768-1024 是性价比区间。
-3.  **归一化重要性**: 为什么计算相似度前通常要做 L2 归一化？
-    *   *解析*: 归一化后，向量的模长为1。此时余弦相似度 等价于点积，计算速度更快，且消除了文本长度对相似度分数的影响。
+*   **MTEB (Massive Text Embedding Benchmark)**: 目前最权威的测评基准，涵盖检索、重排序、聚类等任务。

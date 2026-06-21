@@ -29,6 +29,8 @@ follow_up:
 【场景分析】
 纯向量检索擅长语义匹配但弱于精确关键词（产品名、错误码）；纯BM25擅长精确匹配但不懂同义改写。混合检索取两者之长。
 
+**实战案例**：在一个技术文档RAG中，用户查询"报错 0x00004d"，纯Dense检索因为理解不了数字的含义召回的是"内存溢出"等语义相似文档，而混合检索通过BM25精确匹配到了包含该错误码的故障排查页，解决了找不到精确指令的问题。
+
 【双路检索架构】
 1. Sparse路径（BM25）：
    - Elasticsearch/OpenSearch全文本索引
@@ -44,40 +46,15 @@ follow_up:
    - 加权融合：α×BM25_score + (1-α)×Dense_score
    - 线性插值需要先归一化两路分数（min-max或softmax）
 
-【混合检索流程图】
-```text
-           用户查询
-              │
-      ┌───────┴───────┐
-      ▼               ▼
-┌───────────┐   ┌───────────┐
-│  稠密检索  │   │  稀疏检索  │
-│ (Vector)  │   │  (BM25)   │
-└─────┬─────┘   └─────┬─────┘
-      │               │
-   Top-K           Top-K
-(Doc Scores)   (Doc Scores)
-      │               │
-      └───────┬───────┘
-              ▼
-      ┌───────────────┐
-      │   分数归一化   │
-      │ (Normalization)│
-      └───────┬───────┘
-              ▼
-      ┌───────────────┐
-      │    融合排序    │
-      │ (RRF / Weighted)│
-      └───────┬───────┘
-              │
-              ▼
-      ┌───────────────┐
-      │   Cross-Encoder│
-      │      重排     │
-      └───────┬───────┘
-              │
-              ▼
-         最终结果 Top-N
+**代码示例**：
+```python
+def reciprocal_rank_fusion(results_dict, k=60):
+    fused_scores = {}
+    for system, doc_list in results_dict.items():
+        for rank, doc in enumerate(doc_list):
+            doc_id = doc['id']
+            fused_scores[doc_id] = fused_scores.get(doc_id, 0) + 1 / (k + rank + 1)
+    return sorted(fused_scores.items(), key=lambda x: x[1], reverse=True)
 ```
 
 【Query路由优化】
@@ -106,5 +83,4 @@ follow_up:
 ## 常见考点
 1. **BM25和向量检索的区别**：在什么场景下BM25会明显优于Dense？（答：匹配专有名词、ID、生僻词，或用户查询非常精准时；Dense在泛化能力上更强，但可能模糊边界）。
 2. **分数融合的难点**：为什么不能直接相加 BM25 分数和 Cosine Similarity？（答：两者分布和量纲完全不同，直接相加会导致某种分数被淹没，必须先归一化或使用基于排名的RRF）。
-3. **Rerank的性能瓶颈**：Cross-Encoder 是慢速模型，如何保证系统整体响应速度？（答：只对召回的Top-N（如50或100）进行重排，而不是全库重排；通常Rerank耗时<100ms，在可接受范围内）。
-
+3. **Rerank的性能瓶颈**：Cross-Encoder 是慢速模型，如何保证系统整体响应速度？（答：只对召回的Top-N（如50或100）进行重排，而不是全库

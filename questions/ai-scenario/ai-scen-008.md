@@ -30,6 +30,8 @@ follow_up:
 【场景分析】
 实时RAG的核心矛盾：索引更新需要时间，用户期望立即检索到最新内容。关键指标：索引延迟（文档更新到可检索的时间差）。
 
+**实战案例**：电商促销RAG系统中，运营每分钟更新几十个活动规则。最初采用全量重建索引导致规则更新后10分钟才生效，引发客诉。后改为基于Debezium的CDC流式处理+向量库Upsert，将可见延迟降低至2秒以内。
+
 【增量索引架构】
 1. 变更检测：
    - CDC（Change Data Capture）：监听数据库binlog或文件系统事件（如Debezium）
@@ -44,6 +46,23 @@ follow_up:
    - Near Real-Time：向量库写入内存后立即可查（牺牲部分查询性能）
    - Soft Refresh：后台定期Compaction，合并Segment，优化查询性能
    - 双缓冲：新索引构建在影子集合 → 原子切换别名
+
+**代码示例**：
+```python
+from pymilvus import Collection
+
+def upsert_document(collection, doc_id, new_chunks):
+    # 1. 删除旧向量 (部分向量库支持Upsert自动覆盖，此处模拟显式逻辑)
+    collection.delete(f"doc_id == '{doc_id}'")
+    
+    # 2. 生成新向量
+    new_vectors = [embed_model.encode(c) for c in new_chunks]
+    data = [[doc_id]*len(new_chunks), new_chunks, new_vectors]
+    
+    # 3. 插入新数据
+    collection.insert(data)
+    collection.flush() # 确保可见性
+```
 
 【实时RAG数据流架构图】
 ┌──────────┐     ┌──────┐     ┌──────────────┐     ┌───────────┐
@@ -79,6 +98,9 @@ follow_up:
 - TTL兜底：即使精准失效失败，设置较短的TTL（如5分钟）保证最终一致性
 
 ## 常见考点
-1. **向量数据库的Upsert实现原理**：为什么Upsert比Insert+Delete更高效？底层是如何保证查询一致性的？（答：通常基于标记删除+后台Compaction，实时查询时过滤Deleted标记）
-2. **处理高并发写冲突**：如果同一文档在一秒内被修改了10次，如何保证索引最终正确？（答：Kafka分区有序消费 + 乐观锁版本号检查，旧版本写入向量库时被拒绝）
-3. **查询时的过滤机制**：在软删除场景下，如何保证用户搜不到已删除文档？（答：向量检索时必须带上Metadata Filter `is_deleted=false`，但这会增加查询开销）
+1. **向量数据库的Upsert实现原理**：
+| 方式 | 实现机制 | 性能影响 | 适用场景 |
+|------|----------|----------|----------|
+| Delete + Insert | 先根据主键删除，再插入新数据 | 较低（两次IO） | 通用，兼容性好 |
+| 原地更新 | 覆盖Segment中对应的向量数据 | 较高（需锁Segment） | 极低延迟场景 |
+| 追加+标记 | 追加新版本，旧版本标记无效 | 最高（读时过滤） | 写多读少，允许读放大 |

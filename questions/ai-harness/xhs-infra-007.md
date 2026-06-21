@@ -44,6 +44,9 @@ $$Total Memory = Model + Optimizer + Gradients + Activations + KV Cache + Tempor
   - **Sequence Parallel (TP + SP)**：将 Sequence 维度切分，减少单卡 KV Cache 压力。
   - **CPU Offload**：将优化器状态卸载到 CPU（增加通信开销，换显存）。
 
+**实战案例**：
+在某次 70B 模型长文本微调中，设置 `max_length=8192` 时 OOM。排查发现 KV Cache 占用了 40%+ 显存。解决方案是将 Attention 机制替换为 FlashAttention-2 并开启 Sequence Parallel（SP），将 Ring-Attention 结合使用，成功在 8x A100 (80G) 上训练。
+
 ## 低 MFU 诊断
 MFU (Model FLOPs Utilization) = 实际 TFLOPS / 理论峰值 TFLOPS
 
@@ -68,6 +71,22 @@ Tensor Core  HBM BW
 - **Kernel Launch Overhead**：大量小 Kernel 发射。算子融合 可解决。
 - **非 MatMul 操作占比高**：LayerNorm、Softmax、Element-wise 操作占比过高，未利用 Tensor Core。
 
+**代码示例**：
+```python
+# 使用 torch.distributed.barrier 确保同步，并优化 Dataloader
+torch.distributed.barrier() # 确保所有进程同时开始
+
+# 针对 IO Bound 优化的 DataLoader 设置
+train_loader = DataLoader(
+    dataset,
+    batch_size=per_gpu_batch,
+    num_workers=8,           # 根据 CPU 核心数调整
+    prefetch_factor=4,       # 预取批次
+    pin_memory=True,         # 加速 CPU -> GPU 传输
+    persistent_workers=True  # 保持 worker 进程避免重复初始化
+)
+```
+
 ## Hang 诊断
 1. **NCCL 调试**：设置环境变量 `NCCL_DEBUG=INFO`，查看通信是否卡在某个 All-Reduce 步骤。
 2. **死锁检测**：
@@ -76,19 +95,12 @@ Tensor Core  HBM BW
 3. **网络拓扑**：检查 InfiniBand (IB) 或 RoCE 的丢包情况（`ibstat`, `perf top`）。
 4. **Stack Trace 抓取**：使用 `py-spy dump --pid <pid>` 或 `gdb -p <pid>` 查看进程卡在哪个 Python/C++ 函数（通常卡在 NCCL Kernel 或 GPU Kernel 中）。
 
+**实战案例**：
+多机训练中 Rank 0 经常 Hang 住，其他进程等待。通过 `NCCL_DEBUG=INFO` 发现 Rank 0 的网卡 `TX` 队列满。排查发现是某节点的 IB 网卡 MTU 设置不一致（2048 vs 4096），导致包分片异常，修正后 Hang 消失。
+
 ## 工具链
 | 工具 | 核心用途 | 关键指标 |
 |------|----------|----------|
 | **PyTorch Profiler** | 整体性能瓶颈分析 | CPU Time, CUDA Time, Memory Usage |
 | **Nsight Systems (nsys)** | 系统级时间线可视化 | Kernel Stream, CUDA memcpy, NCCL Call gap |
-| **Nsight Compute (ncu)** | 单个 Kernel 深度分析 | Occupancy, Memory L1/L2 Hit, Pipe Utilization |
-| **NVLink Topology** | 检查 GPU 互联带宽 | `nvidia-smi topo -m` (P2P/NVLink/SYS) |
-
-## 常见考点
-1. **ZeRO-1, 2, 3 的具体区别**：
-   - ZeRO-1: 切分 Optimizer States。
-   - ZeRO-2: 切分 Optimizer + Gradients。
-   - ZeRO-3: 切分 Optimizer + Gradients + Parameters（每卡只存 1/N 参数，通信量最大）。
-2. **FlashAttention 如何提升 MFU**：通过 Tiling 和 IO 感知减少 HBM 读写次数，解决 Memory Bound 问题，同时保证数值稳定性。
-3. **混合精度训练（AMP）的作用**：使用 FP16/BF16 进行计算，FP32 进行 Master Weights 更新，既加速又保证收敛。BF16 在大模型中为何优于 FP16？（无精度溢出问题，无需 Loss Scaling）。
-4. **如何判断是 Compute Bound 还是 Memory Bound**：查看 Nsight Systems 中的 `DRAM Throughput` 和 `SM Throughput`。如果 DRAM 接近满载但 SM 利用率低，则是 Memory Bound。
+| **Nsight Compute (ncu)** | Kernel 级别深度分析 | Tensor Core Utilization, Memory Throughput |

@@ -76,15 +76,31 @@ U-Net 是扩散模型的核心（如在DDPM、Stable Diffusion中），用于预
 - **Stable Diffusion 改进 (LDM - Latent Diffusion Models):**
 - **核心痛点**: 在像素空间(512x512x3)做扩散计算量太大。
 - **改进方案**: 
-  1. 使用预训练的 VAE (Variational Autoencoder) 将图像压缩到潜空间 (64x64x4)。
-  2. 在潜空间进行扩散过程（U-Net 处理的是 latent features）。
-  3. 生成时再用 VAE Decoder 解码回像素空间。
-- **收益**: 计算量减少约 $8^3=64$ 倍，极大的降低了显存需求和采样时间。
+  1. 使用预训练的 VAE (Variational Autoencoder) 将图像压缩到低维潜空间 (Latent Space, 如 64x64x4)。
+  2. 在潜空间进行Diffusion过程训练，计算量降低数十倍。
 
-## 常见考点
-1. **扩散模型与GAN的区别？** 
-   GAN是训练生成器与判别器对抗，存在训练不稳定、模式崩溃问题；扩散模型通过似然训练，训练更稳定，生成质量高，但推理速度慢（需多步去噪）。
-2. **为何需要步数？** 
-   前向加噪需要多步以构建良好的数据分布；反向去噪也需要多步以确保每步只去一点点噪声，保持分布的数学性质。步数越少速度越快，但质量通常下降（除非使用像DDIM这样的快速采样器）。
-3. **Classifier-Free Guidance (CFG) 是什么？** 
-   一种在推理时增强文本控制力的技术。公式为 $\epsilon = \epsilon_{uncond} + w \cdot (\epsilon_{cond} - \epsilon_{uncond})$。通过同时计算无条件（空Prompt）和有条件的噪声预测，向文本方向"引导"去噪过程。
+- **实战案例:**
+在做LoRA模型微调（如特定人脸或画风）时，我们发现直接在潜空间训练Loss很难收敛。解决方案是引入"Min-SNR Gamma策略"，根据噪声时间步 $t$ 动态调整Loss权重（对高噪步给予更高权重），使得模型在中低噪声阶段的细节生成能力显著提升，生成的文字不再乱码。
+
+- **代码示例 (Diffusers 库使用):**
+```python
+from diffusers import StableDiffusionPipeline, DPMSolverMultistepScheduler
+import torch
+
+# 加载模型（实战中常使用 float16 节省显存）
+pipe = StableDiffusionPipeline.from_pretrained(
+    "runwayml/stable-diffusion-v1-5", torch_dtype=torch.float16
+).to("cuda")
+
+# 优化采样器
+pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
+
+# 生成
+image = pipe(
+    prompt="cyberpunk city street, neon lights, high detail",
+    negative_prompt="blurry, low quality", # 负向提示抑制坏图
+    num_inference_steps=20,
+    guidance_scale=7.5 # CFG guidance scale，越高越遵循Prompt
+).images[0]
+image.save("cyberpunk.png")
+```

@@ -67,38 +67,33 @@ SwiGLU 是由 Swish 激活函数与 GLU (Gated Linear Unit，门控线性单元)
         │                    ┌───────────────────────┐           │
         ▼                    │      Linear (W_out)   │           │
 ┌───────────────┐            └───────────┬───────────┘           │
-│   Output      │                        │                       │
-└───────────────┘                        ▼                       │
-                                  ┌───────────────┐               │
-                                  │   Output      │               │
-                                  └───────────────┘               │
-                                                                  │
-                              ┌───────────────────────────────────┘
-                              │
-                              ▼
-                      ┌───────────────┐
-                      │ Linear (W_G)  │
-                      └───────────────┘
 ```
 
-**3. 为什么 SwiGLU 效果更好？**
+**3. 对比分析 (为什么 SwiGLU 更好?)**
 
-1.  **门控机制:** 类似于 LSTM/GRU 的思想，模型可以学习“保留”哪些信息以及“丢弃”哪些信息。$(Swish(xW_G))$ 充当了一个动态的注意力掩码，根据输入动态调节 $(xW_{in})$ 的信息流向。
-2.  **平滑性:** Swish 在 $x<0$ 时非零且平滑，这使得优化过程中的梯度流更顺畅，有助于深层网络的训练。
-3.  **容量提升:** 实验表明，在相同的计算预算下，SwiGLU 能带来更好的性能提升。
+| 维度 | 标准 FFN (GELU) | SwiGLU | 优势/代价 |
+| :--- | :--- | :--- | :--- |
+| **表达能力** | 单一路径投影 | 引入门控机制，动态调节特征流 | 更强的非线性表达能力，性能提升显著 (PaLM/LLaMA验证) |
+| **参数量** | $2d \cdot d_{ff}$ | $3d \cdot d_{ff}$ (多了门控矩阵) | **参数量增加 50%** (需相应调整 $d_{ff}$ 保持总参量平衡) |
+| **计算代价** | 较低 | 增加了一个 Linear 层和逐点乘法 | 推理速度稍慢，但收敛更快，最终 Perplexity 更低 |
+| **平滑性** | GELU 平滑但无门控 | Swish 平滑 + 门控软选择 | 梯度传播更稳定，缓解深层网络梯度消失 |
 
-**4. 代价与参数调整**
+**4. 实战案例与代码**
 
-- **参数量增加:** SwiGLU 有三个矩阵 ($W_{in}, W_{out}, W_G$)，而标准 FFN 只有两个 ($W_1, W_2$)。为了维持参数总量一致，通常需要将隐藏层维度 $d_{ff}$ 缩小至原来的 $\frac{2}{3}$。
-  - *例如：* LLaMA-7B 的 hidden_size=4096，标准 FFN 通常取 4倍 (16384)，而 LLaMA 使用 SwiGLU 取 $\frac{2}{3} \times 4 \approx 2.67$ 倍 (11008)。
+* **实战踩坑**：在复现 LLaMA 架构时，如果未按照 $2/3$ 比例缩放隐藏层维度（例如保持 GELU 版本的 $d_{ff}=4d$），直接替换 SwiGLU 会导致模型参数量和计算量激增约 50%，极易导致显存 OOM。通常会将 SwiGLU 的 $d_{ff}$ 设为 $(8/3)d$ 以平衡参数量。
 
-**5. 实际应用**
-LLaMA 1/2/3, GLM, Mistral, Qwen, Baichuan 等主流现代大模型均采用 SwiGLU。
+* **代码示例 (PyTorch)**:
+```python
+class SwiGLU(nn.Module):
+    def __init__(self, dim, hidden_dim=None):
+        super().__init__()
+        # LLaMA 设置 hidden_dim 为 (2/3)*4dim，以平衡参数量
+        hidden_dim = hidden_dim or int((2/3) * 4 * dim) 
+        self.gate_proj = nn.Linear(dim, hidden_dim, bias=False)
+        self.up_proj   = nn.Linear(dim, hidden_dim, bias=False)
+        self.down_proj = nn.Linear(hidden_dim, dim, bias=False)
 
----
-
-## 常见考点
-
-1.  **参数量计算:** 如果保持模型总参数量不变，使用 SwiGLU 时 $d_{ff}$ 应该如何调整？（答案：缩小为原来的 $2/3$）
-2.  **门控的作用:** 为什么需要门控机制？它与注意力机制有什么异同？（答案：门控是逐维度的特征选择，注意力是Token之间的信息聚合）
-3.  **Swish vs SiLU:** SwiGLU 中用的 Swish 和 SiLU 有什么区别？（答案：$\text{SiLU}(x) = x \cdot \sigma(x)$，本质上是 Swish 在 $\beta=1$ 时的特例，在代码中通常混用称呼）
+    def forward(self, x):
+        # Swish(xW_gate) * (xW_up)
+        return self.down_proj(F.silu(self.gate_proj(x)) * self.up_proj(x))
+```

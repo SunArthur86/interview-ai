@@ -84,11 +84,33 @@ GPU 0 (Expert 0,1)           GPU 1 (Expert 2,3)
 4. **专家倾斜/分级**
    - **进阶**：将专家按能力或频率分级，高频请求走小专家模型，低频复杂请求走大专家模型。
 
+## 实战案例
+在某次百亿参数MoE模型训练中，我们观察到Loss曲线出现周期性尖峰。经Profiling发现，All-to-All通信阶段某张GPU的NCCL Kernel耗时是其他卡的3倍。排查发现是Auxiliary Loss的权重设置过小（1e-4），导致约90%的Token被路由到了Expert 0和Expert 1，造成了严重的通信拥塞。将权重调整为0.02并引入Noisy Top-K后，通信耗时方差降低了80%，训练吞吐提升15%。
+
+## 代码示例 (PyTorch - 模拟All-to-All后的负载检查)
+```python
+import torch
+import torch.distributed as dist
+
+def check_expert_balance(local_expert_counts):
+    # local_expert_counts: [num_experts], 本地GPU上每个专家处理的token数
+    
+    # 1. All-Reduce 聚合全局统计信息
+    global_counts = local_expert_counts.clone()
+    dist.all_reduce(global_counts, op=dist.ReduceOp.SUM)
+    
+    # 2. 计算负载标准差，用于监控
+    mean_load = global_counts.float().mean()
+    std_load = global_counts.float().std(mean=mean_load)
+    cv = std_load / mean_load # 变异系数
+    
+    # 3. 如果变异系数超过阈值，触发告警或动态调整路由
+    if cv > 0.3: 
+        print(f"Warning: Expert load imbalance detected! CV={cv:.4f}")
+    
+    return global_counts
+```
+
 ## 实际经验
 - **StepFun万亿MoE**：384专家，8+1共享架构，大规模并行下对通信库优化极深。
-- **MiniMax**：32专家，结合 ETP (Expert Tensor Parallelism) + EDP 混合策略以解决显存瓶颈。
-
-## 常见考点
-1. **追问**：MoE训练中显存通常卡在哪里？（答：通常卡在 All-to-All 通信所需的缓冲区，以及激活值由于切分导致的碎片化）。
-2. **追问**：为什么 All-to-All 比 All-Reduce 更难优化？（答：All-Reduce 是点对点聚合，带宽模型简单；All-to-All 是网状交换，容易发生网络拥塞，且对等节点间负载不均会导致长尾效应）。
-3. **追问**：推理时如何做 MoE 的负载均衡？（答：训练依赖 Loss，推理通常依赖专家复制或静态调度，因为推理无法改变模型权重，只能通过系统层调度将热门专家分布到更多节点）。
+- **MiniMax**：32专家，结合 ETP (Expert Tensor Parallelism) 降低通信量。

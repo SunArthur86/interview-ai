@@ -69,36 +69,44 @@ follow_up:
                            ▼
                     ┌──────────────┐     ┌──────────────┐
                     │  PPO/DPO 更新│ ──► │  RLHF 模型   │
-                    │  (策略梯度)   │     │ (对齐后模型) │
-                    └──────────────┘     └──────────────┘
+                    │  (策略梯度)   │     │ (
 ```
 
-**3. PPO vs DPO 核心区别**
+**3. PPO vs DPO 深度对比**
 
 | 特性 | PPO (Proximal Policy Optimization) | DPO (Direct Preference Optimization) |
 | :--- | :--- | :--- |
-| **是否需要 RM** | **需要**，且 RM 训练不稳定，容易过拟合或崩溃。 | **不需要**，直接利用偏好数据。 |
-| **训练流程** | 复杂。需同时维持 SFT(Reference)、Active Policy、Reward Model、Value Function 四个模型。 | 简单。只需 SFT 和 Active Policy 两个模型。 |
-| **数学原理** | 间接优化。最大化 KL 约束下的期望奖励 $J(\pi) = \mathbb{E}[r - \beta \text{KL}(\pi_\theta \| \pi_{ref})]$。 | 直接优化。推导出一个解析解，证明了最大化奖励等价于最大化偏好数据的似然：$\nabla J_{DPO} = \sigma(\beta (r_\theta(y_w) - r_\theta(y_l))) \nabla \log \frac{\pi_\theta(y_w\|x)}{\pi_\theta(y_l\|x)}$。 |
-| **稳定性** | 较差。涉及 KL 惩罚系数 $\beta$ 的微调，探索过程容易破坏模型的语言能力（模式崩塌）。 | 较好。不需要探索，直接在离线偏好数据上拟合，不易崩塌。 |
-| **效果** | SOTA 基准，上限高。 | 接近甚至超越 PPO，训练效率极高。 |
+| **核心机制** | Actor-Critic 架构。需要训练 Policy 模型、Value 模型和 Reward 模型。 | 直接利用偏好数据优化策略，无需训练显式的 Reward 模型。 |
+| **训练复杂度** | 高。需要 4 个模型同时加载：Ref, Policy, Reward, Value (显存占用极大)。 | 低。只需加载 Policy 和 Ref 模型 (显存减半)。 |
+| **训练稳定性** | 较难调节。Reward Model 的不准确输出会导致策略崩溃，需 KL 惩罚约束。 | 高。直接优化人类偏好目标函数，避免了奖励模型 hacking 问题。 |
+| **采样效率** | 低。每步需生成大量样本进行交互和梯度估计。 | 高。属于离线强化学习，直接利用已有的偏好对数据。 |
+| **当前趋势** | 早期 OpenAI/Anthropic 使用，现逐渐被 DPO 取代。 | LLaMA 2/3, Mistral, ChatGLM3 等主流模型采用。 |
 
-**4. 补充细节**
+**4. 实战案例与代码**
 
-- **PPO 中的 KL 散度:** 为了防止模型在 RL 阶段为了刷高分而生成乱码，PPO 会计算当前策略与初始 SFT 策略之间的 KL 散度，并施加惩罚。这保证了模型语言能力的连贯性。
-- **DPO 的巧妙之处:** DPO 发现 RM 的输出其实是一个隐变量，可以消掉。它证明了奖励模型的差值可以表示为策略概率的对数差，从而直接利用偏好对 $(y_w, y_l)$ 来优化策略。
+* **实战踩坑**：在使用 PPO 进行微调时，如果 Reward 模型给出的分值方差过大，或者 KL 散度惩罚系数设置不当，模型极易出现 **"Reward Hacking"** 现象，即生成一些被 Reward 模型判定为高分但毫无意义的重复字符串（如无限输出 "Yes"）。切换到 DPO 可以有效避免此问题，因为它不需要回归拟合奖励分值。
 
-**5. 趋势**
+* **代码示例 (DPO Loss)**:
+```python
+import torch
+import torch.nn.functional as F
 
-- **PPO:** 仍是工业界大规模训练的首选（如 GPT-4, Claude 早期），但在小规模或中等规模模型上正逐渐被更简单的方法替代。
-- **DPO:** 开源社区（如 Llama 2, Mistral, Zephyr）广泛采用，训练快且效果好。
-- **GRPO:** 无需显式价值函数，基于群体采样的优化策略，进一步简化了 RL 流程。
-
----
-
-## 常见考点
-
-1.  **RLHF 的三阶段数据:** 每个阶段分别需要什么样的数据？（答案：SFT需要问答对，RM需要排序偏好对，RL需要Prompt）。
-2.  **DPO 为什么不需要 RM?** 它是如何利用 SFT 模型的？（答案：DPO 将 SFT 模型视为 Reference Model ($\pi_{ref}$)，通过锁定 $\pi_{ref}$ 的 Logits 来实现隐式的 KL 正则化）。
-3.  **模式崩塌:** 在 RLHF 训练中，如果奖励模型给某一句简单重复的话极高分数，RL 模型会怎么做？如何避免？（答案：模型会一直输出这句话导致语言能力丧失。通过 KL 惩罚限制策略与 SFT 的距离来避免）。
-4.  **Reward Hacking:** 模型学会“欺骗”奖励模型而不是真正解决问题，P PO 和 DPO 如何缓解？（答案：PPO 通过 KL 约束，DPO 通过在固定偏好数据上训练避免探索导致的攻击）。
+def dpo_loss(policy_chosen_logps, policy_rejected_logps, 
+             reference_chosen_logps, reference_rejected_logps, beta=0.1):
+    """
+    计算 DPO Loss
+    beta: 温度系数，控制对参考模型的偏离程度
+    """
+    # 计算策略模型与参考模型的 Log Prob 差异
+    pi_diff = policy_chosen_logps - policy_rejected_logps
+    ref_diff = reference_chosen_logps - reference_rejected_logps
+    
+    # DPO 核心目标：最大化 的概率
+    # Loss = -log(sigmoid(beta * (pi_logratios - ref_logratios)))
+    loss = -F.logsigmoid(beta * (pi_diff - ref_diff)).mean()
+    
+    # 可选：计算准确率
+    acc = ((pi_diff > ref_diff).float()).mean()
+    
+    return loss, acc
+```

@@ -64,6 +64,20 @@ $$ Speedup = \frac{1}{(1 - \alpha) + \alpha / k} $$
 
 - **加速效果:** 理论上可达 $5\sim\textbf{6x}$ (在 $k$ 较大且接受率高时)，实际生产中通常稳定在 **2-3x**。
 
+- **实战案例:** 在工程落地中，如果大模型开启 Temperature > 0，采样随机性会导致小模型猜测命中率显著下降，此时 Speculative Decoding 几乎无效。**经验解法**：验证阶段使用 Greedy (Top-1) 验证，但在最终输出 token 时再应用采样逻辑，或采用 Medusa 结构以获得更好的校准性。
+
+- **代码示例 (PyTorch Mask逻辑):**
+```python
+# 生成 Tree Attention Mask 用于 Speculative Decoding
+# draft_tokens: [batch, k] 小模型生成的 k 个候选
+def get_tree_mask(batch_size, seq_len, k):
+    # 简化的下三角矩阵，允许并行验证
+    mask = torch.tril(torch.ones(seq_len + k, seq_len + k))
+    # 实际 TGGraph 或 vLLM 中需要构建特殊的树形依赖图
+    # 这里仅示意：每个位置只能看之前的草稿路径
+    return mask.unsqueeze(0).expand(batch_size, -1, -1)
+```
+
 - **## 常见考点**
 1. **接受率与 Speculation Number ($k$) 的关系**：$k$ 越大吞吐越高，但接受率通常会下降，如何平衡？(一般 $k=5\sim10$)
 2. **Tree Attention 的具体实现**：如何在 CUDA Kernel 层面高效实现 Tree Mask 以避免显存碎片？

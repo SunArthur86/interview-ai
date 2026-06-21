@@ -63,7 +63,33 @@ follow_up:
 5. **查询理解** - 用户问题可能模糊（指代消解）、意图不明确或需要改写以适应检索库的分布。
 6. **上下文窗口限制与噪音** - 当检索回大量文档时，如何将关键信息置于 LLM 注意力中心（Lost in the Middle 现象）。
 
+- **实战案例:** 在企业知识库问答中，如果直接把检索到的 5 个 chunk 拼接喂给 LLM，答案经常出现“幻觉拼接”（将 A 文档的数据安在 B 文档的事件上）。**解法**：引入 CoT（思维链）提示，要求模型先分析“问题相关的文档是哪一段”，再生成答案，能有效减少跨文档干扰。
+
+- **代码示例 (LangChain Rerank):**
+```python
+from langchain.retrievers import ContextualCompressionRetriever
+from langchain.retrievers.document_compressors import CohereRerank
+
+# 基础向量检索器 (召回 Top 20)
+retriever = vectorstore.as_retriever(search_kwargs={"k": 20})
+
+# 使用 Cohere Rerank 进行重排序 (精排 Top 5)
+compressor = CohereRerank(top_n=5)
+compression_retriever = ContextualCompressionRetriever(
+    base_compressor=compressor, base_retriever=retriever
+)
+```
+
+- **对比表格 (RAG vs Finetune):**
+
+| 维度 | RAG (检索增强) | Fine-tuning (微调) |
+| :--- | :--- | :--- |
+| **知识更新** | 实时 (更新向量库) | 滞后 (需重新训练) |
+| **外部知识** | 强 (引用准确) | 弱 (依赖训练数据) |
+| **隐私安全** | 高 (本地数据) | 低 (模型权重泄露风险) |
+| **推理成本** | 高 (Context 长) | 低 (Prompt 短) |
+| **适用场景** | 事实性问答、百科、私有知识 | 风格模仿、指令遵循、格式化输出 |
+
 - **## 常见考点**
 1. **RAG 与 Fine-tuning 如何选择**？(RAG 适合事实性、动态知识；Fine-tuning 适合语言风格、指令遵循、领域内隐知识)
-2. **混合检索**：如何平衡 BM25（关键词）和 Dense Vector（语义）的权重？(通常加权打分或 Reciprocal Rank Fusion)
-3. **Lost in the Middle 现象**：将答案放在 Prompt 的开头或结尾效果最好，放在中间时模型往往会忽略，如何缓解？(重排序将关键信息前置)
+2. **混合检索 (Hybrid Search)**：关键词检索 (BM25) 与 向量检索 如何加权？(Reciprocal Rank Fusion, RRF 算法)

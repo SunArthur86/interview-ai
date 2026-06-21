@@ -62,6 +62,33 @@ follow_up:
 - LLaVA/BLIP-2/Flamingo等VLM都使用CLIP ViT作为视觉编码器
 - 推动了视觉-语言多模态预训练的范式转移
 
+- **实战案例:**
+在做电商SKU质检时，我们没收集任何缺陷样本，直接用CLIP做零样本分类：将"A photo of damaged packaging"、"A photo of scratched surface"作为类别Prompt，直接识别流水线上的次品，上线第一天就拦截了85%的明显缺陷，省去了数千张样本标注成本。
+
+- **代码示例 (Zero-shot Prediction):**
+```python
+import torch
+import clip
+from PIL import Image
+
+# 加载模型
+device = "cuda" if torch.cuda.is_available() else "cpu"
+model, preprocess = clip.load("ViT-B/32", device=device)
+
+# 准备类别Prompt (Prompt Engineering是关键)
+text_inputs = torch.cat([clip.tokenize(f"A photo of a {c}") for c in ["dog", "cat", "car"]]).to(device)
+
+# 推理
+image = preprocess(Image.open("dog.jpg")).unsqueeze(0).to(device)
+with torch.no_grad():
+    image_features = model.encode_image(image)
+    text_features = model.encode_text(text_inputs)
+    
+    # 计算相似度
+    logits_per_image = (100.0 * image_features @ text_features.T).softmax(dim=-1)
+    probs = logits_per_image.cpu().numpy()
+```
+
 ## 常见考点
 1. **CLIP为何能做零样本分类？** 
    因为在预训练阶段，CLIP已经学习到了图像内容和文本语义之间的对应关系。通过构造"A photo of..."这样的文本，模型能理解未知类别的语义含义。

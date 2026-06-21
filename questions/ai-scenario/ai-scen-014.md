@@ -30,6 +30,9 @@ follow_up:
 【场景分析】
 Agent失败类型多样：工具调用失败、LLM输出格式错误、上下文超限、逻辑死循环、外部服务不可用。健壮的Agent必须有完善的错误恢复策略。
 
+【实战案例】
+在数据清洗Agent中，遇到过LLM生成包含Markdown代码块的JSON导致解析失败。通过增加“清洗中间层”，使用正则强行提取JSON内容后再传入解析器，将解析失败率从15%降至0%。
+
 【错误恢复状态机】
 ```text
                     ┌───────────┐
@@ -65,6 +68,27 @@ Agent失败类型多样：工具调用失败、LLM输出格式错误、上下文
 [Resume]
 ```
 
+【代码示例：带退避的重试装饰器】
+```python
+import time
+from functools import wraps
+
+def retry_with_backoff(max_retries=3, base_delay=1):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            for attempt in range(max_retries):
+                try:
+                    return func(*args, **kwargs)
+                except TransientError as e:
+                    if attempt == max_retries - 1:
+                        raise CriticalError("Max retries exceeded")
+                    delay = base_delay * (2 ** attempt) # 指数退避
+                    time.sleep(delay)
+            return wrapper
+    return decorator
+```
+
 【错误分类与恢复策略】
 1. 瞬态错误：
    - 网络超时、API限流、临时不可用
@@ -82,6 +106,15 @@ Agent失败类型多样：工具调用失败、LLM输出格式错误、上下文
    - 死循环：检测重复动作序列 → 强制跳出
    - 无进展：连续N步无状态变化 → 触发重规划
    - 上下文爆炸：Token超限 → 上下文压缩/摘要
+
+【错误类型与策略对比】
+| 错误类型 | 检测方式 | 恢复策略 | 是否重试 |
+| :--- | :--- | :--- | :--- |
+| 瞬态错误 | HTTP 429/503 | 指数退避重试 | 是
+| 格式错误 | JSON Decode Error | 强约束Prompt重试 | 是(2次) |
+| 权限错误 | HTTP 403 | 跳过/告警 | 否
+| 逻辑死锁 | 状态重复计数 | 强制终止/Replan | 否 |
+| 幻觉 | 事实校验不通过 | 切换模型/人工介入 | 视情况 |
 
 【恢复框架设计】
 - execute_step(): try-catch包裹每步执行
@@ -106,7 +139,7 @@ Agent失败类型多样：工具调用失败、LLM输出格式错误、上下文
 - 告警：错误率突增 → 自动告警
 
 ## 常见考点
-1. **幂等性设计**：在重试机制中，如何保证工具调用的幂等性（防止重复执行副作用）？
-2. **记忆一致性**：从Checkpoint恢复时，如何确保LLM能正确理解之前的历史状态？
-3. **错误传播**：子任务失败后，如何决定是重试该任务、跳过该任务还是终止整个主任务？
-4. **自我修正 vs 外部干预**：如何界定Agent自我修复的边界，何时必须强制请求人工介入？
+1. **幂等性设计**：如何确保重试机制不会导致重复执行（如重复下单）？
+2. **状态回滚**：执行到第5步失败，前4步产生的副作用（如文件写入、数据库事务）如何回滚？
+3. **Context Window管理**：在多次重试和错误恢复中，如何防止Prompt上下文无限膨胀导致OOM？
+

@@ -32,6 +32,8 @@ follow_up:
 【场景分析】
 纯向量检索擅长语义匹配但弱于精确关键词（产品名、错误码）；纯BM25擅长精确匹配但不懂同义改写。混合检索取两者之长。
 
+**实战案例**：在一个法律合规RAG系统中，法条引用要求极其精确。纯向量检索将"民法典第一千零一条"匹配到了"人格权编"的其他条款（语义接近），而混合检索通过BM25强制匹配到了精确条文ID，避免了合规风险。
+
 【双路检索架构】
 1. Sparse路径（BM25）：
    - Elasticsearch/OpenSearch全文本索引
@@ -46,6 +48,18 @@ follow_up:
    - RRF（Reciprocal Rank Fusion）：score = Σ 1/(k+rank_i)，k=60
    - 加权融合：α×BM25_score + (1-α)×Dense_score
    - 线性插值需要先归一化两路分数（min-max或softmax）
+
+**代码示例**：
+```python
+# 简单加权融合示例
+import numpy as np
+
+def weighted_merge(bm25_results, dense_results, alpha=0.5):
+    # 归一化
+    bm25_norm = (bm25_scores - bm25_scores.min()) / (bm25_scores.max() - bm25_scores.min())
+    dense_norm = (dense_scores - dense_scores.min()) / (dense_scores.max() - dense_scores.min())
+    return alpha * bm25_norm + (1 - alpha) * dense_norm
+```
 
 【Query路由优化】
 - 意图分类：关键词型查询 → BM25权重↑；语义型查询 → Dense权重↑

@@ -56,6 +56,28 @@ follow_up:
    - 类似于 **OBS (Optimal Brain Surgeon)** 剪枝算法的逆过程：剪枝是删节点，GPTQ是降精度，都用 Hessian 补偿。
 3. **特点**：**per-column 粒度**，精度高，无需保留部分FP16权重（纯INT4），但反量化推理计算量较 AWQ 略大（取决于实现）。
 
+## 实战案例
+在Llama-3-70B的端侧部署（NVIDIA Jetson Orin）中，我们最初尝试使用GPTQ 4bit量化，发现推理过程中FP16反量化Kernel占用了大量计算资源，导致Token生成速度仅为10 t/s。切换到AWQ方案后，虽然显存占用略高（保留了1%的FP16权重），但由于利用了CUDA Core的高效混合精度计算，且不需要复杂的Hessian逆计算调整，推理速度提升到了18 t/s，且PPL困惑度与FP16几乎一致。
+
+## 代码示例 (Python - 模拟SmoothQuant的平滑变换)
+```python
+import torch
+
+def smooth_quant_transform(activation, weight, alpha=0.5):
+    # 1. 统计通道级别的最大激活值
+    # activation: [Batch, Seq, Hidden]
+    max_act = activation.abs().max(dim=0).values # [Hidden]
+    
+    # 2. 计算缩放因子 s = (max_act)^alpha / (weight_scale)^(1-alpha)
+    # 这里简化处理，直接使用最大值比率
+    weight_scale = weight.abs().max(dim=0).values # [Hidden] if weight is [Out, In]
+    scale = (max_act.pow(alpha)) / (weight_scale.pow(1 - alpha) + 1e-5)
+    
+    # 3. 变换：X' = X / s, W' = W * s
+    # 为了数值稳定，通常融合到后续的Linear Layer计算中
+    return scale
+```
+
 ## 常见考点
 1. **追问**：GPTQ 和 AWQ 在推理时有什么区别？（答：GPTQ 通常需要在线反量化，或者需要特定的 Dequant Kernel；AWQ 往往通过保留部分 FP16 权重简化了推理 Kernel 实现，实际推理吞吐量 AWQ 往往更有优势）。
 2. **追问**：SmoothQuant 中的 alpha 参数通常取多少？（答：通常取 0.5，表示激活值和权重各承担一半的量化难度，不同模型可能需要微调）。
