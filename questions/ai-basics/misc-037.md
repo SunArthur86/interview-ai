@@ -67,20 +67,20 @@ class QA(dspy.Signature):
 
 # 自动优化
 # BootstrapFewShot: 利用Teacher模型在训练集上生成高质量的Few-shot示例
-teleprompter = dspy.BootstrapFewShot(metric=my_metric, max_bootstrapped_demos=4)
-compiled_rag = teleprompter.compile(RAG(), trainset=trainset)
+teleprompter = dspy.BootstrapFewShot(metric=my_metric, max_labeled_demos=16)
+optimized_qa = teleprompter.compile(QA(), trainset=train_data)
 ```
 
-- **实战案例:** 
-在一个复杂的RAG系统中，我们曾遇到手动调试Few-shot示例导致推理Token激增（单次成本>1美元）且效果不稳定。引入DSPy后，通过`BootstrapFewShotWithRandomSearch`自动筛选出最具代表性的3个示例，不仅推理成本降低70%，在边缘Case上的F1分数还提升了15%。
+## 边界情况
+1. **Metric 定义的主观性**：对于生成式任务（如摘要、写作），很难定义精确的 Metric。如果 Metric 设计不当（如仅基于相似度），优化器可能会找到“死记硬背”而非“泛化”的 Prompt。
+2. **Teacher 模型的能力上限**：在 BootstrapFewShot 中，Teacher LLM 的能力决定了生成示例的质量上限。如果 Teacher 模型本身无法解决某些复杂问题，优化器会陷入局部最优。
+3. **过拟合**：Teleprompter 可能会在训练集上过度优化，选出的 Few-shot 示例只对训练数据有效，导致在真实泛化场景下表现下降。
 
-- **对比表格 (传统 Prompt Engineering vs DSPy):**
+## 易错点
+1. **混淆 Module 和 Function**：初学者容易将 DSPy 的 Module 简单理解为函数封装，实际上它维护了 Prompt 状态和权重，是可以被 Compiler 修改的动态组件，而非静态代码。
+2. **忽略数据质量**：认为 DSPy 能自动修复 Prompt 就不需要关注数据。实际上，如果 `trainset` 包含噪声或错误标注，优化过程会放大这些错误，导致生成的 Prompt 包含错误的 Few-shot 示例。
 
-| 维度 | 传统 Prompt Engineering | DSPy (Declarative) |
-| :--- | :--- | :--- |
-| **核心范式** | "怎么问" (手写指令/示例) | "做什么" (定义接口/目标) |
-| **调优方式** | 人工迭代 (Trial & Error) | 程序化搜索 (如贝叶斯优化/随机搜索) |
-| **可移植性** | 差 (换模型需重写Prompt) | 强 (模型不可知，自动适配新模型) |
-| **可维护性** | 低 (逻辑分散在字符串中) | 高 (模块化代码，易于版本控制) |
-| **复杂任务处理** | 难以维护长且多步的Prompt | 自动管理多模块的串联与Trace优化 |
-| **数据利用** | 仅依赖静态示例 | 利用数据自动生成/选择最优示例 |
+## 面试追问
+1. **追问**：DSPy 在优化过程中需要多次调用 LLM，成本很高。在实际生产环境中如何平衡优化效果和推理成本？
+2. **追问**：DSPy 的 `BootstrapFewShot` 和 `KNN` 优化器分别适用于什么场景？它们在选择示例时的核心差异是什么？
+3. **追问**：如果目标是优化一个多步骤的 Agent 流程（包含 RAG + 工具调用），DSPy 如何保证整体链路的端到端优化？

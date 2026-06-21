@@ -54,7 +54,8 @@ Input ──▶ [A] ──▶ [B] ──▶ Output      [Boss]──────
 ### 深化实战
 - **实战案例**：在开发文档生成系统时，最初用 Pipeline（提取->转写->生成），只要提取失败，后续全挂。后改为 Boss 模式，Boss 针对不同类型的文档分发给不同的 Worker 专精处理，某 Worker 挂了只影响那一类文档，整体可用性提升。
 - **代码示例（Python - Boss 逻辑）**：
-```pythonnclass BossAgent:
+```python
+nclass BossAgent:
     def dispatch(self, task):
         # 根据任务动态分配，而非固定链条
         if task.type == 'simple':
@@ -66,8 +67,24 @@ Input ──▶ [A] ──▶ [B] ──▶ Output      [Boss]──────
             return aggregate(res1, res2)
 ```
 
-### ## 常见考点
+### ## 边界情况
+- **Pipeline 的阻塞效应**：在 Pipeline 模式下，如果 Stage A 极慢但 Stage B 极快，会导致积压，整体吞吐量由最慢的 Stage 决定（短板效应）。
+- **Boss 的单点瓶颈**：如果 Boss 逻辑过于复杂（例如每秒分发上千个任务），Boss 自身会成为性能瓶颈，甚至导致调度延迟。
+- **数据一致性挑战**：在 Boss-Worker 并行写入场景下，如果多个 Worker 同时修改同一个全局资源（如共享的 Context 字典），会出现数据竞争，需加锁或使用不可变数据结构。
+
+## 常见考点
 1. **Pipeline 的背压如何处理？**
    答：在 Agent 语境下通常体现为队列积压，需限制并发数或丢弃低优先级任务，防止上下游速度不匹配导致资源耗尽。
 2. **Boss-Worker 模式中 Worker 的输出格式如何统一？**
    答：必须强类型约束（如 Pydantic Model），否则 Boss 难以解析结果进行下一步决策。
+
+## 易错点
+- **误区**：认为 Boss-Worker 一定比 Pipeline 快。
+  **正解**：对于简单的线性任务，Boss-Worker 引入了额外的调度开销和序列化/反序列化成本，直接用 Pipeline 性能可能更高。
+- **误区**：认为 Pipeline 不能并行。
+  **正解**：Pipeline 的 Stage 内部可以是并行的（多个 Worker 处理同一个 Stage），但 Stage 之间必须是串行的。
+
+## 面试追问
+1. 在需要保证强事务性（ACID）的多步操作中（如先扣款再发货），Pipeline 和 Boss-Worker 哪个更容易实现？为什么？
+2. 如果 Boss 需要根据 Worker 的实时反馈动态调整后续策略（如 DAG 的动态剪枝），在设计上如何避免状态管理的混乱？
+3. 观察到 Boss Agent 变得非常“聪明”（调度逻辑极其复杂），这是否是一种反模式？如何通过架构演进来解决 Boss 过于沉重的问题？

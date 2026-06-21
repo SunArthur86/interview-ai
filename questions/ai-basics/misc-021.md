@@ -89,25 +89,33 @@ def sample_with_strategy(logits, temperature=0.7, top_k=40, top_p=0.9):
     sorted_probs, sorted_indices = torch.sort(probs_top_k, descending=True)
     cumulative_probs = torch.cumsum(sorted_probs, dim=-1)
     
-    # 移除累积概率超过p的token
+    # 移除超过top_p的token
     sorted_indices_to_remove = cumulative_probs > top_p
-    # 保留至少一个token
+    # 保留第一个超过阈值的token（保证至少有一个token）
     sorted_indices_to_remove[..., 1:] = sorted_indices_to_remove[..., :-1].clone()
     sorted_indices_to_remove[..., 0] = 0
     
-    # 将移除的token概率置0
-    probs_top_p = probs_top_k.scatter(1, sorted_indices, sorted_probs)
-    probs_top_p[sorted_indices_to_remove] = 0.0
+    # 应用mask
+    indices_to_remove = sorted_indices_to_remove.scatter(1, sorted_indices, sorted_indices_to_remove)
+    probs_top_k[indices_to_remove] = 0.0
     
     # 5. Re-normalize
-    probs_top_p = probs_top_p / probs_top_p.sum(dim=-1, keepdim=True)
+    final_probs = probs_top_k / probs_top_k.sum(dim=-1, keepdim=True)
     
     # 6. Sample
-    next_token = torch.multinomial(probs_top_p, num_samples=1)
+    next_token = torch.multinomial(final_probs, num_samples=1)
     return next_token
 ```
 
-- **## 常见考点**
-  1. **Temperature = 0 的实现问题**: 理论上 $T=0$ 会导致除以零。实际代码中通常直接取 `argmax` (贪婪搜索) 而不是经过 Softmax 采样，或者设置一个极小值。
-  2. **Top-p vs Top-k 的边界**: Top-p 在分布非常平坦时可能保留过多的 token（计算量大），而 Top-k 严格限制了数量。在分布非常尖锐时，Top-p 可能只保留 1 个 token，此时退化为贪婪搜索。
-  3. **Repetition Penalty (重复惩罚)**: 这虽然不是采样策略，但常与上述参数配合使用。通过在 Softmax 前对已生成 token 的 logits 进行惩罚（除以 penalty 或减去常数），避免模型循环复读。
+- **## 边界情况**
+  1. **全零分布**: 当Top-p截断后没有任何Token（极罕见，如Temperature极高且分布极平），应回退到均匀分布或贪婪搜索，防止程序崩溃。
+  2. **重复生成**: 在Top-k较小（如<10）且Temperature极低时，模型极易陷入死循环重复同一个短语，需添加Repetition Penalty进行缓解。
+
+- **## 易错点**
+  1. **Temperature为零的处理**: 理论上T=0时Softmax会出现除以零或无穷大。实际工程中（如vLLM/Transformers）通常使用Argmax替代，或者增加极小epsilon（1e-5）而非直接设为0。
+  2. **Top-k与Top-p的叠加顺序**: 必须先应用Top-k限定范围，再在限定范围内应用Top-p。若顺序颠倒，Top-p可能选中大量低概率噪声，导致Top-k失效。
+
+- **## 面试追问**
+  1. 为什么在代码生成或数学推理任务中，单纯的Greedy Search（Temperature=0）往往不如Temperature=0.1效果更好？
+  2. Min-P采样是近年来提出的新策略，它与Top-p有何本质区别，为何在处理某些模型的“白板”问题时效果更好？
+  3. 在Speculative Decoding（投机采样）场景下，Draft Model和Target Model的采样策略参数（如Temperature）是否必须保持一致，为什么？

@@ -18,72 +18,97 @@ feynman:
 
 # 大模型部署有哪些方案？
 
-按使用场景选择部署方案：
+KV Cache是LLM推理的主要显存开销（可达总显存的80%+）：
 
-1. **云端GPU部署：**
-- vLLM：最高吞吐量，支持PagedAttention
-- TGI（Text Generation Inference）：HuggingFace出品
-- TensorRT-LLM：NVIDIA出品，极致性能
-- SGLang：结构化生成+RadixAttention
+1. **PagedAttention**：
+- 分块管理KV Cache
+- 消除内部碎片
+- 按需分配
 
-2. **边缘/本地部署：**
-- Ollama：一键部署，适合个人使用
-- llama.cpp：CPU/GPU混合推理，GGUF量化
-- LM Studio：桌面GUI
+2. **GQA/MQA**：
+- 减少KV的头数
+- MQA极端减少（1个KV头）
+- GQA折中（如Llama3-8B用8个KV头vs32个Q头）
 
-3. **API服务：**
-- OpenAI API、Anthropic API、通义千问API
-- 无需GPU，按token付费
+3. **KV Cache量化**：
+- FP16 → INT8：减少50%内存
+- KV Cache INT4量化：减少75%
 
-4. **私有化部署关键考虑：**
-- GPU显存：模型大小 × 2 + KV Cache + 框架开销
-- 吞吐量：QPS需求
-- 延迟：TTFT和TPOT要求
-- 并发数：continuous batching
+4. **Sliding Window Attention**：
+- 只保留最近W个token的KV Cache
+- 超出窗口的丢弃（如Mistral用4096窗口）
 
-推荐：生产环境用vLLM + AWQ量化，个人用Ollama。
+5. **KV Cache Offloading**：
+- 将不活跃的KV Cache移到CPU内存
+- 需要时再加载回GPU
 
-- **补充：推理架构选型决策树**
-- **追求极致吞吐**: TensorRT-LLM (需编译，部署周期长)。
-- **快速迭代/兼容性好**: vLLM 或 TGI (支持 HuggingFace 模型直接加载)。
-- **多模态/复杂控制流**: SGLang (支持 RadixAttention 和复杂的并发原语)。
-- **显存受限**: llama.cpp (支持 GGUF 4bit/5bit 量化，CPU 推理兜底)。
+6. **Prefix Sharing**：
+- 多请求共享相同system prompt的KV Cache
 
-### 实战案例
-在高并发客服场景下，直接使用 vLLM 默认配置曾导致长请求占满显存阻塞短请求（Head-of-Line Blocking）。实战中通过开启 `max_num_seqs` 限制并精细化调整 `gpu_memory_utilization` 为 0.9，配合 Prefix Caching 解决了该问题。
+- **补充：量化与精度权衡**
+- **静态量化**: 校准集确定量化参数，部署简单。
+- **动态量化**: 运行时计算量化参数，精度略高但计算开销增加。
+- **INT4 KV 陷阱**: 极低比特可能导致注意力计算出现显著的精度损失，通常需要配合 SmoothQuant 或类似的激活值平滑技术。
 
-### 推理框架对比
-| 特性 | vLLM | TGI (Text Generation Inference) | TensorRT-LLM | llama.cpp |
-| :--- | :--- | :--- | :--- | :--- |
-| **核心优势** | PagedAttention，高吞吐 | HF 生态集成，安全性高 | 极致性能，CUDA Kernel 优化 | 极低资源消耗，量化支持好 |
-| **部署难度** | 低（Python 直接调用） | 中（Docker 容器化） | 高（需 C++ 编译 Engine） | 极低（二进制运行） |
-| **量化支持** | AWQ, GPTQ, BitsAndBytes | bitsandbytes, exl2 | FP8, INT4, INT8 | GGUF (Q2_K ~ Q8_0)
-|
-**适用硬件** | NVIDIA GPU 优先 | NVIDIA GPU | NVIDIA GPU (H100/A100 佳) | CPU (x86/ARM/Apple) + GPU |
-| **最佳场景** | 通用高并发推理 | 企业级，需鉴权/审计 | 极低延迟，大规模生产 | 端侧设备，个人电脑 |
+- **KV Cache 数据流示意图**
 
-### 代码示例 (vLLM 离线推理)
-```python
-from vllm import LLM, SamplingParams
-
-# 初始化模型，开启量化加载（需提前安装对应量化库）
-llm = LLM(model="TheBloke/Llama-2-7b-AWQ", quantization="awq")
-
-# 配置采样参数
-sampling_params = SamplingParams(temperature=0.7, top_p=0.95, max_tokens=100)
-
-# 批量推理
-prompts = ["Hello, my name is", "The future of AI is"]
-outputs = llm.generate(prompts, sampling_params)
-
-for output in outputs:
-    print(f"Prompt: {output.prompt!r}, Generated text: {output.outputs[0].text!r}")
+```text
+输入 Token (T_i)
+   │
+   ▼
+┌──────────────┐
+│  QKV Projection │
+└───┬──────┬────┘
+    │      │
+    │      ▼
+    │  [Store K_i, V_i] ────> KV Cache (Memory)
+    │      ▲
+    │      │ (Load History K_0...K_{i-1})
+    │      │
+    ▼      │
+┌──────────────┐
+│ Attention Calc │ (Score = Q * K^T)
+└──────────────┘
 ```
 
-## 常见考点
-1. **vLLM 和 TGI 如何选择？**
-   - vLLM 吞吐通常更高，PagedAttention 优势明显；TGI 集成 HF 生态更好，对最新模型支持较快，且安全性增强功能较多。
-2. **AWQ 和 GPTQ 量化的区别？**
-   - AWQ (Activation-aware Weight Quantization) 仅量化权重，激活值保持精度，推理速度通常比 GPTQ 快且精度略高，是 vLLM 推荐方案。
-3. **TensorRT-LLM 的主要优势是什么？**
-   - 利用 NVIDIA GPU 的 Tensor Core 和 FP8 优化，推理性能通常是 SOTA，但模型构建耗时较长。
+### 实战案例
+在 128K 长文本推理中，使用 FP16 存储 KV Cache 导致 80GB 显存仅能容纳 2 个并发请求。通过开启 vLLM 的 **INT8 KV Cache** 并结合 **GQA**（若模型支持），显存占用降低约 60%，成功将并发数提升至 6 个，且 Perplexity 几乎无损失。
+
+### KV Cache 优化技术对比
+| 优化技术 | 核心机制 | 显存节省 | 性能影响 | 实施难度 | 适用场景 |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **PagedAttention** | 类似操作系统虚拟内存分页 | 消除内部碎片 | 增加少许管理开销 | 高（需修改内核） | 高并发、变长请求 |
+| **GQA/MQA** | 多个 Query 头共享一组 KV | 高 (取决于分组比) | 减少内存带宽瓶颈 | 低（推理侧透明） | Llama3, Mistral 等现代模型 |
+| **INT4/INT8 量化** | 降低 KV 数据类型位宽 | 高 (50%-75%) | 可能增加 Dequantize 开销 | 中（需校准） | 显存极度受限场景 |
+| **Sliding Window** | 仅保留窗口内 KV | 极高 (固定上限) | 长距离上下文丢失 | 低 | 生成任务、局部依赖强 |
+| **Prefix Caching** | 共享 System Prompt KV | 间接节省 | 加速 TTFT | 高（需框架支持） | 多轮对话、Prompt 固定 |
+
+### 代码示例 (简单的 KV Cache 伪代码)
+```python
+class KVCache:
+    def __init__(self, max_len, head_dim, dtype=torch.float16):
+        self.k_cache = torch.zeros((max_len, head_dim), dtype=dtype, device='cuda')
+        self.v_cache = torch.zeros((max_len, head_dim), dtype=dtype, device='cuda')
+        self.seq_len = 0
+
+    def update(self, k_new, v_new):
+        # 简单拼接，实际中需考虑预分配内存池避免频繁 malloc
+        self.k_cache[self.seq_len:self.seq_len+k_new.shape[1]] = k_new
+        self.v_cache[self.seq_len:self.seq_len+v_new.shape[1]] = v_new
+        self.seq_len += k_new.shape[1]
+```
+
+- **边界情况**：
+  - **输入长度超过 KV Cache 预分配上限**：如果不进行扩容处理（如 vLLM 的 Block 分配失败），推理会直接报错 OOM，而非自动降级。
+  - **Beam Search**：在生成多个候选分支时，KV Cache 的显存占用会随 Beam Size 线性倍增，极易导致显存爆炸。
+  - **多轮对话 Context 复用**：如果系统 Prompt 极长，而用户 Query 很短，每次都重新计算 System Prompt 的 KV 会极其浪费，Prefix Caching 在此场景收益巨大。
+
+## 面试追问
+1. **追问 1**：使用 PagedAttention 固然能解决碎片化问题，但它引入了额外的 Kernel 开销和元数据管理。在 Batch Size 较小（如 < 4）的场景下，PagedAttention 可能不如连续内存分配快，你会如何做动态权衡？（引导：根据 Batch Size 或碎片率切换 Allocator）
+2. **追问 2**：INT4 KV Cache 虽然节省显存，但会导致 Attention Score 计算精度下降。除了 SmoothQuant，还有什么技术可以在不恢复高精度计算的前提下缓解这个问题？（引导：Per-Token Quantization, 权重量化配合 KV 量化）
+
+## 易错点
+1. **误区**：KV Cache 越大，模型效果越好。
+   **纠正**：对于某些局部依赖性强的任务，过长的 KV Cache 可能会引入噪声（Distractor Attention），反而在推理时导致注意力分散。Sliding Window 或 kv-compression 在某些情况下反而能提升效果。
+2. **误区**：开启了 Prefix Caching 就一定能节省显存。
+   **纠正**：Prefix Caching 共享的是物理 Block。如果请求的并发度不够高，或者 System Prompt 之间的差异导致无法完全匹配，共享率会很低，此时缓存本身占用的显存反而可能成为负担。

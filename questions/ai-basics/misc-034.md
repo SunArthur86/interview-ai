@@ -98,3 +98,17 @@ def robust_json_parse(text: str):
     except Exception:
         return None  # 触发重试逻辑
 ```
+
+## 边界情况
+1. **空数组/对象的差异**：在定义 Schema 时，明确区分 `null`、`[]` 和 `{}` 的含义，防止模型在无数据时混淆输出。
+2. **特殊字符转义**：当用户输入包含换行符、引号或非 ASCII 字符时，容易破坏 JSON 结构。需确保 LLM 理解转义规则，或使用 Marshaling/Unmarshaling 机制在 Prompt 层做隔离。
+3. **枚举值幻觉**：如果 Schema 中包含 Enum（如 `status: ["active", "inactive"]`），模型仍可能输出未定义的值。必须在 Pydantic 验证层严格捕获此类错误。
+
+## 易错点
+1. **省略 Schema 描述**：很多人只给 JSON 结构示例而不给字段含义描述，导致模型在相似字段间产生歧义（如 `start_date` 和 `create_date`）。
+2. **过度依赖 JSON Mode**：认为开启 JSON Mode 就能 100% 保证格式正确，忽略了模型仍可能生成 `null` 或截断后的 JSON 字符串，必须结合业务逻辑验证。
+
+## 面试追问
+1. **追问**：如果业务要求必须输出特定的嵌套 JSON 结构（如包含中文字段名），如何保证稳定输出？
+2. **追问**：在流式输出场景下，如何实时校验和解析不完整的 JSON 片段而不阻塞响应？
+3. **追问**：对比 `json5` 和 `lark` 解析器，在处理 LLM 输出时的容错能力有何区别？

@@ -38,7 +38,7 @@ LLM自回归推理分两个阶段：
 |------|-------------|-------------|
 | 输入处理 | 一次处理所有 Prompt Token | 逐个生成 Output Token |
 | 计算模式 | 并行计算 | 自回归串行计算 |
-| 瓶颈资源 | GPU 算力 (Compute Bound) | 显存带宽 (Memory Bound) |
+| 瓶颈资源 | GPU 算力 | 显存带宽 |
 | 延迟特征 | 决定 TTFT (首字延迟) | 决定 TPOT (生成速度) |
 | 优化手段 | FlashAttention, 分块预填充 | KV Cache 量化, Speculative Decoding |
 
@@ -75,10 +75,17 @@ def profile_phase(stage, input_ids, past_kv=None):
 - **Decode**: 仅处理单个 Token，计算量小但需加载巨大的 KV Cache（$O(N)$），主要受限于 HBM 带宽。
 - **混合调度**: 为了避免 Decode 阶段长请求阻塞短请求的 TTFT，vLLM 等框架会采用迭代级调度，优先保证新请求的 Prefill 资源。
 
-## 常见考点
-1. **为什么长文本生成时 Decode 越来越慢？**
-   - KV Cache 随生成长度线性增加，每次迭代读取显存量增加，且 Attention 计算量增加（尽管有 Mask，但访存开销增大）。
-2. **FlashAttention 主要优化了哪个阶段？**
-   - 主要优化 Prefill 阶段，通过 Tiling 技术减少 HBM 访问，提升 Attention 计算速度。
-3. **如何降低首字延迟（TTFT）？**
-   - 使用 Streaming Prefill（边生成边处理输入）、增加 GPU 并行度或使用更快的 Prefill 专用算子。
+- **边界情况**：
+  - **Batch Size = 1**：此时 Decode 阶段不仅受限于显存带宽，Kernel Launch 的开销也可能成为瓶颈，导致 GPU 利用率极低（<2%）。
+  - **空输入/极短 Prompt**：Prefill 阶段时间极短，几乎可忽略，系统总耗时完全取决于 Decode 阶段的步数。
+  - **KV Cache 耗尽**：在长文本生成中，如果 KV Cache 超出预设显存上限，系统必须回退到重计算模式或截断上下文，导致 Decode 速度急剧下降。
+
+## 面试追问
+1. **追问 1**：在 Continuous Batching 调度中，如果有多个长文本的 Decode 请求占用显存，导致新请求的 Prefill 无法分配到足够的 KV Cache 空间，这种情况下通常有哪些缓解策略？（引导：Priority Scheduling, Preemption 机制，或 KV Cache Swap out）
+2. **追问 2**：为什么投机采样（Speculative Decoding）通常主要加速 Decode 阶段，而在 Prefill 阶段效果不明显？（引导：Prefill 本身已经是高度并行的计算密集型操作，串行的 Draft 无法带来加速；且小模型处理长 Prompt 可能不如大模型快）
+
+## 易错点
+1. **误区**：Prefill 阶段总是比 Decode 阶段快。
+   **纠正**：在极长上下文（如 1M tokens）场景下，Prefill 的计算量 $O(N^2)$ 会变得极其巨大，此时 TTFT 可能长达数十秒，甚至超过整个 Decode 阶段的时间。
+2. **误区**：Batch Size 越大，推理吞吐量一定线性增加。
+   **纠正**：在 Decode 阶段，过大的 Batch Size 可能导致 KV Cache 占用过多显存，触发 OOM 或者频繁的内存碎片整理；同时，如果 Batch 内各序列长度差异巨大，计算会受限于最长的序列，导致 Padding 浪费。

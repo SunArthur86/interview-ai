@@ -73,3 +73,17 @@ for output in outputs:
 | **显存利用率** | 低（通常浪费 20%-60%） | 高（接近物理上限） |
 | **长文本支持** | 差（需按最大长度预留） | 强（动态扩展 Block） |
 | **缓存共享** | 难（Prefix Caching 实现复杂） | 易（通过 RadixTree 引用计数共享） |
+
+## 边界情况
+- **Block Size 大小敏感性**：Block Size 设置过小会导致元数据管理开销增大；设置过大则对于短序列请求会浪费显存（类似内存页内碎片）。需根据实际请求的 Token 长度分布选择（通常 16 或 32）。
+- **Prefill 与 Decode 争抢**：当混合处理极长 Prompt（Prefill 阶段）和短 Prompt（Decode 阶段）时，长 Prompt 的矩阵计算可能占满 GPU 算力，导致短请求的 TTFT（首字延迟）飙升。vLLM 通过调度策略（如优先级调度）缓解此问题，但在极端混合负载下仍需注意。
+- **CPU 瓶颈**：在极高并发下，vLLM 的 Python 层调度逻辑和 CPU-GPU 数据传输可能成为瓶颈，单纯看 GPU 利用率 100% 并不一定意味着吞吐量已达极限。
+
+## 面试追问
+1. PagedAttention 是如何实现 KV Cache 的跨请求共享的？RadixTree 在其中起到了什么作用？
+2. 在多 GPU 分布式推理场景下（如 Tensor Parallelism），vLLM 如何处理 Block 的切分和通信？
+3. 解释一下 vLLM 中的 Continuous Batching（或称 Iterative Level Scheduling）与传统 Static Batching 的具体区别？
+
+## 易错点
+1. **混淆位置**：误以为 PagedAttention 优化的是 Attention 计算本身的数学复杂度。其实它主要优化的是**显存管理效率**，间接允许了更大的 Batch Size，从而提升吞吐。
+2. **忽视 COW 机制**：在修改已存在的 KV Cache（如如 Speculative Decoding 中的验证阶段）时，忽视了 Copy-on-Write 机制，误以为会直接修改原 Block 导致其他请求数据受损。

@@ -84,4 +84,16 @@ outputs = llm.generate(["你好，请介绍一下量子物理。"], sampling_par
 - **## 常见考点**
   1. **GPTQ 为什么慢？**: GPTQ 每次推理需要做 Weight Dequantization（反量化），增加计算开销；而 AWQ 可以直接利用硬件的 INT4/INT8 Matmul 加速，通过 Per-channel Scaling 实现无缝衔接。
   2. **SmoothQuant vs AWQ**: SmoothQuant 是将激活值的难度迁移到权重上，实现全 INT8 量化；AWQ 是保留部分权重（通道）为 FP16 以保护精度，其余做 INT4。
-  3. **量化粒度**: 解释 Per-Tensor（整个张量一个缩放因子）与 Per-Channel（每一行/列一个缩放因子）的区别。通常 AWQ/GPTQ 使用 Per-Channel 以减少误差。
+
+- **## 边界情况**
+  1. **小模型量化**: 在参数量小于7B的模型上使用AWQ时，保留部分FP16权重的比例可能对显存节省相对敏感，需精细调整Clipping阈值。
+  2. **跨设备量化**: 在多机多卡推理中，需确保量化参数（Scale/Zero-point）在各卡间严格同步，否则会导致计算发散。
+
+- **## 易错点**
+  1. **校准数据集选择**: GPTQ/AWQ均依赖校准数据集。误用训练数据（而非代表性验证集）可能导致“数据泄露”式的虚高性能，实际泛化能力变差。
+  2. **MoE架构量化**: 对混合专家模型量化时，仅量化专家层权重可能不足以控制显存，Router层和Attention层同样需要处理，且Expert Load Balancing可能因量化失真。
+
+- **## 面试追问**
+  1. AWQ保留1%显著权重的策略在MoE（混合专家）模型中是否适用？可能会遇到什么问题？
+  2. 在极端低比特（如INT2或INT1）量化下，AWQ的Scaling机制是否会失效，为什么？
+  3. 如果模型权重分布本身非常平滑（如经过深度平滑SmoothQuant），AWQ基于激活幅度的策略还能否准确找到重要权重？

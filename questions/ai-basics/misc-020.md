@@ -79,19 +79,23 @@ from vllm import LLM, SamplingParams
 def init_llm_engine():
     llm = LLM(
         model="meta-llama/Llama-2-7b-hf",
-        tensor_parallel_size=4,  # 多卡并行
-        max_model_len=2048,      # 限制上下文长度
-        gpu_memory_utilization=0.9 # 显存利用率阈值
+        tensor_parallel_size=1,
+        gpu_memory_utilization=0.9,
+        max_model_len=4096,
+        enable_prefix_caching=True  # 显式启用前缀缓存
     )
     return llm
-
-llm = init_llm_engine()
-prompts = ["你好，", "介绍一下北京的"] * 100
-# 自动应用Continuous Batching和PagedAttention
-outputs = llm.generate(prompts, SamplingParams(temperature=0.8))
 ```
 
-- **## 常见考点**
-  1. **vLLM 的 Kernel 是优化的重点**: 除了内存管理，vLLM 重写了 Attention Kernel（PagedAttention Kernel），利用显存的块结构优化内存访问模式，减少 HBM 读写次数。
-  2. **预分配 vs 动态分配**: vLLM 采用 Block Manager 预先分配大部分显存给 KV Cache（通过参数 `gpu_memory_utilization` 控制），而不是像 HuggingFace Transformers 那样动态增长，这避免了 OOM（Out Of Memory）风险。
-  3. **迭代级调度**: 解释 Continuous Batching 是如何在每次 Decoder Step 后动态调整 Batch 的。
+- **## 边界情况**
+  1. **Prefill阶段瓶颈**: 在Prompt极长（如32k+）的场景下，Compute Bound的Prefill阶段可能成为瓶颈，此时PagedAttention带来的显存优化收益会递减，需关注显存带宽。
+  2. **块大小选择**: Block Size过小会增加管理开销；过大则会导致内碎片。例如对于平均生成长度为100的请求，设置为16可能比32或64更合适。
+
+- **## 易错点**
+  1. **投机采样兼容性**: 开启Speculative Decoding（投机采样）时，KV Cache的管理逻辑更为复杂，vLLM需同时维护主模型和Draft模型的Block表，易误解为简单的PagedAttention加倍。
+  2. **预填充与解码分离**: vLLM虽然统一了调度，但在底层实现上Prefill和Decoding往往使用不同的Kernel。误以为Continuous Batching能将Prefill和Decoding任务无缝混合在同一步迭代中是错误的，它们通常在同一Iteration内并行但计算图不同。
+
+- **## 面试追问**
+  1. vLLM的PagedAttention是如何处理多模态输入（如Vision Transformer的Feature Map）的KV Cache形状差异的？
+  2. 在极高并发下，vLLM的Scheduler调度开销是否会成为新的瓶颈？如果是，有哪些优化思路（如分离CUDA Graph）？
+  3. 相比于TGI（Text Generation Inference），vLLM的迭代级调度在处理长尾延迟请求时有何不同？

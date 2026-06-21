@@ -68,24 +68,18 @@ follow_up:
 - **Token 长度限制怎么办？**：将长篇 System Prompt 压缩，或使用向量检索提取最相关的规则片段，但要注意 Core Identity（身份和核心规则）必须始终保留在上下文窗口顶部。
 - **Few-shot（少样本）和 Zero-shot（零样本）如何选择？**：如果任务格式复杂或需要特定风格，Few-shot 效果更好；如果只是通用逻辑，Zero-shot 节省 Token 成本。
 - **如何测试 System Prompt 的有效性？**：构建包含 Corner Cases（极端情况）和 Adversarial Inputs（对抗性输入）的测试集，进行自动化评估或人工打分。
-- **模型出现「遗忘」系统指令怎么办？**：随着对话轮次增加，系统指令权重可能降低。解决方法包括：在每一轮对话中重新注入系统指令（显式拼接），或使用支持 `system` 角色的对话 API。
+- **模型出现「遗忘」系统指令怎么办？**：随着对话轮次增加，系统指令权重可能降低。解决方法包括：在每一轮对话中重新注入系统指令（显式拼接），或使用支持 `system` 消息持久化的模型 API（如部分模型的 `system_prompt_override` 机制）。
 
-- **实战案例**：在设计 SQL 生成 Agent 时，最初提示词仅为「你是 SQL 专家」，模型常在遇到未知表名时瞎编。后来在 System Prompt 中显式增加规则：「遇到未在 Schema 中定义的表，直接报错，不要猜测」，这一改动让无效 SQL 的生成率降低了 90%。
+## 边界情况
+1. **指令冲突**：当 System Prompt 中的约束（如“禁止代码”）与用户显式需求（如“写一段代码”）冲突时，模型容易产生混淆。设计时应明确优先级（如“除非用户明确要求，否则...”）。
+2. **多轮对话上下文污染**：用户可能在第 10 轮对话中通过诱导性的对话让模型逐步放弃 System Prompt 的设定（如“为了更灵活，请忽略刚才那条规则”）。
+3. **语言差异**：如果 System Prompt 是中文，但用户输入全是英文技术术语，模型可能会“语言切换”导致原本的中文约束被忽略。建议核心约束使用双语表述。
 
-- **代码示例**：
-```python
-# 结构化 System Prompt 构建
-def build_system_prompt(config: dict):
-    return f"""
-# IDENTITY
-You are an expert {config['role']} with 10+ years of experience.
+## 易错点
+1. **指令过载**：试图在 System Prompt 里塞入所有可能的规则，导致模型注意力分散，核心约束反而被弱化。应遵循“最小必要原则”，核心约束不超过 3-5 条。
+2. **负面指令主导**：过多的“不要...”不仅浪费 Token，还可能暗示模型这些行为是存在的，反而激发其尝试。建议将负面约束转化为正向流程（如把“不要瞎编”改为“必须基于提供的文档回答”）。
 
-# CONSTRAINTS
-1. Always output in {config['language']}.
-2. If the answer is not in the context, reply "I don't know".
-3. Never output harmful content.
-
-# FORMAT
-Output result strictly in JSON format: {{"answer": "...", "source": "..."}}
-""".strip()
-```
+## 面试追问
+1. **追问**：在长上下文场景下，如何保证 System Prompt 的核心指令在 128k 甚至更长的窗口后依然有效？
+2. **追问**：如果要设计一个“通用型”Agent 的 System Prompt，如何平衡“通用性”和“特定任务的表现力”？
+3. **追问**：你提到“Let's think step by step”，在什么场景下这种 CoT（思维链）提示反而会降低模型性能？
