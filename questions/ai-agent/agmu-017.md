@@ -73,41 +73,34 @@ def run_eval_with_guard(agent_step, max_steps=10):
 - **Tracing**：必须使用分布式追踪（如 LangSmith, Arize），可视化每一步的 Token 消耗和中间状态。
 - **Golden Set**：构建高质量的标准问题集，覆盖常见路径和边界情况。
 - **Hallucination Rate**：专门检测 Agent 是否虚构了工具或参数。
+- **Cost-aware Evaluation**：不仅评估结果对错，还要评估达成结果的路径是否最经济（如避免不必要的工具调用）。
 
 **增强后的代码逻辑（去重与熔断）**：
 ```python
 from typing import Callable, Any, Set, List
 import hashlib
 
-def run_with_guard(
-    agent_step: Callable[[List[str]], str], 
-    user_goal: str, 
-    max_steps: int = 20,
-    state_window: int = 5  # 防止周期性循环的窗口大小
-):
-    transcript: List[str] = []
-    # 使用固定大小的列表作为滑动窗口，避免内存无限增长
-    seen_hashes: Set[str] = set()
-    history_buffer: List[str] = []
+def run_with_timeout_and_loop_check(step_func: Callable, max_steps: int = 20) -> Any:
+    history: Set[str] = set()
+    for _ in range(max_steps):
+        result = step_func()
+        # 指纹计算：只取关键字段或哈希，避免内容微变导致判空失败
+        state_sig = hashlib.md5(str(result).encode()).hexdigest()
+        
+        if state_sig in history:
+            raise RuntimeError("Agent陷入了状态循环")
+        history.add(state_sig)
+        
+        if result.get("done", False):
+            return result
+    raise TimeoutError("超过最大评估步数")
+```
 
-    for step in range(max_steps):
-        # 构造上下文，包含历史记录
-        current_context = transcript + [f"GOAL: {user_goal}"]
-        
-        # 执行 Agent 步骤
-        action = agent_step(current_context)
-        
-        # 生成状态哈希 (仅对 Action 进行哈希，忽略 Context 变化)
-        # 增加步骤索引防止不同步骤相同内容被误判
-        action_hash = hashlib.md5(action.strip().encode()).hexdigest()
-        
-        # 检查是否在窗口内重复
-        if action_hash in seen_hashes:
-            raise RuntimeError(f"Detected repeated action at step {step}; aborting. Action: {action}")
-        
-        seen_hashes.add(action_hash)
-        transcript.append(action)
-        
-        # 简单的终止条件检测
-        if "<DONE>" in action:
-            break
+## 易错点
+1. **过度依赖 LLM-as-Judge**：认为 GPT-4 的打分就是绝对真理。实际上对于特定领域的逻辑（如数学计算、代码语法），传统的规则测试往往比 LLM 裁判更准且成本更低。
+2. **忽视数据分布偏移**：评估集只覆盖“ happy path”（正常流程），一旦用户输入偏离预期，Agent 表现崩塌。必须引入 Adversarial Examples（对抗样本）进行鲁棒性测试。
+
+## 面试追问
+1. 如果 E2E 评估显示成功率下降，但单元测试都通过了，你会怎么排查？（提示：关注 Agent 间的交互损耗和上下文传递噪声）。
+2. 如何构建高质量的 Golden Set？除了人工标注，有没有自动化生成并清洗测试数据的方法？
+3. 在资源受限的情况下（如只有 GPT-3.5 可用做裁判），如何保证评估的客观性？

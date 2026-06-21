@@ -83,3 +83,12 @@ def select_few_shot_examples(query, corpus_embeddings, k=3):
     top_indices = np.argsort(scores)[-k:][::-1] 
     return [examples[i] for i in top_indices]
 ```
+
+- **## 易错点**
+1. **混淆Instruction Tuning与ICL**：Instruction Tuning（指令微调）是训练阶段通过更新权重让模型学会遵循指令；而ICL是推理阶段，仅通过上下文示例激发模型能力。不可混为一谈。
+2. **示例的标签泄露**：在构建示例时，如果Input中包含了Label的信息（例如分类任务中输入文本里直接提到了类别词），模型实际上是在做“文本匹配”而非“学习模式”，导致评估虚高。
+
+- **## 面试追问**
+1. 当Context Window长度有限，无法塞入很多示例时，如何在ICL效率和效果间平衡？（可以考虑使用模型压缩或转向Instruction Tuning模型；或者在ICL中使用PEFT如LoRA来微调小模型以替代长示例）
+2. ICL中的“Recitation”现象是什么？模型是否会死记硬背示例？（如果示例列表很长，模型可能会通过注意力机制直接从Context中“复制”答案而不是进行泛化推理，这被称为Recitation，削弱了泛化能力）
+3. 如何利用反向思维进行ICL？（提供输入和错误输出，让模型解释原因并修正，这在纠错类任务中往往比正向示例更有效。）

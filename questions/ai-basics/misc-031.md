@@ -104,8 +104,14 @@ print(result.to_pandas())
    - **Recall** = 标注为相关的文档中，被成功检索到的比例（不漏查）。
 
 2. **Faithfulness 和 Answer Relevancy 评分的原理？**
-   - **Faithfulness**: 将答案拆解为多个陈述，让 LLM 判断每个陈述是否能在 Context 中找到依据。
-   - **Answer Relevancy**: 基于生成的答案反向生成一个问题，计算该问题与原问题的 Embedding 相似度。
+   - **Faithfulness**：将答案拆解为多个原子陈述，逐一判断是否能在Context中找到依据。
+   - **Answer Relevancy**：基于生成的答案反生成一个问题，计算反生成问题与原问题的相似度。
 
-3. **Ragas 评估的缺点是什么？**
-   - 评估本身依赖于 LLM（LLM-as-a-Judge），因此不仅成本高，而且评估结果可能受到 Judge 模型偏见的影响，且速度较慢，不适合实时监控。
+- **## 易错点**
+1. **忽视Ground Truth的必要性**：虽然Ragas支持无Ground Truth评估（如Context Recall），但在严格的生产验收中，没有Ground Truth很难准确衡量“漏检”情况。
+2. **评估模型的偏见**：用LLM（如GPT-4）作为评估者时，评估结果可能会受到评估模型自身偏好或知识的影响（例如，如果答案超出了评估模型的认知范围，即使符合事实，Faithfulness也可能被误判为低）。
+
+- **## 面试追问**
+1. 在没有Ground Truth的情况下，如何计算Context Recall？（Ragas使用一种基于“上下文充分性”的启发式方法，让LLM判断Context是否足够回答问题，但这不是标准的Recall；或者利用LLM生成参考答案来模拟GT）
+2. 如果RAG系统的上下文窗口有限，导致Context被截断，会主要影响哪个指标？（主要影响Context Recall，因为相关文档可能被截断；同时也可能影响Faithfulness，因为依据缺失导致模型被迫幻觉）
+3. 除了Ragas，如何进行端到端的用户满意度评估？（引入人工反馈RLHF，或根据用户点击率、点赞率等隐性指标构建Human Preference Metrics）

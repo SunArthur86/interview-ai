@@ -44,7 +44,7 @@ feynman:
                                    ▼               │
                           ┌──────────────────┐      │
                           │   最终用户响应    │      │
-                          └──────────────────┘      │
+                          └────────┬─────────┘      │
                                    │               │
                                    ▼               │
                           ┌──────────────────┐      │
@@ -69,21 +69,22 @@ def human_in_the_loop_agent(agent_result, confidence_threshold=0.8):
         human_feedback = wait_for_review(review_id, timeout=300) # 5min超时
         
         if human_feedback.approved:
-            log_to_dataset(agent_result, human_feedback) # 存入训练集
+            log_to_dataset(agent_result, human_feedback.corrected_content) # 写入数据集
             return human_feedback.corrected_content
         else:
-            return "Request rejected due to safety concerns."
+            return "Content rejected due to policy violation."
 ```
 
-**人机交互模式对比**：
+**关键细节补充**：
+- **置信度校准**：模型的 Logits 往往不是真实的置信度，需通过温度缩放或 Platt Scaling 进行校准，否则容易频繁误报或漏报风险。
+- **Fallback 机制**：若人工审核超时（如无人值守），系统必须具备安全的降级策略（如拒绝执行或回复兜底话术），而不是无限挂起。
+- **审核界面优化**：人工审核 UI 应高亮显示 Agent 的不确定来源（如引用的文档片段），加速人类判断。
 
-| 模式 | 交互方式 | 延迟 | 典型应用场景 | 实时性要求 |
-| :--- | :--- | :--- | :--- | :--- |
-| **Active** | 系统生成请求人审 | 高 (分钟级) | 代码生成、高风险交易 | 低 ( correctness > speed ) |
-| **Interactive** | 人机协作，边聊边做 | 中 | 创意写作、数据清洗 | 中 |
-| **Passive** | 全自动，事后审计 | 极低 | 客服 QA、简单问答 | 高 ( speed > perfection ) |
+## 易错点
+1. **置信度幻觉**：模型可能对错误的回答给出极高的自信度。单纯依赖分数是不够的，必须结合“自我一致性检查”（多次采样看结果是否一致）来辅助判断。
+2. **反馈循环偏差**：人类修正后的数据如果直接用于微调，可能会引入人类的偏好偏差，导致模型过度拟合特定审核人员的风格。需进行数据清洗和去偏。
 
-## 常见考点
-1. **人机协作的延迟问题**：如何平衡安全性与实时性？（如设置超时自动降级策略）。
-2. **反馈循环**：如何将人工修正有效地转化为训练数据？（区分格式修正与逻辑修正）。
-3. **场景界定**：哪些场景必须强制人机在环？（如自动驾驶的接管权、法律合规性审查）。
+## 面试追问
+1. 如果人工审核积压严重，导致大量任务排队，你会如何设计优先级调度算法来平衡效率和风险？
+2. 如何量化“人机在环”带来的收益？即如何证明增加人工步骤比纯自动化更好？
+3. 在用户端体验上，如何优雅地处理“转人工”的过渡，不让用户感到系统正在“卡顿”或“由于错误而中断”？

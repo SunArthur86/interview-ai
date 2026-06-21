@@ -73,32 +73,16 @@ follow_up:
 - **RAG**：适用于数据量大但更新快、事实性要求高、需要引用溯源的场景。需关注检索延迟和切片质量。
 - **Prompt**：适用于数据量少、逻辑简单、只需控制输出格式或使用Few-shot的场景。受上下文窗口长度限制。
 
+- **边界情况补充:**
+  - **高频实时查询**: 如果系统需要每秒处理数千次查询且要求极低延迟（如高频交易辅助），RAG中的向量检索步骤可能成为瓶颈，此时倾向于CPT（知识内化）。
+  - **多模态数据**: RAG在处理图像、音频等多模态检索时，Embedding的匹配难度远高于文本，此时Prompt（如输入图片URL）可能是更优解。
+  - **上下文窗口限制**: 当RAG检索到的文档总长度超过模型的Context Window（如超过128k），必须引入重排序或压缩算法，否则会截断关键信息。
+
 - **实战案例:**
 在构建企业知识库助手时，仅使用RAG导致模型对内部黑话（如“蓝屏”指代特定业务故障）理解偏差。通过CPT注入1万条内部工单对话，模型对特定术语的理解准确率提升了25%。
 
 - **代码示例:**
 ```python
 # 简易RAG检索与Prompt构建逻辑
-def rag_query(user_question, vector_db, llm):
-    # 1. 检索相关文档
-    docs = vector_db.search(user_question, top_k=3)
-    context = "\n".join([d.content for d in docs])
-    
-    # 2. 构建带领域指令的Prompt
-    system_prompt = "你是一个资深技术支持工程师。请基于以下已知信息回答问题，如果在已知信息中找不到答案，请回答'不知道'。"
-    
-    prompt = f"""{system_prompt}
-    
-    参考信息:
-    {context}
-    
-    用户问题: {user_question}
-    """
-    
-    return llm.generate(prompt)
+def r
 ```
-
-## 常见考点
-1. **灾难性遗忘**：在做CPT注入领域知识时，模型可能会遗忘通用能力，如何缓解？（通常采用混合通用数据训练或参数高效微调PEFT如LoRA）。
-2. **RAG检索召回率**：如果检索到的文档不相关或噪音太大怎么办？（涉及重排序Rerank、混合检索Hybrid Search、查询改写Query Rewriting等技术）。
-3. **RAG与微调的权衡**：为什么有了RAG还需要SFT？（SFT让模型学会"如何利用检索到的上下文"并适应领域特定的说话风格）。

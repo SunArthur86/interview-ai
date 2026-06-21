@@ -59,7 +59,7 @@ User Query ──> Embedding Model ──> 向量库
 
 **1. 实战案例**：在客服问答场景中，用户问“如何退款”，向量库可能同时召回“退款流程”和“不支持退款说明”的片段。若“不支持退款”的向量距离更近（仅因为词频高），直接传给 LLM 会导致回答错误。接入 Reranker 后，模型能捕捉“退款流程”与意图的强匹配，将其排在首位，避免误导用户。
 
-**2. 代码示例 (Python)**：
+**2. 代码示例**：
 ```python
 from FlagEmbedding import FlagReranker
 reranker = FlagReranker('BAAI/bge-reranker-v2-m3', use_fp16=True)
@@ -76,10 +76,23 @@ scores = reranker.compute_score(pairs)
 sorted_docs = [doc for _, doc in sorted(zip(scores, candidates), reverse=True)]
 ```
 
+### 边界情况与极端场景
+1.  **空输入处理**：当检索阶段未召回任何文档（Top-0）时，Rerank 模块需具备“空转”能力，避免抛出异常，系统应能优雅降级为直接回答或拒绝回答。
+2.  **超长文档截断**：Reranker 模型通常有最大 Token 限制（如 512）。若召回的单个文档过长，需设计截断策略（如仅截取头尾或 sliding window），防止信息丢失或报错。
+3.  **跨语言 Rerank**：在多语言 RAG 场景中，若 Query 是中文而 Doc 是英文，需确认所选 Reranker 模型（如 BGE-M3）支持跨语言语义对齐，否则可能打出错误的低分。
+
 ## 常见考点
 1.  **Rerank 会对 RAG 系统的延迟产生多大影响？**
     通常 Rerank 仅处理前 50-100 个文档，增加的延迟在几百毫秒级（取决于模型大小），相比 LLM 生成的时间（秒级）通常是可以接受的。
 2.  **向量检索效果已经很差了，Rerank 能救回来吗？**
-    不能。Rerank 只能从召回的集合中挑选最好的，如果相关信息根本没被召回，Rerank 也无能为力。它负责“锦上添花”，不负责“无中生有”。
-3.  **除了提升准确度，Rerank 还有其他作用吗？**
-    有的。Rerank 模型可以输出分数，我们可以设定阈值，低于阈值的 Context 不送给 LLM，从而过滤掉噪声，减少幻觉。
+    不能。Rerank 只能从召回的集合中挑选最好的，如果正确答案没在 Top-K 召回集中（Recall 低），Rerank 无能为力。它是“锦上添花”，不是“雪中送炭”。
+
+## 易错点
+1.  **过度重排**：对召回数量（如 Top-1000）进行全量 Rerank 会导致响应时间不可控，通常建议 Rerank 的输入截断在 50-100 之间。
+2.  **忽视截断策略**：直接将超长文本扔给 Reranker 会导致截断核心内容（如截断把结论截没了），应在入库时做好分块，或在 Rerank 前进行智能摘要。
+
+## 面试追问
+1.  如果用户 Query 非常简短（如“苹果”），而 Reranker 模型因为没有上下文导致打分置信度普遍不高，你会怎么优化检索链路？（提示：结合 Query Expansion 或 HyDE）
+2.  在高并发场景下，Reranker 模型是 CPU 计算密集型，你会如何做推理加速或架构优化？（提示：量化 int8、批处理、独立 GPU 服务部署）
+3.  除了精度，Reranker 在处理“否定意图”时有什么天然优势？能否举例说明？
+

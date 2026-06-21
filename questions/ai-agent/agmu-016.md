@@ -46,7 +46,7 @@ feynman:
 ```
 
 **实战案例**：
-在电商系统重构中，后端 Agent 将 `userId` 改为 `user_id`（蛇形），但前端 Agent 坚持用驼峰 `userId`。通过引入 Schema 强制校验，QA Agent 自动拦截了联调失败，并要求后端 Agent 保持与 OpenAPI 定义一致，避免了上线后大量 400 报错。
+在电商系统重构中，后端 Agent 将 `userId` 改为 `user_id`（蛇形），但前端 Agent 坚持用驼峰 `userId`。通过引入 Schema 强制校验，QA Agent 自动拦截了联调失败，并要求后端 Agent保持与 OpenAPI 定义一致，避免了上线后大量 400 报错。
 
 **代码示例**：
 ```python
@@ -77,7 +77,13 @@ frontend_data = UserSchema(**mock_api_resp).model_dump(by_alias=False) # Standar
 **关键细节补充**：
 - **全局 Memory**：确保所有 Agent 共享一部分长期记忆，专门存放变量定义、接口文档等元数据。
 - **Reflexion 模式**：当 QA Agent 发现不一致时，反馈具体错误信息给对应的 Agent，要求其自我修正（Self-Reflexion），而不是直接重置。
+- **版本控制**：接口 Schema 必须版本化（如 v1, v2），防止 Agent 在迭代过程中引用旧定义导致的不一致。
 
-## 常见考点
-1. **Schema 漂移**：如果需求变更，如何更新 Schema？（答：需有一个「架构师 Agent」负责更新 Schema，并广播通知其他 Agent）。
-2. **上下文限制**：如何把巨大的 API Spec 放入 Context？（答：使用 RAG 检索相关接口，或动态注入 Prompt）。
+## 易错点
+1. **Schema 漂移**：认为 Schema 生成一次就永久有效，忽略了业务变更。必须引入「架构师 Agent」负责维护 Schema 的生命周期，处理变更通知。
+2. **Prompt 截断**：将巨大的 OpenAPI 文档直接塞进 Prompt 容易导致截断。应采用 RAG（检索增强生成），只将与当前任务相关的接口定义注入给 Agent。
+
+## 面试追问
+1. 如果业务需求变更导致 Schema 必须修改，如何协调所有正在运行的 Agent 平滑切换到新版本，而不破坏现有任务？
+2. 在极端情况下，两个 Agent 各执一词（前端认为 A 对，后端认为 B 对），仲裁机制如何设计？是引入“架构师 Agent”还是基于规则？
+3. 对于复杂的嵌套对象，JSON Schema 可能会非常长，如何优化 Token 消耗？
