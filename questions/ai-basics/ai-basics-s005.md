@@ -13,6 +13,11 @@ feynman:
   - QK相似度决定权重，加权聚合V得到输出
   - 解决了RNN无法并行和长距离遗忘的问题
   - 是Transformer架构的核心组件
+memory_points:
+- 核心公式：Softmax(QK^T / √d_k) · V，除以√d_k是为了防止梯度饱和。
+- Q/K/V含义：Query查，Key被匹配，Value是实际内容。
+- NLP优势：解决长距离依赖（O(1)距离），支持并行计算，可解释性强。
+- 多头机制：不同头关注不同子空间（如语法、语义），增强表达。
 ---
 
 # 什么是注意力机制？为什么在NLP中有效？
@@ -101,3 +106,11 @@ def scaled_dot_product_attention(query, key, value, mask=None):
 1. **为什么要除以 √d_k？**（答：防止点积过大导致Softmax梯度消失，起到调节方差的作用）
 2. **Self-Attention的时间复杂度是多少？**（答：O(N²·d)，主要来自QKᵀ矩阵乘法；N是序列长度）
 3. **如何降低Attention的计算复杂度？**（答：Sparse Attention, FlashAttention, Linear Attention等优化手段）
+
+## 记忆要点
+
+- 核心公式：Softmax(QK^T / √d_k) · V，除以√d_k是为了防止梯度饱和。
+- Q/K/V含义：Query查，Key被匹配，Value是实际内容。
+- NLP优势：解决长距离依赖（O(1)距离），支持并行计算，可解释性强。
+- 多头机制：不同头关注不同子空间（如语法、语义），增强表达。
+

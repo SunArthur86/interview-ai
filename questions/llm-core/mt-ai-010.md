@@ -26,6 +26,11 @@ follow_up:
 - AI 编程会不会取代程序员？—— 不会，但会用 AI 的取代不会用的
 - 怎么控制 AI 编程的质量？—— 小步迭代 + 代码审查 + 自动化测试
 - Token 成本怎么优化？—— 精准描述需求、减少不必要的上下文、用便宜模型做简单任务
+memory_points:
+- Cursor核心是Agent闭环(Composer模式)：主导0到1搭脚手架与多文件重构
+- Windsurf核心是流式推导(Cascade模式)：类似CoT，擅长复杂逻辑梳理与代码审查
+- Cursor胜在@Codebase语义检索与生态，Windsurf胜在IDE原生集成与无感交互
+- 实战避坑：大型Monorepo防索引过慢，大模型重构防Token消耗与幻觉修改
 ---
 
 # 【美团面经】使用 Cursor、Windsurf 的使用场景和使用情况如何？
@@ -98,3 +103,11 @@ follow_up:
 3. Follow the existing folder structure: /src/modules/{module_name}.
 4. Do not use 'any'; use 'unknown' if type is uncertain.
 ```
+
+## 记忆要点
+
+- Cursor核心是Agent闭环(Composer模式)：主导0到1搭脚手架与多文件重构
+- Windsurf核心是流式推导(Cascade模式)：类似CoT，擅长复杂逻辑梳理与代码审查
+- Cursor胜在@Codebase语义检索与生态，Windsurf胜在IDE原生集成与无感交互
+- 实战避坑：大型Monorepo防索引过慢，大模型重构防Token消耗与幻觉修改
+

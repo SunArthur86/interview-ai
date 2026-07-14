@@ -14,6 +14,12 @@ feynman:
   - Continuous Batching让变长请求在同批次高效流转
   - 支持张量并行等分布式推理技术
   - 引入前缀缓存和投机采样进一步加速
+memory_points:
+- PagedAttention：KV Cache 分块管理，消除显存碎片，利用率从 60% 提至 96%。
+- Continuous Batching：请求动态进出 Batch，无需等最长请求结束，吞吐大幅提升。
+- 核心优势：结合两者，比 HuggingFace 快 14-24 倍，显存利用率接近极致。
+- 关键配置：Block Size 通常设 16，Prefix Caching 可复用 System Prompt KV。
+- 适用场景：高并发在线服务首选，单任务微调场景优势不明显。
 ---
 
 # vLLM的核心优化技术有哪些？
@@ -80,3 +86,12 @@ outputs = llm.generate(["Hello, my name is", "The future of AI is"], sampling_pa
    - Orca 是 Continuous Batching 的一种早期实现，vLLM 结合 PagedAttention 进一步提升了显存管理效率。
 3. **vLLM 如何处理 Prefix Caching 的失效？**
    - 引用计数管理，当所有引用该 Prefix 的请求结束后，释放对应的物理 Block。
+
+## 记忆要点
+
+- PagedAttention：KV Cache 分块管理，消除显存碎片，利用率从 60% 提至 96%。
+- Continuous Batching：请求动态进出 Batch，无需等最长请求结束，吞吐大幅提升。
+- 核心优势：结合两者，比 HuggingFace 快 14-24 倍，显存利用率接近极致。
+- 关键配置：Block Size 通常设 16，Prefix Caching 可复用 System Prompt KV。
+- 适用场景：高并发在线服务首选，单任务微调场景优势不明显。
+

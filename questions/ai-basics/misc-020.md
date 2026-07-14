@@ -17,6 +17,11 @@ feynman:
 follow_up:
 - PagedAttention如何处理变长序列?
 - Prefix Caching在什么场景下效果最好?
+memory_points:
+- PagedAttention：KV Cache分块存储，消除显存碎片，利用率升至96%
+- Continuous Batching：动态调度请求，移除暂停/完成并插入新任务
+- Prefix Caching：复用System Prompt等前缀计算，降低首字延迟
+- 效果：相比HuggingFace吞吐量提升10倍（50 vs 5 tok/s）
 ---
 
 # vLLM的核心技术创新是什么?为什么比HuggingFace推理快10倍
@@ -99,3 +104,11 @@ def init_llm_engine():
   1. vLLM的PagedAttention是如何处理多模态输入（如Vision Transformer的Feature Map）的KV Cache形状差异的？
   2. 在极高并发下，vLLM的Scheduler调度开销是否会成为新的瓶颈？如果是，有哪些优化思路（如分离CUDA Graph）？
   3. 相比于TGI（Text Generation Inference），vLLM的迭代级调度在处理长尾延迟请求时有何不同？
+
+## 记忆要点
+
+- PagedAttention：KV Cache分块存储，消除显存碎片，利用率升至96%
+- Continuous Batching：动态调度请求，移除暂停/完成并插入新任务
+- Prefix Caching：复用System Prompt等前缀计算，降低首字延迟
+- 效果：相比HuggingFace吞吐量提升10倍（50 vs 5 tok/s）
+

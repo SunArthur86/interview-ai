@@ -16,6 +16,11 @@ feynman:
 follow_up:
 - Beam Search为什么在开放对话中效果不好?
 - do_sample=True和False的区别?
+memory_points:
+- Greedy快但易陷入重复，Beam Search稳但易生成平庸废话，适合翻译/摘要。
+- Contrastive Search结合概率与退化惩罚，解决重复问题，适合长文本/RAG，参数alpha通常0.5-0.7。
+- Nucleus Sampling (Top-p) 随机采样，多样性高，适合创意写作，但可能产生幻觉。
+- 决策口诀：事实问答用Contrastive，创意对话用Nucleus，机器翻译用Beam。
 ---
 
 # 对比常见解码策略:Greedy/Beam Search/Contrastive Search各自的优缺点
@@ -89,3 +94,11 @@ output = model.generate(
 1. **为何 Beam Search 在人类评估中常不如 Sampling？**（因为 Beam Search 倾向于保守、高概率但“无聊”的文本）
 2. **Contrastive Search 中 $\alpha$ 参数的作用**？($\alpha$ 过大导致不连贯，过小导致重复)
 3. **Temperature 参数的影响**？（Temperature > 1 平滑概率分布增加随机性，< 1 尖锐分布使其更确定，接近0即变为Greedy）
+
+## 记忆要点
+
+- Greedy快但易陷入重复，Beam Search稳但易生成平庸废话，适合翻译/摘要。
+- Contrastive Search结合概率与退化惩罚，解决重复问题，适合长文本/RAG，参数alpha通常0.5-0.7。
+- Nucleus Sampling (Top-p) 随机采样，多样性高，适合创意写作，但可能产生幻觉。
+- 决策口诀：事实问答用Contrastive，创意对话用Nucleus，机器翻译用Beam。
+

@@ -14,6 +14,11 @@ feynman:
 follow_up:
 - Cross-Encoder为什么精度更高?
 - 如何训练自定义Reranker?
+memory_points:
+- Reranker用于召回后的精排，提升Top-K质量，弥补向量检索语义理解不足。
+- Bi-Encoder独立编码速度快，用于召回；Cross-Encoder拼接交互精度高，用于重排。
+- 流程：Bi-Encoder召回Top-50 -> Cross-Encoder精排Top-5。
+- 代价：Cross-Encoder无法缓存向量，计算开销大，仅处理少量候选。
 ---
 
 # RAG中为什么需要Reranker?Cross-Encoder和Bi-Encoder有什么区别
@@ -99,3 +104,11 @@ docs = [doc for _, doc in sorted(zip(scores, docs), key=lambda x: x[0], reverse=
 
 3. **如何处理Reranker的长文本限制？**
    - 切片处理或只截取关键部分（如标题和首段）。部分模型（如BGE-large）支持更长的上下文窗口。
+
+## 记忆要点
+
+- Reranker用于召回后的精排，提升Top-K质量，弥补向量检索语义理解不足。
+- Bi-Encoder独立编码速度快，用于召回；Cross-Encoder拼接交互精度高，用于重排。
+- 流程：Bi-Encoder召回Top-50 -> Cross-Encoder精排Top-5。
+- 代价：Cross-Encoder无法缓存向量，计算开销大，仅处理少量候选。
+

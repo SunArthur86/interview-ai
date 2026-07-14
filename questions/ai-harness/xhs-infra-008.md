@@ -22,6 +22,10 @@ follow_up:
 - 模型路由器如何决策用大模型还是小模型？
 - KV Cache在多轮对话中如何管理？
 - 推荐场景的冷启动如何用LLM优化？
+memory_points:
+- 负载均衡：L7按内容/用户画像路由，长文本去高显存节点。会话亲和命中KV Cache。
+- 调度优化：Continuous Batching动态剔除Padding。Prefill(算力)与Decode(带宽)分离调度。
+- 成本优化：异构GPU池(A100算力/L40S带宽)。投机采样用小模型加速。前缀缓存共享Prompt。
 ---
 
 # 设计一个支持百万QPS的大模型Serving系统（结合推荐场景）。如何做负载均衡和成本优化？
@@ -114,3 +118,10 @@ Please rank the candidates by relevance to the query. Return only the sorted IDs
 | **调度能力** | Continuous Batching (非常成熟) | Continuous Batching (较好) | In-flight Batching (高性能) |
 | **部署难度** | 低 (Python 为主) | 中 (容器化) | 高 (需编译 TensorRT 引擎) |
 | **成本效益** | 高 (显存利用率高) | 中 | 极高 (吞吐量大，但开发维护成本高) |
+
+## 记忆要点
+
+- 负载均衡：L7按内容/用户画像路由，长文本去高显存节点。会话亲和命中KV Cache。
+- 调度优化：Continuous Batching动态剔除Padding。Prefill(算力)与Decode(带宽)分离调度。
+- 成本优化：异构GPU池(A100算力/L40S带宽)。投机采样用小模型加速。前缀缓存共享Prompt。
+

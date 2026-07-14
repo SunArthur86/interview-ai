@@ -12,6 +12,10 @@ feynman:
   - 价值：结构可见可复用
   - 简化：降低Prompt负担
   - 局限：权限边界需手动把控
+memory_points:
+- Crew 抽象角色分工与任务依赖，降低 Prompt 心智负担。
+- 支持 Sequential 顺序流和 Hierarchical 层级管理。
+- Task 输出自动作为下个 Task 输入，实现上下文传递。
 ---
 
 # CrewAI 的「Crew」抽象解决什么问题
@@ -78,3 +82,10 @@ result = crew.kickoff()
 1. **进程模式**：`Sequential` 和 `Hierarchical` 的适用场景？（答：简单流水线用 Sequential，需要动态调度或复杂分解用 Hierarchical）。
 2. **内存共享**：不同 Agent 之间如何共享上下文？（答：主要通过 Task 的输出作为下一个 Task 的输入，或者共享短期记忆）。
 3. **执行机制**：CrewAI 是并行的吗？（答：默认 Sequential 是串行的，Hierarchical 中 Manager 可以并发派发，但需注意 LLM API 调用的并发限制）。
+
+## 记忆要点
+
+- Crew 抽象角色分工与任务依赖，降低 Prompt 心智负担。
+- 支持 Sequential 顺序流和 Hierarchical 层级管理。
+- Task 输出自动作为下个 Task 输入，实现上下文传递。
+

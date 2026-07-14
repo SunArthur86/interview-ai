@@ -24,6 +24,11 @@ follow_up:
 - NTK-aware 和 YaRN 的区别？—— NTK 统一缩放所有维度，YaRN 分频段处理
 - 长度外推会损失质量吗？—— 会，特别是长序列的精确召回任务（如 needle-in-haystack）
 - 为什么不直接训练更长的序列？—— 训练成本随序列长度平方增长（Attention 复杂度）
+memory_points:
+- 演进口诀：初代非线插、二代上YaRN、2.5暴力练全长
+- 因为高频保局部细节不缩放，低频管全局结构做拉伸，所以YaRN成外推首选
+- Qwen2靠YaRN+DCA辅切分外推128K，Qwen2.5直接原生喂入真实长文数据
+- 实战配置：transformers中rope_scaling参数指定yarn及factor缩放倍数
 ---
 
 # 【美团面经】Qwen 是怎么做长度外推的？
@@ -84,3 +89,11 @@ model = AutoModelForCausalLM.from_pretrained(
 | **短文本性能** | 有一定退化 | 几乎无退化 (保留高频分辨率) | 最优 (原生长度) |
 | **资源消耗** | 低 (推理时配置) | 低 | 高 (需更多显存和算力) |
 | **适用场景** | 快速验证、资源受限 | 生产环境外推首选 (Qwen2/GPT-4) | 追求极致长文效果 (Qwen2.5) |
+
+## 记忆要点
+
+- 演进口诀：初代非线插、二代上YaRN、2.5暴力练全长
+- 因为高频保局部细节不缩放，低频管全局结构做拉伸，所以YaRN成外推首选
+- Qwen2靠YaRN+DCA辅切分外推128K，Qwen2.5直接原生喂入真实长文数据
+- 实战配置：transformers中rope_scaling参数指定yarn及factor缩放倍数
+

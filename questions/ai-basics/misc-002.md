@@ -18,6 +18,11 @@ feynman:
   - 是目前大模型主流的位置编码方式
 follow_up:
 - RoPE如何实现长度外推(NTK-aware/YaRN/Dynamic Scaling)?
+memory_points:
+- 主流方案：Sinusoidal（绝对）、Learned（绝对）、RoPE（相对，主流）。
+- RoPE原理：通过旋转矩阵将位置信息注入Q和K，内积自然包含相对位置。
+- RoPE优势：相对位置感知，长度外推能力强（训练4K可推理32K+），计算高效。
+- 实战：长文本推理常用NTK-aware Scaling而非简单插值，以保持注意力衰减特性。
 ---
 
 # 主流大模型使用的位置编码有哪些?RoPE的原理和优势是什么
@@ -85,3 +90,11 @@ def precompute_freqs_cis(dim: int, end: int, theta: float = 10000.0):
 2. **实现细节**：旋转操作是在 Attention 之前还是之后？(通常在 Q/K 计算出来之后，进行点乘之前)。
 3. **多维处理**：RoPE 如何应用到高维向量？(两两分组旋转，即 head_dim/2 次旋转)。
 4. **对比 ALiBi**：RoPE (加法在复数域/旋转) vs ALiBi (直接在 Attention Score 减去偏置) 的优劣。
+
+## 记忆要点
+
+- 主流方案：Sinusoidal（绝对）、Learned（绝对）、RoPE（相对，主流）。
+- RoPE原理：通过旋转矩阵将位置信息注入Q和K，内积自然包含相对位置。
+- RoPE优势：相对位置感知，长度外推能力强（训练4K可推理32K+），计算高效。
+- 实战：长文本推理常用NTK-aware Scaling而非简单插值，以保持注意力衰减特性。
+

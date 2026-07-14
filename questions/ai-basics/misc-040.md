@@ -17,6 +17,12 @@ feynman:
 follow_up:
 - Latent Diffusion为什么比像素空间扩散快?
 - DALL-E 3和Stable Diffusion有什么区别?
+memory_points:
+- 前向过程：逐步加高斯噪声直至纯噪声，公式含重参数化技巧
+- 反向过程：训练U-Net预测噪声，从纯噪声逐步去噪恢复图像
+- U-Net核心：全卷积结构、跳跃连接（补充高频细节）、Cross-Attention注入文本条件
+- Stable Diffusion改进：在VAE压缩的潜空间做扩散，大幅降低计算量
+- 时间步注入：通过AdaLN将时间t嵌入网络，告知当前噪声水平
 ---
 
 # 扩散模型(Diffusion)的前向和反向过程是什么?为什么U-Net是核心架构
@@ -104,3 +110,12 @@ image = pipe(
 ).images[0]
 image.save("cyberpunk.png")
 ```
+
+## 记忆要点
+
+- 前向过程：逐步加高斯噪声直至纯噪声，公式含重参数化技巧
+- 反向过程：训练U-Net预测噪声，从纯噪声逐步去噪恢复图像
+- U-Net核心：全卷积结构、跳跃连接（补充高频细节）、Cross-Attention注入文本条件
+- Stable Diffusion改进：在VAE压缩的潜空间做扩散，大幅降低计算量
+- 时间步注入：通过AdaLN将时间t嵌入网络，告知当前噪声水平
+

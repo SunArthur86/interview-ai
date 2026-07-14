@@ -24,6 +24,11 @@ follow_up:
 - Top-K 和 Top-P 怎么选？—— Top-P 更自适应，通常优先
 - 为什么 Temperature=0 时结果不一定完全一致？—— 浮点精度 + batch padding 影响
 - Speculative Decoding 怎么加速？—— 小模型快速生成候选，大模型批量验证
+memory_points:
+- 两大流派：Greedy/Beam重确定易重复，Top-K/Top-P重多样防尾巴
+- 因为T控制整体随机性，所以T越低越确定(代码T<0.3)，T越高越发散(创意T>0.7)
+- Top-P核基选：动态截断累积概率(常设0.9)，比Top-K固定截断更自然
+- 进阶加速：投机采样用小模型草拟+大模型验证，实现2-3倍无损加速
 ---
 
 # 【美团面经】了解大模型的解码策略吗？简要说一说
@@ -121,3 +126,11 @@ def top_k_top_p_filtering(logits, top_k=0, top_p=0.0, filter_value=-float('Inf')
 | **Top-K Sampling** | 创意写作 | K 较小时会切断有效低概率词 | K=40~50 |
 | **Top-P (Nucleus)** | 通用对话 (推荐) | 概率分布极平时可能截断过多 | P=0.9, T=0.7 |
 | **Contrastive Search** | 长文本生成 | 实现稍复杂，需调节 deg_penalty | penalty=0.5~1.0 |
+
+## 记忆要点
+
+- 两大流派：Greedy/Beam重确定易重复，Top-K/Top-P重多样防尾巴
+- 因为T控制整体随机性，所以T越低越确定(代码T<0.3)，T越高越发散(创意T>0.7)
+- Top-P核基选：动态截断累积概率(常设0.9)，比Top-K固定截断更自然
+- 进阶加速：投机采样用小模型草拟+大模型验证，实现2-3倍无损加速
+

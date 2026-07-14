@@ -22,6 +22,11 @@ follow_up:
 - PagedAttention的block大小如何选择？
 - 连续批处理和静态批处理有什么本质区别？
 - Radix Tree如何实现多轮对话前缀复用？
+memory_points:
+- 核心原理：PagedAttention 借鉴 OS 虚拟内存，将 KV Cache 分块管理，消除内存碎片。
+- 关键机制：块表映射逻辑到物理块，非连续存储，内存利用率大幅提升。
+- Continuous Batching：动态加入/退出请求，保持 GPU 高利用率，接近 100%。
+- 效果：吞吐量提升 2-4 倍，显存浪费从 60%+ 降至 <4%，支持长上下文高并发。
 ---
 
 # 为什么vLLM能加快大模型推理速度？PagedAttention的核心原理是什么？
@@ -87,3 +92,11 @@ for output in outputs:
 ## 易错点
 1. **混淆位置**：误以为 PagedAttention 优化的是 Attention 计算本身的数学复杂度。其实它主要优化的是**显存管理效率**，间接允许了更大的 Batch Size，从而提升吞吐。
 2. **忽视 COW 机制**：在修改已存在的 KV Cache（如如 Speculative Decoding 中的验证阶段）时，忽视了 Copy-on-Write 机制，误以为会直接修改原 Block 导致其他请求数据受损。
+
+## 记忆要点
+
+- 核心原理：PagedAttention 借鉴 OS 虚拟内存，将 KV Cache 分块管理，消除内存碎片。
+- 关键机制：块表映射逻辑到物理块，非连续存储，内存利用率大幅提升。
+- Continuous Batching：动态加入/退出请求，保持 GPU 高利用率，接近 100%。
+- 效果：吞吐量提升 2-4 倍，显存浪费从 60%+ 降至 <4%，支持长上下文高并发。
+

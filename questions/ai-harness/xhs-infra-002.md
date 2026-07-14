@@ -21,6 +21,11 @@ follow_up:
 - draft model如何选择？对生成质量有什么影响？
 - 树状投机和传统线性投机有什么区别？
 - Speculative Decoding是否保证无损（lossless）？
+memory_points:
+- 核心流程：小模型快速生成候选，大模型并行验证，接受正确前缀，拒绝处重采样。
+- 加速原理：利用小模型速度快，大模型并行验证只花一次 Forward，期望加速 1.5-2.5x。
+- 高 Batch 优势：验证阶段计算密集，GPU 利用率高，常与 PagedAttention 组合。
+- 关键指标：接受率决定加速比，需确保 Draft Model 与 Target Model 分布对齐。
 ---
 
 # Speculative Decoding（投机解码）的原理是什么？在高batch场景下如何加速推理？
@@ -86,3 +91,11 @@ def speculative_decode(prompt, draft_model, target_model, max_spec_steps=5):
 | **Medusa** | 主模型附加 Heads | 较高 (结构化) | 显存占用低（共享基础层） | 需训练多组 Head，训练成本高 |
 | **Lookahead Decoding** | n-gram 匹配 | 高（简单文本） | 无需额外模型，推理级训练 | 复杂语义场景效果差 |
 | **EAGLE (based Logits)** | 浅层网络特征 | 高 (80%+) | 极高的接受率和速度 | 依赖特定特征的提取，实现复杂 |
+
+## 记忆要点
+
+- 核心流程：小模型快速生成候选，大模型并行验证，接受正确前缀，拒绝处重采样。
+- 加速原理：利用小模型速度快，大模型并行验证只花一次 Forward，期望加速 1.5-2.5x。
+- 高 Batch 优势：验证阶段计算密集，GPU 利用率高，常与 PagedAttention 组合。
+- 关键指标：接受率决定加速比，需确保 Draft Model 与 Target Model 分布对齐。
+

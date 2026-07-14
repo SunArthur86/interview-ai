@@ -23,6 +23,12 @@ follow_up:
 - 如何保持Golden Set的时效性？
 - 标注一致性如何保证？
 - Core Set和Full Set的分配比例如何确定？
+memory_points:
+- 构建流程：来源（线上日志/人工构造/对抗样本）→ 标注（评分细则）→ 分层。
+- 分层设计：Core Set（50条，CI必跑）+ Full Set（500条，发布前）。
+- 评测执行：规则校验（必过）+ LLM-as-Judge（语义评分）+ 语义相似度。
+- CI集成：Pre-merge通过率>95%，Pre-release>90%，下降>5%阻断发布。
+- 对比：Golden Set离线快且无风险，A/B测试在线慢但看真实业务指标。
 ---
 
 # 如何设计AI应用的Golden Set评测系统？构建高质量评测集，保障每次迭代不退化。
@@ -106,3 +112,12 @@ def evaluate_golden_set(model_outputs, golden_data):
    *答案要点*：设置样本的生命周期管理；通过监控线上Query分布，自动识别低频/失效样本并标记待删除；利用LLM自动生成相似问题来扩充或替换过时样本，人工只需复核。
 3. **主观题的评分一致性**：对于开放性问题，如何保证LLM-as-Judge或人工评分的稳定性？
    *答案要点*：细化评分Rubric（细则），将抽象标准转化为具体的检查项；使用CoT（Chain of Thought）让Judge先分析再打分；计算Cohen's Kappa系数监控一致性，低一致性样本需重新对齐标准。
+
+## 记忆要点
+
+- 构建流程：来源（线上日志/人工构造/对抗样本）→ 标注（评分细则）→ 分层。
+- 分层设计：Core Set（50条，CI必跑）+ Full Set（500条，发布前）。
+- 评测执行：规则校验（必过）+ LLM-as-Judge（语义评分）+ 语义相似度。
+- CI集成：Pre-merge通过率>95%，Pre-release>90%，下降>5%阻断发布。
+- 对比：Golden Set离线快且无风险，A/B测试在线慢但看真实业务指标。
+

@@ -22,6 +22,10 @@ follow_up:
 - GQA 的分组数怎么选？—— 通常 h/4 ~ h/8，需要实验验证
 - GQA 训练时和 MHA 有什么区别？—— K/V 投影矩阵更小，其他不变
 - MLA 和 GQA 有什么区别？—— MLA 是低秩压缩（动态恢复），GQA 是离散共享
+memory_points:
+- GQA优势：KV头数减少g倍(如8倍)，显存和带宽压力骤降，质量接近MHA远超MQA。
+- 头数权衡：Q头数h不变，KV头数h/g。通过Repeat扩展KV匹配Q计算。
+- 实战收益：长文本场景显存瓶颈显著缓解，吞吐提升，PPL几乎无损。
 ---
 
 # 【智谱Infra面经】GLM-4 为什么选择 GQA？GQA vs MHA/MQA 的头数/维度权衡？KV Cache 节省多少？
@@ -83,3 +87,10 @@ def gqa_forward(q, k, v, n_rep):
 1. **GQA 在实现上如何做 Split 和 Concat？**（Q 维度不变，K/V 维度减少后通过 Repeat 扩展以匹配 Q 计算）
 2. **GQA 对训练和推理速度的影响是否相同？**（主要收益在推理显存，训练速度收益相对较小，主要受限于 Memory Bound）
 3. **除了减少显存，GQA 对 Attention Kernel 计算还有哪些优化点？**（减少了 HBM 读取 K/V 的次数）
+
+## 记忆要点
+
+- GQA优势：KV头数减少g倍(如8倍)，显存和带宽压力骤降，质量接近MHA远超MQA。
+- 头数权衡：Q头数h不变，KV头数h/g。通过Repeat扩展KV匹配Q计算。
+- 实战收益：长文本场景显存瓶颈显著缓解，吞吐提升，PPL几乎无损。
+

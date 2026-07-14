@@ -12,6 +12,10 @@ feynman:
   - 契约：单一源头（Schema）
   - 校验：契约测试Agent或静态检查
   - 门禁：状态机约束
+memory_points:
+- 多 Agent 独立上下文易导致接口不一致，需单一契约源。
+- 引入 OpenAPI/Schema 作为唯一真理，QA Agent 强校验。
+- 采用 Schema First 或 Reflexion 模式自我修正。
 ---
 
 # 多 Agent 会不会降低「一致性」(同一产品前后端接口对不上)
@@ -87,3 +91,10 @@ frontend_data = UserSchema(**mock_api_resp).model_dump(by_alias=False) # Standar
 1. 如果业务需求变更导致 Schema 必须修改，如何协调所有正在运行的 Agent 平滑切换到新版本，而不破坏现有任务？
 2. 在极端情况下，两个 Agent 各执一词（前端认为 A 对，后端认为 B 对），仲裁机制如何设计？是引入“架构师 Agent”还是基于规则？
 3. 对于复杂的嵌套对象，JSON Schema 可能会非常长，如何优化 Token 消耗？
+
+## 记忆要点
+
+- 多 Agent 独立上下文易导致接口不一致，需单一契约源。
+- 引入 OpenAPI/Schema 作为唯一真理，QA Agent 强校验。
+- 采用 Schema First 或 Reflexion 模式自我修正。
+

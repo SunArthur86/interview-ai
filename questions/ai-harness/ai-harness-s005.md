@@ -14,6 +14,11 @@ feynman:
   - GQA/MQA通过减少KV头数大幅降低显存占用
   - 量化将FP16降至INT8/4，显著节省内存
   - 滑动窗口和Offloading进一步处理长序列低频数据
+memory_points:
+- 核心认知：KV Cache是LLM推理显存大头（占比超80%），优化的本质是省显存提并发。
+- 显存降维打击：GQA/MQA减KV头数，INT8/INT4量化直接减半或削减75%存储。
+- 系统级调度：vLLM的PagedAttention按页分配消灭碎片，Prefix Sharing复用系统提示词。
+- 架构级拓展：Sliding Window限长丢弃旧Token，Offloading时间换空间卸载至CPU内存。
 ---
 
 # LLM中的KV Cache如何优化？
@@ -108,3 +113,11 @@ class KVCache:
    - PCIe 带宽远小于 GPU 显存带宽，每次换入换出 KV Cache 的延迟会极大拖慢 TPOT。
 3. **FlashAttention 对 KV Cache 有影响吗？**
    - FlashAttention 优化的是计算过程（减少 HBM 访问），不改变 KV Cache 的存储机制，但通常与其配套使用。
+
+## 记忆要点
+
+- 核心认知：KV Cache是LLM推理显存大头（占比超80%），优化的本质是省显存提并发。
+- 显存降维打击：GQA/MQA减KV头数，INT8/INT4量化直接减半或削减75%存储。
+- 系统级调度：vLLM的PagedAttention按页分配消灭碎片，Prefix Sharing复用系统提示词。
+- 架构级拓展：Sliding Window限长丢弃旧Token，Offloading时间换空间卸载至CPU内存。
+

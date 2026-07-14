@@ -23,6 +23,12 @@ follow_up:
 - 开源72B模型与GPT-4的效果差距如何弥补？
 - 如何在有限GPU资源下最大化并发？
 - 私有化部署的Agent如何持续迭代？
+memory_points:
+- 核心约束：数据不出域，选Qwen/Llama等开源模型，用vLLM/TGI本地推理。
+- 架构选型：LangGraph优于LangChain，状态机可控，避免过度抽象。
+- 工具集成：自定义Tool通过Function Calling调用，数据库只读，内网网关隔离。
+- 异构适配：支持量化适配低显存卡，RAG增量更新保证知识时效。
+- 实战痛点：用RocksDB存KV Cache确保中间态数据不落盘，满足审计合规。
 ---
 
 # 设计一个Self-hosted的Agent框架。公司要求完全私有化部署，不依赖外部LLM API。
@@ -108,3 +114,12 @@ def query_internal_crm(customer_id: str) -> str:
 ## 易错点
 1. **忽视运维监控**：认为部署完就结束了，实际上私有化模型很容易出现显存泄漏或CUDA OOM。必须监控GPU显存使用率和KV Cache碎片率。
 2. **安全边界模糊**：虽然模型在本地，但Agent通过工具访问内网系统时，如果不做严格的权限管控（如RBAC），Agent可能成为攻击内网的跳板。
+
+## 记忆要点
+
+- 核心约束：数据不出域，选Qwen/Llama等开源模型，用vLLM/TGI本地推理。
+- 架构选型：LangGraph优于LangChain，状态机可控，避免过度抽象。
+- 工具集成：自定义Tool通过Function Calling调用，数据库只读，内网网关隔离。
+- 异构适配：支持量化适配低显存卡，RAG增量更新保证知识时效。
+- 实战痛点：用RocksDB存KV Cache确保中间态数据不落盘，满足审计合规。
+

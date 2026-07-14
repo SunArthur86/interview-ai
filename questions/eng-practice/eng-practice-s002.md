@@ -12,6 +12,11 @@ feynman:
   - 利用LLM-as-Judge实现低成本自动评估
   - 针对RAG场景关注忠实度与上下文召回
   - 评估标准需与具体业务目标对齐
+memory_points:
+- 离线评估：基准测试（MMLU/GSM8K），自动评估（RAGAS/LLM-as-Judge），人工评估。
+- 在线评估：用户反馈（点赞/点踩），业务指标（任务完成率/交互轮数）。
+- RAGAS 核心：Faithfulness（忠实度）、Relevancy（相关性）、Context Recall（召回）。
+- 评估策略：逻辑用 LLM-as-Judge，语气用用户指标；离线测选型，在线测价值。
 ---
 
 # 如何评估LLM应用的效果？
@@ -99,3 +104,11 @@ data_samples = {
 1. **LLM-as-Judge 的位置偏差如何解决？**：即模型倾向于认为排在前面的回答更好，需通过交换位置多次测试取平均来消除。
 2. **RAG 评估中的 Faithfulness 和 Context Recall 的具体计算方式？**：通常是将答案切分成陈述句，然后分别验证其是否被上下文支持。
 3. **如何构建高质量的黄金测试集？**：讨论生成式构建（用LLM生成Q&A）与人工校验的结合。
+
+## 记忆要点
+
+- 离线评估：基准测试（MMLU/GSM8K），自动评估（RAGAS/LLM-as-Judge），人工评估。
+- 在线评估：用户反馈（点赞/点踩），业务指标（任务完成率/交互轮数）。
+- RAGAS 核心：Faithfulness（忠实度）、Relevancy（相关性）、Context Recall（召回）。
+- 评估策略：逻辑用 LLM-as-Judge，语气用用户指标；离线测选型，在线测价值。
+

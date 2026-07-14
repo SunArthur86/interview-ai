@@ -17,6 +17,12 @@ feynman:
 follow_up:
 - DSPy的BootstrapFewShot如何选择示例?
 - DSPy和LangChain有什么本质区别?
+memory_points:
+- 核心思想：声明式编程替代手写Prompt，将Prompt Engineering转为参数优化
+- 四大组件：Signature定义输入输出，Module处理单元，Teleprompter优化器，Metric评估
+- 优化流程：定义Signature -> 优化器搜索最佳Prompt/示例 -> 编译运行
+- 对比：传统靠人工调参，DSPy靠Teacher LLM生成示例和Metric反馈自动调优
+- 局限：Metric设计难主观，依赖Teacher模型能力上限，易过拟合训练集
 ---
 
 # DSPy框架的核心思想是什么?它如何自动优化Prompt
@@ -84,3 +90,12 @@ optimized_qa = teleprompter.compile(QA(), trainset=train_data)
 1. **追问**：DSPy 在优化过程中需要多次调用 LLM，成本很高。在实际生产环境中如何平衡优化效果和推理成本？
 2. **追问**：DSPy 的 `BootstrapFewShot` 和 `KNN` 优化器分别适用于什么场景？它们在选择示例时的核心差异是什么？
 3. **追问**：如果目标是优化一个多步骤的 Agent 流程（包含 RAG + 工具调用），DSPy 如何保证整体链路的端到端优化？
+
+## 记忆要点
+
+- 核心思想：声明式编程替代手写Prompt，将Prompt Engineering转为参数优化
+- 四大组件：Signature定义输入输出，Module处理单元，Teleprompter优化器，Metric评估
+- 优化流程：定义Signature -> 优化器搜索最佳Prompt/示例 -> 编译运行
+- 对比：传统靠人工调参，DSPy靠Teacher LLM生成示例和Metric反馈自动调优
+- 局限：Metric设计难主观，依赖Teacher模型能力上限，易过拟合训练集
+

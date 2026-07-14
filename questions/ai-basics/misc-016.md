@@ -17,6 +17,11 @@ feynman:
 follow_up:
 - Flash Attention如何处理在线Softmax?
 - Flash Attention v3有什么改进?
+memory_points:
+- 核心原理：Tiling分块计算+在线Softmax，减少HBM读写
+- 效果：速度提升2-4倍，显存从O(n²)降至O(n)
+- 性质：数学精确等价，非近似算法
+- 边界：极短序列(<512)可能因Kernel开销反而变慢
 ---
 
 # Flash Attention的原理是什么?为什么能同时加速和省显存
@@ -96,3 +101,11 @@ out = flash_attn_func(
 1. 为什么在GPU上计算快但读写慢？（计算单元与显存带宽的差距）
 2. Flash Attention 支持Attention Mask吗？如何实现的？
 3. Flash Attention-3 在H100上使用了什么新的硬件特性（如Tensor Cores或TMA）？
+
+## 记忆要点
+
+- 核心原理：Tiling分块计算+在线Softmax，减少HBM读写
+- 效果：速度提升2-4倍，显存从O(n²)降至O(n)
+- 性质：数学精确等价，非近似算法
+- 边界：极短序列(<512)可能因Kernel开销反而变慢
+

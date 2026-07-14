@@ -14,6 +14,12 @@ feynman:
   - 利用语义缓存避免重复计算
   - 压缩历史上下文减少Token输入
   - 高频场景考虑自建或量化部署
+memory_points:
+- 模型路由：小模型处理简单任务，大模型处理复杂任务，先判后分。
+- Prompt优化：精简System Prompt，历史对话做摘要或滑动窗口截断。
+- 缓存策略：语义缓存防重复计算，Prompt Caching缓存长上下文前缀。
+- RAG优化：提高检索精度减少无关Token，动态截断保留最相关片段。
+- 自建部署：Token量极大时，自建vLLM加量化比API更划算。
 ---
 
 # LLM应用的token成本如何优化？
@@ -78,3 +84,12 @@ def semantic_cache_check(query, cache_dict, embed_model, threshold=0.95):
 1. **模型路由的具体实现逻辑？**：讨论基于规则的路由和基于 LLM 的路由的优劣。
 2. **Semantic Cache 的相似度阈值如何设定？**：阈值过高导致缓存命中率低，过低可能导致答非所问，需结合业务场景调优。
 3. **Prompt Caching 的生效条件？**：通常要求前缀完全一致，因此设计中需将静态 System Prompt 放在最前面，动态变量放在最后面。
+
+## 记忆要点
+
+- 模型路由：小模型处理简单任务，大模型处理复杂任务，先判后分。
+- Prompt优化：精简System Prompt，历史对话做摘要或滑动窗口截断。
+- 缓存策略：语义缓存防重复计算，Prompt Caching缓存长上下文前缀。
+- RAG优化：提高检索精度减少无关Token，动态截断保留最相关片段。
+- 自建部署：Token量极大时，自建vLLM加量化比API更划算。
+

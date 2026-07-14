@@ -22,6 +22,11 @@ follow_up:
 - 没有 Infra 实习经验怎么办？ — — 自己复现 vLLM/DeepSpeed 实验，做 benchmark 对比
 - CUDA 编程零基础怎么入门？ — — NVIDIA 官方教程 + 简单 GEMM/softmax kernel 练习
 - Infra 和算法岗的区别？ — — Infra 重工程/系统/性能优化，算法重模型/训练/数据
+memory_points:
+- 推理优化：KV Cache计算显存，PagedAttention解决碎片，量化(W4A16/W8A8)提速
+- 训练优化：3D并行(数据/张量/流水线)，ZeRO-3切分参数，混合精度防溢出
+- CUDA基础：SM/Warp架构，Memory Coalescing合并访问，Shared Memory减少HBM读取
+- 面试重点：项目深挖原理(如vLLM Block机制)，系统设计(高并发推理)，算法推导(FlashAttention)
 ---
 
 # 【智谱面经】大模型 Infra 岗位怎么准备？必看资料有哪些？面试考察重点是什么？
@@ -91,3 +96,11 @@ follow_up:
 ## 常见考点
 1. **FlashAttention v1 和 v2 的主要区别？**（v2 主要优化了 workload partitioning，减少非矩阵计算，更适合 H100）
 2. **为什么 MoE 训练容易导致负载不均？**（某些 Expert 收到的 Token 过多，导致计算倾斜，通常使用 Load Balance Loss = \alpha * n \times (aux_loss) 解决）
+
+## 记忆要点
+
+- 推理优化：KV Cache计算显存，PagedAttention解决碎片，量化(W4A16/W8A8)提速
+- 训练优化：3D并行(数据/张量/流水线)，ZeRO-3切分参数，混合精度防溢出
+- CUDA基础：SM/Warp架构，Memory Coalescing合并访问，Shared Memory减少HBM读取
+- 面试重点：项目深挖原理(如vLLM Block机制)，系统设计(高并发推理)，算法推导(FlashAttention)
+

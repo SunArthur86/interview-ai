@@ -25,6 +25,11 @@ follow_up:
 - 论文那么多怎么选？—— 关注 NeurIPS/ICML/ACL/ICLR + arXiv 热门 + Hugging Face 趋势
 - 怎么高效读论文？—— 第一遍只读 Abstract+Intro+Conclusion+Figure，值得深入再精读
 - 要不要复现论文？—— 核心论文建议复现关键实验，加深理解
+memory_points:
+- 必读Top3：Attention奠定QKV架构，RoPE奠定位置编码，DPO奠定对齐新范式
+- DeepSeek技术报告必看：拆解MLA与MoE如何实现极端的显存压缩与低成本推理
+- 回答策略：读论文+实战结合(如通过调RoPE的base值实现长文外推解决信息截断)
+- 方法论：读论文不仅懂QKV公式，更要带入工程解决如长文本特征衰减等实际Bug
 ---
 
 # 【美团面经】近一年读过什么 AI 论文/技术报告两次以上？对你有什么帮助？
@@ -97,3 +102,11 @@ def apply_rotary_emb(xq, xk, freqs_cis):
     
     return xq_out.type_as(xq), xk_out.type_as(xk)
 ```
+
+## 记忆要点
+
+- 必读Top3：Attention奠定QKV架构，RoPE奠定位置编码，DPO奠定对齐新范式
+- DeepSeek技术报告必看：拆解MLA与MoE如何实现极端的显存压缩与低成本推理
+- 回答策略：读论文+实战结合(如通过调RoPE的base值实现长文外推解决信息截断)
+- 方法论：读论文不仅懂QKV公式，更要带入工程解决如长文本特征衰减等实际Bug
+

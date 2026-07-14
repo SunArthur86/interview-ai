@@ -24,6 +24,11 @@ follow_up:
 - GQA 的分组数怎么选？—— 通常选 n_heads/4 到 n_heads/8 之间
 - MLA 的训练代价是什么？—— 多了压缩/恢复矩阵的参数和计算
 - vLLM 支持 MLA 吗？—— 需要 PagedAttention 的适配
+memory_points:
+- MLA 核心：对全量 KV 进行数学低秩分解，推理时将矩阵吸收进 Q，大幅省显存。
+- 压缩机制：只缓存低维潜向量，恢复投影在 Attention 计算中实时合并，显存换计算。
+- 方案对比：MQA/GQA 是物理硬共享易损精度，而 MLA 是动态压缩，压缩率极高。
+- 阶段差异：Prefill 阶段多算投影略慢，但因 Decode 阶段显存骤降，整体吞吐大幅提升。
 ---
 
 # 【美团面经】MLA 是怎么对 KV Cache 做优化的？和 MQA/GQA 相比有什么区别？
@@ -106,3 +111,11 @@ class MLA_Compute:
         scores = torch.matmul(q_absorbed, compressed_kv.transpose(-2, -1))
         return scores
 ```
+
+## 记忆要点
+
+- MLA 核心：对全量 KV 进行数学低秩分解，推理时将矩阵吸收进 Q，大幅省显存。
+- 压缩机制：只缓存低维潜向量，恢复投影在 Attention 计算中实时合并，显存换计算。
+- 方案对比：MQA/GQA 是物理硬共享易损精度，而 MLA 是动态压缩，压缩率极高。
+- 阶段差异：Prefill 阶段多算投影略慢，但因 Decode 阶段显存骤降，整体吞吐大幅提升。
+

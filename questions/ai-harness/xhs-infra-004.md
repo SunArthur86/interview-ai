@@ -21,6 +21,11 @@ follow_up:
 - FlashAttention如何处理causal mask？
 - v3的异步加载为什么能提升性能？
 - 在MoE模型中FlashAttention有什么特殊优化？
+memory_points:
+- 核心优化：IO-aware Tiling 分块计算，将 HBM 访问从 O(N²) 降至 O(N)。
+- v1：引入分块和在线 Softmax，Kernel 融合减少读写。
+- v2：优化工作分区和 Warp-level 并行，减少非矩阵运算，A100 加速明显。
+- v3：利用 H100 FP8 Tensor Core 和 TMA 异步加载，速度接近理论峰值。
 ---
 
 # FlashAttention v1/v2/v3的核心改进分别是什么？为什么能减少内存访问？
@@ -88,3 +93,11 @@ out = acc / l_curr
 | **主要瓶颈** | 显存带宽 | Shared Mem | Non-matmul Ops | Compute (Tensor Core) |
 | **适用硬件** | 全部 | Ampere+ (A100) | Ampere+ (A100) | Hopper (H100) |
 | **反向传播** | 需存N²矩阵 | 重计算 (省显存) | 更高效的并行重计算 | 异步重计算 |
+
+## 记忆要点
+
+- 核心优化：IO-aware Tiling 分块计算，将 HBM 访问从 O(N²) 降至 O(N)。
+- v1：引入分块和在线 Softmax，Kernel 融合减少读写。
+- v2：优化工作分区和 Warp-level 并行，减少非矩阵运算，A100 加速明显。
+- v3：利用 H100 FP8 Tensor Core 和 TMA 异步加载，速度接近理论峰值。
+

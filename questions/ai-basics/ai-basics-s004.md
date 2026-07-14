@@ -11,6 +11,11 @@ feynman:
   - BN依赖batch大小，受变长序列影响大
   - LN针对单个样本归一化，适合序列处理
   - RMSNorm是LN的去均值简化版，计算更高效
+memory_points:
+- BatchNorm：沿Batch维度统计，依赖Batch Size，适合CNN，训练推理不一致。
+- LayerNorm：沿特征维度统计，不依赖Batch Size，适合Transformer/NLP。
+- 核心区别：BN固定每层特征分布，LN固定单个样本的向量范数。
+- 实战：小Batch Size（如2）下BN失效，Transformer必须用LN。
 ---
 
 # Batch Normalization和Layer Normalization有什么区别？
@@ -95,3 +100,11 @@ output_ln = ln(x)
 ## 常见考点
 1. **RMSNorm和LayerNorm的区别？**（答：RMSNorm去掉了均值中心化，计算更快，性能相当，LLM常用）
 2. **BatchNorm在推理时怎么处理？**（答：使用训练时累积的全局running_mean和running_var，冻结更新）
+
+## 记忆要点
+
+- BatchNorm：沿Batch维度统计，依赖Batch Size，适合CNN，训练推理不一致。
+- LayerNorm：沿特征维度统计，不依赖Batch Size，适合Transformer/NLP。
+- 核心区别：BN固定每层特征分布，LN固定单个样本的向量范数。
+- 实战：小Batch Size（如2）下BN失效，Transformer必须用LN。
+

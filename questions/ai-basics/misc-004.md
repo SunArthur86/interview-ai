@@ -17,6 +17,11 @@ feynman:
 follow_up:
 - PagedAttention如何减少显存碎片?
 - GQA为什么能减少KV Cache大小?
+memory_points:
+- 缓存历史Key/Value避免重复计算，每步只算新token的Q与缓存做Attention
+- 加速原理：计算复杂度从O(n²)降至O(n)，省去历史token的投影计算
+- 代价：显存占用随序列长度线性增长，公式为2×层数×长度×维度×字节数
+- 瓶颈：长文本推理中KV Cache常比模型权重更占显存，导致Batch受限
 ---
 
 # 什么是KV Cache?它为什么能加速自回归生成?有什么代价
@@ -89,3 +94,11 @@ Step 3: Input "!" (Need attention on "Hello World")
   Q3 (计算)            │
   K3, V3 (计算) ───────┼──► [ Concat: K1+K2+K3, ... ]
                       │       │
+
+## 记忆要点
+
+- 缓存历史Key/Value避免重复计算，每步只算新token的Q与缓存做Attention
+- 加速原理：计算复杂度从O(n²)降至O(n)，省去历史token的投影计算
+- 代价：显存占用随序列长度线性增长，公式为2×层数×长度×维度×字节数
+- 瓶颈：长文本推理中KV Cache常比模型权重更占显存，导致Batch受限
+

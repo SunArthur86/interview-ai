@@ -16,6 +16,11 @@ feynman:
 follow_up:
 - 为什么不用更复杂的激活函数?
 - SwiGLU的三个矩阵维度如何设定?
+memory_points:
+- SwiGLU引入门控机制，公式为Swish(xW_g)⊙(xW_in))W_out
+- 优势：非线性表达能力强，梯度平滑，比ReLU/GELU性能更好
+- 代价：参数量增加50%（多一个门控矩阵），需调整隐藏层维度保持总参平衡
+- 初始化：A随机初始化，B初始化为0，保证训练开始时等价于原始模型
 ---
 
 # 为什么现代大模型(LLaMA/GLM)用SwiGLU替代ReLU/GELU作为FFN激活函数
@@ -97,3 +102,11 @@ class SwiGLU(nn.Module):
         # Swish(xW_gate) * (xW_up)
         return self.down_proj(F.silu(self.gate_proj(x)) * self.up_proj(x))
 ```
+
+## 记忆要点
+
+- SwiGLU引入门控机制，公式为Swish(xW_g)⊙(xW_in))W_out
+- 优势：非线性表达能力强，梯度平滑，比ReLU/GELU性能更好
+- 代价：参数量增加50%（多一个门控矩阵），需调整隐藏层维度保持总参平衡
+- 初始化：A随机初始化，B初始化为0，保证训练开始时等价于原始模型
+

@@ -22,6 +22,10 @@ follow_up:
 - Auxiliary Loss的权重alpha如何设置？
 - MoE推理时如何做专家缓存？
 - DeepSeek-V3的MoE有什么创新？
+memory_points:
+- 通信瓶颈：All-to-All易拥塞。优化用EP+TP混合减少跨域，通信计算重叠，EDP分担负载。
+- 负载均衡：Auxiliary Loss让fi接近1/N，Noisy Top-K增加探索，共享专家兜底。
+- 实战调优：Loss尖峰查通信耗时方差，调大Aux权重，避免专家负载倾斜。
 ---
 
 # MoE（Mixture of Experts）训练中All-to-All通信瓶颈如何优化？专家负载不均衡怎么解决？
@@ -114,3 +118,10 @@ def check_expert_balance(local_expert_counts):
 ## 实际经验
 - **StepFun万亿MoE**：384专家，8+1共享架构，大规模并行下对通信库优化极深。
 - **MiniMax**：32专家，结合 ETP (Expert Tensor Parallelism) 降低通信量。
+
+## 记忆要点
+
+- 通信瓶颈：All-to-All易拥塞。优化用EP+TP混合减少跨域，通信计算重叠，EDP分担负载。
+- 负载均衡：Auxiliary Loss让fi接近1/N，Noisy Top-K增加探索，共享专家兜底。
+- 实战调优：Loss尖峰查通信耗时方差，调大Aux权重，避免专家负载倾斜。
+

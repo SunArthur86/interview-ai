@@ -12,6 +12,10 @@ feynman:
   - LangGraph：状态机，易审计
   - 侧重：AutoGen偏探索，LangGraph偏生产
   - 混用：节点嵌套，统一追踪
+memory_points:
+- AutoGen 重对话社交，LangGraph 重状态机与确定性。
+- AutoGen 状态隐式难恢复，LangGraph 显式 Checkpoint 支持断点续传。
+- AutoGen 适合脑暴探索，LangGraph 适合长链路生产任务。
 ---
 
 # AutoGen 和 LangGraph 多 Agent 有什么气质差异
@@ -82,3 +86,10 @@ app = workflow.compile(checkpointer=memory)
 1. **状态管理**：LangGraph 的状态如何在节点间流转？（答：通过共享的 `State` 对象，每次节点返回更新部分，Graph 会合并）。
 2. **循环控制**：AutoGen 如何防止无限对话？（答：通常通过设置 `max_consecutive_auto_reply` 参数）。
 3. **人机协作**：两者如何介入人工审核？（答：AutoGen 通过中断机制，LangGraph 通过特定的 interrupt 节点或边）。
+
+## 记忆要点
+
+- AutoGen 重对话社交，LangGraph 重状态机与确定性。
+- AutoGen 状态隐式难恢复，LangGraph 显式 Checkpoint 支持断点续传。
+- AutoGen 适合脑暴探索，LangGraph 适合长链路生产任务。
+

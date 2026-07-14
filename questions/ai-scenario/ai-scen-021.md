@@ -23,6 +23,12 @@ follow_up:
 - 如何选择量化方案（INT8 vs INT4）？
 - Speculative Decoding的加速比受什么影响？
 - 如何监控推理服务的SLA？
+memory_points:
+- 核心引擎：vLLM（PagedAttention+Continuous Batching）或TensorRT-LLM。
+- 性能优化：量化（FP16→INT4）提速30%，Speculative Decoding加速2-3倍。
+- 缓存策略：Prefix Cache复用系统Prompt，KV Cache共享，减少重复计算。
+- 容量规划：70B模型需4卡A100，支持50-100并发，吞吐约2000 tokens/s。
+- 高可用：API网关统一鉴权，GPU感知调度，动态扩缩容防OOM。
 ---
 
 # 如何设计一个高并发的LLM模型推理服务？支持1000+QPS、流式输出、多模型管理。
@@ -85,3 +91,12 @@ llm = LLM(
 sampling_params = SamplingParams(temperature=0.7, top_p=0.95, max_tokens=1024)
 outputs = llm.generate(prompts, sampling_params)
 ```
+
+## 记忆要点
+
+- 核心引擎：vLLM（PagedAttention+Continuous Batching）或TensorRT-LLM。
+- 性能优化：量化（FP16→INT4）提速30%，Speculative Decoding加速2-3倍。
+- 缓存策略：Prefix Cache复用系统Prompt，KV Cache共享，减少重复计算。
+- 容量规划：70B模型需4卡A100，支持50-100并发，吞吐约2000 tokens/s。
+- 高可用：API网关统一鉴权，GPU感知调度，动态扩缩容防OOM。
+

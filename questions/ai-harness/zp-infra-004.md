@@ -22,6 +22,10 @@ follow_up:
 - PagedAttention 的 block size 怎么选？—— 通常 16，太小则块表开销大，太大则碎片多
 - Continuous Batching 和 Static Batching 区别？—— Static 等最慢请求完成，Continuous 动态进出
 - KV Cache 量化会影响精度吗？—— INT8 几乎不影响，INT4 可能损失 1-3%
+memory_points:
+- 诊断：显存碎片、预分配浪费(短请求占长空间)、前缀无法共享。
+- 修复：PagedAttention分页管理(利用率40%→96%)，Continuous Batching动态调度。
+- 其他：Radix Tree复用前缀，KV量化(FP8/INT8)，GQA减少头数。
 ---
 
 # 【智谱Infra面经】KV Cache 导致推理成本远高于预期，如何诊断和修复？
@@ -93,3 +97,10 @@ class BlockTable:
 1. **PagedAttention 中 Block Table 的维护开销在哪里？**（CPU 管理开销与 GPU 内存碎片消除的权衡）
 2. **Continuous Batching 和 Static Batching 在调度策略上的本质区别？**（基于 Step vs 基于 Token 的时间片）
 3. **KV Cache 量化（INT8）对推理精度的具体影响在哪些场景最明显？**（通常在长文本、复杂推理任务中）
+
+## 记忆要点
+
+- 诊断：显存碎片、预分配浪费(短请求占长空间)、前缀无法共享。
+- 修复：PagedAttention分页管理(利用率40%→96%)，Continuous Batching动态调度。
+- 其他：Radix Tree复用前缀，KV量化(FP8/INT8)，GQA减少头数。
+

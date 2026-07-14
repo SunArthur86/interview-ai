@@ -23,6 +23,12 @@ follow_up:
 - 如何控制生成图片的一致性（如同一角色不同场景）？
 - 文生图的版权风险如何规避？
 - 如何评估生成图片的质量？
+memory_points:
+- 架构：扩散模型生成 → Prompt增强 → 可控生成 → 后处理(超分/安检)。
+- 可控生成：ControlNet控姿态，IP-Adapter控风格，LoRA控角色。
+- 服务优化：异步队列管理，TensorRT/xFormers加速，Prompt结果缓存。
+- 边界处理：NSFW双重拦截，Prompt注入用System Prompt过滤。
+- 易错点：随机种子需全局一致，频繁加载LoRA致显存碎片化。
 ---
 
 # 如何设计一个AI文生图系统？支持文字描述生成高质量图片、可控生成、批量生产。
@@ -109,3 +115,12 @@ def generate_controllable_image(prompt, pose_image):
 ## 易错点
 1. **随机种子管理**：在微服务架构下，若不同Worker的随机数生成器初始化方式不同，相同的Prompt和Seed可能生成完全不同的图，导致缓存失效或体验不一致。
 2. **显存碎片化**：频繁加载卸载不同的LoRA模型会导致GPU显存严重碎片化，需要定期重启进程或使用统一的Model Pool管理。
+
+## 记忆要点
+
+- 架构：扩散模型生成 → Prompt增强 → 可控生成 → 后处理(超分/安检)。
+- 可控生成：ControlNet控姿态，IP-Adapter控风格，LoRA控角色。
+- 服务优化：异步队列管理，TensorRT/xFormers加速，Prompt结果缓存。
+- 边界处理：NSFW双重拦截，Prompt注入用System Prompt过滤。
+- 易错点：随机种子需全局一致，频繁加载LoRA致显存碎片化。
+

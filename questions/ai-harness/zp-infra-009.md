@@ -22,6 +22,11 @@ follow_up:
 - RadixAttention 和 PagedAttention 能一起用吗？—— 可以，SGLang 底层也用分页管理
 - 结构化生成怎么做？ — — 在 logits 上加 mask，只允许符合约束的 token
 - TGI 和 TensorRT-LLM 呢？ — — TGI（HuggingFace）注重易用性，TensorRT-LLM（NVIDIA）注重极致性能
+memory_points:
+- vLLM核心：PagedAttention分页管理KV，解决显存碎片，生态成熟适合通用推理
+- SGLang核心：RadixAttention树状结构，自动共享前缀，适合多轮对话与Agent
+- 结构化输出：SGLang原生支持Regex/JSON约束解码，vLLM通常需后处理
+- 场景选择：通用单轮选vLLM，多轮/长前缀/结构化输出选SGLang
 ---
 
 # 【智谱Infra面经】vLLM 和 SGLang 有什么区别？各自的优势和适用场景？
@@ -81,3 +86,11 @@ state = phone_extraction.run("Call me at 13812345678.")
 1. **Radix Tree 相比 vLLM 的 Block Manager 在前缀共享上有何本质不同？**（Block Manager 主要解决碎片，Radix Tree 逻辑上更高效地处理了树状结构的共享引用）
 2. **vLLM 的 PagedAttention 在实现计算时是如何处理非连续物理 Block 的？**（通过 paged_kernel 索引映射）
 3. **结构化输出的正则约束通常如何集成到 Decoding 过程中？**（通常构建一个 Finite State Machine (FSM) 动态屏蔽无效 Token）
+
+## 记忆要点
+
+- vLLM核心：PagedAttention分页管理KV，解决显存碎片，生态成熟适合通用推理
+- SGLang核心：RadixAttention树状结构，自动共享前缀，适合多轮对话与Agent
+- 结构化输出：SGLang原生支持Regex/JSON约束解码，vLLM通常需后处理
+- 场景选择：通用单轮选vLLM，多轮/长前缀/结构化输出选SGLang
+

@@ -14,6 +14,11 @@ feynman:
 follow_up:
 - 如何评估SFT模型的通用能力损失?
 - CoT数据在SFT中占多大比例合适?
+memory_points:
+- SFT构建：质量>数量，格式统一，包含CoT，指令表达需多样性
+- 防遗忘：混入10-20%预训练数据、使用低学习率、采用LoRA冻结权重
+- 多轮对话：训练时Mask掉历史部分Loss，只计算当前回复梯度
+- 数据飞轮：低质量SFT数据会造成不可逆的模型能力退化
 ---
 
 # SFT数据集的构建有哪些最佳实践?如何避免灾难性遗忘
@@ -66,3 +71,11 @@ def compute_sft_loss(logits, labels, user_mask):
     loss = (loss * loss_mask.view(-1)).sum() / loss_mask.sum()
     return loss
 ```
+
+## 记忆要点
+
+- SFT构建：质量>数量，格式统一，包含CoT，指令表达需多样性
+- 防遗忘：混入10-20%预训练数据、使用低学习率、采用LoRA冻结权重
+- 多轮对话：训练时Mask掉历史部分Loss，只计算当前回复梯度
+- 数据飞轮：低质量SFT数据会造成不可逆的模型能力退化
+

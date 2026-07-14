@@ -21,6 +21,10 @@ follow_up:
 - PD分离的KV Cache传输如何优化？
 - 什么场景下PD分离收益最大？
 - PD分离和Speculative Decoding能组合吗？
+memory_points:
+- 核心区别：Prefill算力密集(O(N²))用高算力卡，Decode内存密集(O(N))用高带宽卡。
+- 架构流程：Prefill生成KV，通过RDMA传输给Decode节点，实现硬件异构利用。
+- 边界条件：Prompt极短时网络开销大于收益，耦合架构更优。需解决KV传输延迟。
 ---
 
 # Prefill-Decode分离（PD分离）是什么？为什么能提升推理效率？
@@ -114,3 +118,10 @@ class PDSeparationScheduler:
 1. **追问**：在什么情况下 PD 分离反而会降低性能？（答：Prompt极短、网络带宽不足、KV Cache过大导致传输时间长于计算时间）。
 2. **追问**：如何解决 Prefill 和 Decode 节点之间的 KV Cache 传输延迟问题？（答：使用 RDMA/InfiniBand，或者计算-传输流水线重叠）。
 3. **追问**：除了分离 GPU，调度层面有什么优化？（答：Continuous Batching、Iteration Level Scheduling）。
+
+## 记忆要点
+
+- 核心区别：Prefill算力密集(O(N²))用高算力卡，Decode内存密集(O(N))用高带宽卡。
+- 架构流程：Prefill生成KV，通过RDMA传输给Decode节点，实现硬件异构利用。
+- 边界条件：Prompt极短时网络开销大于收益，耦合架构更优。需解决KV传输延迟。
+

@@ -14,6 +14,12 @@ feynman:
 follow_up:
 - CLIP的文本编码器和图像编码器维度如何对齐?
 - SigLIP相比CLIP有什么改进?
+memory_points:
+- 核心原理：对比学习将图像和文本对齐到同一向量空间，匹配距离近
+- 架构：双编码器（Image Encoder + Text Encoder）+ 对比损失
+- 零样本分类：构造Prompt（如A photo of dog），算图像与类别文本相似度
+- 训练目标：InfoNCE Loss，同时优化以图找文和以文找图
+- 局限：细粒度分类弱，抽象概念理解差，依赖Prompt Engineering
 ---
 
 # CLIP的原理是什么?为什么它能实现零样本图像分类
@@ -96,3 +102,12 @@ with torch.no_grad():
    对细粒度分类（如区分不同车型）、抽象概念理解、OCR文字识别等方面表现较弱；且对训练数据分布外的新数据泛化性有挑战。
 3. **Temperature参数 $\tau$ 的作用？** 
    控制 softmax 分布的平滑程度。较小的 $\tau$ 使分布更尖锐，更关注难分样本；较大的 $\tau$ 使分布更平滑，有助于优化。
+
+## 记忆要点
+
+- 核心原理：对比学习将图像和文本对齐到同一向量空间，匹配距离近
+- 架构：双编码器（Image Encoder + Text Encoder）+ 对比损失
+- 零样本分类：构造Prompt（如A photo of dog），算图像与类别文本相似度
+- 训练目标：InfoNCE Loss，同时优化以图找文和以文找图
+- 局限：细粒度分类弱，抽象概念理解差，依赖Prompt Engineering
+

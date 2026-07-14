@@ -14,6 +14,12 @@ feynman:
   - 个人和边缘设备轻量化部署推荐Ollama或llama.cpp
   - API方案适合无算力需求的快速接入
   - 部署需权衡显存容量、并发量和响应延迟
+memory_points:
+- KV Cache是显存大头，可达总显存80%以上。
+- PagedAttention：类OS虚拟内存分页，消除内部碎片，按需分配。
+- GQA/MQA：减少KV头数，推理侧透明(Llama3用8个KV头vs32个Q头)。
+- 量化收益：FP16→INT8省50%，→INT4省75%(需配SmoothQuant)。
+- 易错点：KV越大≠效果越好；Prefix Caching共享率低反成负担。
 ---
 
 # 大模型部署有哪些方案？
@@ -112,3 +118,11 @@ class KVCache:
    **纠正**：对于某些局部依赖性强的任务，过长的 KV Cache 可能会引入噪声（Distractor Attention），反而在推理时导致注意力分散。Sliding Window 或 kv-compression 在某些情况下反而能提升效果。
 2. **误区**：开启了 Prefix Caching 就一定能节省显存。
    **纠正**：Prefix Caching 共享的是物理 Block。如果请求的并发度不够高，或者 System Prompt 之间的差异导致无法完全匹配，共享率会很低，此时缓存本身占用的显存反而可能成为负担。
+
+## 记忆要点
+
+- KV Cache是显存大头，可达总显存80%以上。
+- PagedAttention：类OS虚拟内存分页，消除内部碎片，按需分配。
+- GQA/MQA：减少KV头数，推理侧透明(Llama3用8个KV头vs32个Q头)。
+- 量化收益：FP16→INT8省50%，→INT4省75%(需配SmoothQuant)。
+- 易错点：KV越大≠效果越好；Prefix Caching共享率低反成负担。

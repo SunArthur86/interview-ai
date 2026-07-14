@@ -16,6 +16,11 @@ feynman:
 follow_up:
 - 如何确定最优的推理时计算量?
 - Best-of-N的N如何选择?
+memory_points:
+- 定义：推理时增加计算量(思考时间/搜索)提升性能。
+- 范式转变：从预训练Scaling(参数)转向推理Scaling(算力)。
+- 策略：更长CoT、Best-of-N采样、搜索验证。
+- 代表：OpenAI o1和DeepSeek-R1，用算力换复杂推理能力。
 ---
 
 # Test-Time Compute Scaling是什么?为什么说它是推理模型的新范式
@@ -118,3 +123,11 @@ def best_of_n_sampling(model, tokenizer, prompt, n_samples=5):
     # 简单选择第一个合法的作为演示
     return valid_candidates[0] if valid_candidates else candidates[0]
 ```
+
+## 记忆要点
+
+- 定义：推理时增加计算量(思考时间/搜索)提升性能。
+- 范式转变：从预训练Scaling(参数)转向推理Scaling(算力)。
+- 策略：更长CoT、Best-of-N采样、搜索验证。
+- 代表：OpenAI o1和DeepSeek-R1，用算力换复杂推理能力。
+

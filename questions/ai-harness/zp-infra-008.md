@@ -23,6 +23,11 @@ follow_up:
 - Occupancy 是越高越好吗？—— 不一定，高 occupancy 可能意味着低 per-thread 资源
 - 怎么判断 Kernel 是否已经最优？—— 与 cuBLAS/cuDNN 对比，看差距
 - FlashAttention 的 Kernel 为什么快？—— 减少了 global memory 读写，在 SRAM 内完成分块计算
+memory_points:
+- 计算公式：算术强度AI = FLOPs / Bytes，对比转折点判断Bound类型
+- Memory Bound：带宽瓶颈，优化方向是合并访问、Shared Memory分块、向量化读写
+- Compute Bound：算力瓶颈，优化方向是Tensor Core利用、指令流水线、减少逻辑判断
+- 工具定位：Nsight Compute看Stall原因，Nsight Systems看计算与通信重叠情况
 ---
 
 # 【智谱Infra面经】如何评估一个 CUDA Kernel 的优化空间？怎么判断它是计算 bound 还是内存 bound？
@@ -109,3 +114,11 @@ __global__ void good_add(float4* x, float4* y, float4* out, int n) {
 1. **Occupancy 是不是越高越好？**（不是，有时牺牲 Occupancy 换取更多的 Register/Shared Memory 使用能减少全局内存访问）
 2. **如何通过 Nsight Compute 的 `dram__throughput` 和 `dram__bytes_sum` 快速判断是否 Memory Bound？**（如果吞吐接近峰值或 Stall 主要在 Memory，即为 Memory Bound）
 3. **Warp Divergence 对性能的影响有多大？如何检测？**（查看 `smsp__thread_branch_executed` 指标）
+
+## 记忆要点
+
+- 计算公式：算术强度AI = FLOPs / Bytes，对比转折点判断Bound类型
+- Memory Bound：带宽瓶颈，优化方向是合并访问、Shared Memory分块、向量化读写
+- Compute Bound：算力瓶颈，优化方向是Tensor Core利用、指令流水线、减少逻辑判断
+- 工具定位：Nsight Compute看Stall原因，Nsight Systems看计算与通信重叠情况
+

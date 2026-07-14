@@ -22,6 +22,11 @@ follow_up:
 - MFU 怎么计算？ — — 实际 tokens/s × 每 token FLOPs(6N) / GPU 峰值 FLOPS
 - Gradient Checkpoint 的重算开销？ — — 约 20-33%（多一次前向计算）
 - NCCL All-Reduce 通信怎么调优？ — — 环形 vs 树形、NCCL_NET、overlap
+memory_points:
+- 低MFU诊断：用Profiler看Kernel耗时，Nsight看通信重叠，常见瓶颈是通信未Overlap或数据加载慢
+- OOM解决：ZeRO-3分片参数、Checkpointing换激活显存、CPU Offload卸载冷数据
+- Hang诊断：开启NCCL_DEBUG看通信死锁，CUDA_LAUNCH_BLOCKING同步定位错误，py-spy查堆栈
+- 显存公式：总显存=权重+梯度+优化器+激活+KV，优化器状态占比最大
 ---
 
 # 【智谱Infra面经】大模型训练低 MFU / OOM / hang 如何诊断？用哪些工具和指标？
@@ -99,3 +104,11 @@ model.layer[-1].register_forward_hook(check_nan)
 1. **ZeRO-1, ZeRO-2, ZeRO-3 的切分粒度有什么区别？**（Optimizer States / Gradients / Parameters）
 2. **如何区分是通信 Bound 还是计算 Bound？**（查看 Nsight Systems 的 gap，如果计算Kernel之间有长空闲等待 NCCL，则是通信未重叠）
 3. **Gradient Checkpointing 为什么能节省显存？原理是什么？**（以计算换空间，前向不存所有中间激活，反向时重算）
+
+## 记忆要点
+
+- 低MFU诊断：用Profiler看Kernel耗时，Nsight看通信重叠，常见瓶颈是通信未Overlap或数据加载慢
+- OOM解决：ZeRO-3分片参数、Checkpointing换激活显存、CPU Offload卸载冷数据
+- Hang诊断：开启NCCL_DEBUG看通信死锁，CUDA_LAUNCH_BLOCKING同步定位错误，py-spy查堆栈
+- 显存公式：总显存=权重+梯度+优化器+激活+KV，优化器状态占比最大
+

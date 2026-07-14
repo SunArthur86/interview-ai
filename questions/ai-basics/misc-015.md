@@ -17,6 +17,11 @@ feynman:
 follow_up:
 - ZeRO-3的通信开销如何估算?
 - Tensor Parallelism和ZeRO能否同时使用?
+memory_points:
+- ZeRO三级切分：Stage1切状态，Stage2切梯度，Stage3切参数
+- 显存节省：Stage1省4倍，Stage2省8倍，Stage3省N倍
+- 通信代价：Stage3需频繁All-Gather，通信量约为Stage2的1.5倍
+- 选择策略：<7B用Stage1，7-70B用Stage2，>70B用Stage3
 ---
 
 # ZeRO (Zero Redundancy Optimizer)的三级优化分别是什么?如何选择
@@ -89,3 +94,11 @@ GPU 3:  [W3] [G3] [Os3]
 1. ZeRO-3在推理时如何避免频繁的All-Gather导致延迟高？
 2. ZeRO-Offload 是如何利用CPU内存和NVLink/PCIe带宽的？
 3. 相比FSDP (Fully Sharded Data Parallel)，ZeRO有哪些异同？
+
+## 记忆要点
+
+- ZeRO三级切分：Stage1切状态，Stage2切梯度，Stage3切参数
+- 显存节省：Stage1省4倍，Stage2省8倍，Stage3省N倍
+- 通信代价：Stage3需频繁All-Gather，通信量约为Stage2的1.5倍
+- 选择策略：<7B用Stage1，7-70B用Stage2，>70B用Stage3
+

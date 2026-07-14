@@ -17,6 +17,11 @@ feynman:
 follow_up:
 - DPO的beta参数如何调节?
 - IPO和KTO是DPO的什么改进?
+memory_points:
+- DPO核心：利用RLHF最优策略闭式解，将Reward模型隐式消去
+- 损失函数：基于Chosen和Rejected的Log-ratio差值，直接优化策略
+- 优势：无需训练Critic和RM，显存占用低，避免Reward Hacking
+- 参考模型作用：pi_ref用于计算KL散度约束，防止模型偏离过远
 ---
 
 # DPO的数学推导核心是什么?为什么能跳过奖励模型
@@ -56,3 +61,11 @@ def dpo_loss(policy_chosen_logps, policy_rejected_logps, ref_chosen_logps, ref_r
 1. DPO中的参考模型 pi_ref 有什么作用？如果不加会怎样？
 2. beta (temperature) 参数如何调整？它对训练有何影响？
 3. 相比PPO，DPO在处理长上下文时有哪些潜在劣势？
+
+## 记忆要点
+
+- DPO核心：利用RLHF最优策略闭式解，将Reward模型隐式消去
+- 损失函数：基于Chosen和Rejected的Log-ratio差值，直接优化策略
+- 优势：无需训练Critic和RM，显存占用低，避免Reward Hacking
+- 参考模型作用：pi_ref用于计算KL散度约束，防止模型偏离过远
+

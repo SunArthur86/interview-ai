@@ -23,6 +23,10 @@ follow_up:
 - 投机解码接受率多少才有意义？—— 通常 >50% 才有正向加速（draft 开销不能忽略）
 - DFlash 是什么？—— 参考工作，结合 PEARL 思路的改进
 - 高 batch 下投机解码还有用吗？—— 传统方式没用（batch 已打满计算），但并行投机（PEARL）仍有优势
+memory_points:
+- 基础投机：小模型Draft生成候选，大模型Target并行验证，猜对免费，保证分布一致。
+- Medusa：Target多头并行预测，无需额外模型。EAGLE：特征级投机，接受率高。
+- 并行vs树状：树状单次验证延迟低，并行节点分离吞吐高。低延迟选树状，高吞吐选并行。
 ---
 
 # 【智谱Infra面经】Speculative Decoding / Medusa / EAGLE / PEARL 在推理加速中的实现细节？并行投机 vs 树状投机？
@@ -92,3 +96,10 @@ def verify_sampling(draft_tokens, target_logits, base_model_probs):
 1. **Speculative Decoding 如何保证数学上的等价性？**（涉及 rejection sampling 的概率证明）
 2. **树状投机验证时 Attention Mask 是如何构造的？**（需构建稀疏 Mask 以并行计算所有候选路径）
 3. **Acceptance Rate 是什么？低于多少时投机解码会变成负优化？**（通常需 >50% 才能抵消并行计算开销）
+
+## 记忆要点
+
+- 基础投机：小模型Draft生成候选，大模型Target并行验证，猜对免费，保证分布一致。
+- Medusa：Target多头并行预测，无需额外模型。EAGLE：特征级投机，接受率高。
+- 并行vs树状：树状单次验证延迟低，并行节点分离吞吐高。低延迟选树状，高吞吐选并行。
+

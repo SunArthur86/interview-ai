@@ -16,6 +16,11 @@ feynman:
 follow_up:
 - GQA的分组数如何选择?
 - MQA在什么场景下值得质量折中?
+memory_points:
+- MHA各头独立K/V，MQA全头共享一对K/V，GQA分组共享K/V
+- 权衡：K/V头越少，显存和带宽占用越小，推理越快，但表达能力略降
+- 大模型选GQA：兼顾MHA的质量和MQA的速度，KV Cache减至1/G
+- 注意：训练和推理架构必须一致，MHA不能直接切GQA，需Uptraining
 ---
 
 # MHA、MQA、GQA三者有什么区别?为什么大模型倾向用GQA
@@ -96,3 +101,11 @@ GQA (分组共享 - G=2):
 1. **训练与推理一致性**：如果模型在训练时使用 MHA，推理时能否直接切换到 GQA/MQA？(不能，权重结构不同；需使用 Uptraining / Knowledge Distillation 进行对齐训练)。
 2. **性能瓶颈**：为什么减少 KV Cache 能提速？(解释 Compute-bound vs Memory-bound，大模型推理通常是 Memory-bound，减少访存量比减少计算量更关键)。
 3. **分组策略选择**：GQA 的分组数量 G 如何选取？(通常根据模型大小和 KV Cache 压缩率需求折中，如 40B 模型常用 G=8)。
+
+## 记忆要点
+
+- MHA各头独立K/V，MQA全头共享一对K/V，GQA分组共享K/V
+- 权衡：K/V头越少，显存和带宽占用越小，推理越快，但表达能力略降
+- 大模型选GQA：兼顾MHA的质量和MQA的速度，KV Cache减至1/G
+- 注意：训练和推理架构必须一致，MHA不能直接切GQA，需Uptraining
+

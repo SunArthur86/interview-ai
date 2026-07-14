@@ -26,6 +26,12 @@ follow_up:
 - DPO和PPO的区别？——DPO无需RM、无需在线采样，直接离线优化偏好
 - RLHF的Reward Model怎么训？——用人类偏好对（chosen/rejected）做排序学习
 - 基模强了还需要微调吗？——需要，但重点从知识注入转向行为对齐
+memory_points:
+- 迭代速度：SFT(单步闭环)快于RLHF(需训RM+PPO)，SFT适合快速试错
+- SFT破局点：重质量轻数量，几百条高质量数据优于万条普通数据
+- RLHF破局点：从人工标注转向自动反馈(如代码能否跑通)，用DPO简化流程
+- DPO优势：无需显式Reward Model，直接在偏好对上优化，工程落地简单
+- 基模变强：SFT靠数据蒸馏，RLHF靠规则验证(Verifiable Reward)
 ---
 
 # 【字节面经】SFT和RLHF哪个更适合快速迭代？在基模能力越来越强的情况下，这两者的破局点是什么？
@@ -96,3 +102,12 @@ SFT Pipeline:                    RLHF/DPO Pipeline:
 1. **DPO原理**：为什么DPO不需要训练单独的Reward Model？（DPO直接利用偏好数据优化策略，将Reward隐式地消解在策略比对中，推导自RL的目标函数）
 2. **Reward Hacking**：在RLHF训练中，模型学会欺骗Reward Model得分高但输出质量差，怎么破？（使用混合Reward：模型评分 + 规则约束 + 人工抽检）
 3. **数据规模效应**：在SFT中，为什么有时候增加数据反而效果变差？（数据质量分布不均，低质量数据污染了模型原有的通用能力，需严格数据清洗和课程学习Curriculum Learning）
+
+## 记忆要点
+
+- 迭代速度：SFT(单步闭环)快于RLHF(需训RM+PPO)，SFT适合快速试错
+- SFT破局点：重质量轻数量，几百条高质量数据优于万条普通数据
+- RLHF破局点：从人工标注转向自动反馈(如代码能否跑通)，用DPO简化流程
+- DPO优势：无需显式Reward Model，直接在偏好对上优化，工程落地简单
+- 基模变强：SFT靠数据蒸馏，RLHF靠规则验证(Verifiable Reward)
+

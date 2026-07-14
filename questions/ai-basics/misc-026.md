@@ -16,6 +16,11 @@ feynman:
 follow_up:
 - 语义分块如何实现?
 - Markdown文档如何结构化分块?
+memory_points:
+- 固定/递归分块简单但易截断语义；语义分块质量高但慢；结构化分块保留逻辑。
+- 最优策略：父子分块（Parent-Child），小块索引精准，大块生成上下文丰富。
+- 关键参数：chunk_size通常512-800，overlap设为10%-20%保连贯。
+- 实战：表格/代码块需特殊处理，避免截断；优先用Markdown结构切分。
 ---
 
 # RAG中的文档分块(Chunking)有哪些策略?如何选择最优策略
@@ -79,3 +84,11 @@ splitter = SemanticSplitterNodeParser(
 1. **Overlap 的副作用**：Overlap 会导致检索时同一个事实被多次包含，这是否会引起 LLM 的重复回答？(通常影响不大，但要注意)
 2. **Small-to-Big 策略**：除了 Parent-Child，还有检索 Sentence 索引但返回 Window 的做法，这和 Parent-Child 的区别是什么？(Parent-Child 粒度更大，Sentence 2 Window 更灵活)
 3. **RAG 中表格数据的处理**：上述文本分块策略对表格效果极差，如何处理？(需要将表格转为 Markdown 或 HTML 文本描述，或者使用多模态/专门的 Table Parsing)
+
+## 记忆要点
+
+- 固定/递归分块简单但易截断语义；语义分块质量高但慢；结构化分块保留逻辑。
+- 最优策略：父子分块（Parent-Child），小块索引精准，大块生成上下文丰富。
+- 关键参数：chunk_size通常512-800，overlap设为10%-20%保连贯。
+- 实战：表格/代码块需特殊处理，避免截断；优先用Markdown结构切分。
+

@@ -14,6 +14,11 @@ feynman:
 follow_up:
 - Self-Consistency如何提升CoT?
 - CoT在什么模型规模下才有效?
+memory_points:
+- CoT原理：让模型输出推理步骤再给答案，分解问题并利用更多计算。
+- Zero-shot CoT：加一句“Let's think step by step”，无需示例。
+- Few-shot CoT：提供带推理过程的示例，效果更好但耗Token。
+- 注意：CoT仅对大模型(>100B)有效，适用于逻辑推理，不适用于常识问答。
 ---
 
 # Chain-of-Thought (CoT) 提示的原理是什么?Zero-shot CoT vs Few-shot CoT有什么区别
@@ -86,3 +91,11 @@ A: Let's think step by step."""
 1. 如果CoT生成的推理路径很长导致超时或Token耗尽，有什么优化手段？（可以使用“Least-to-Most”提示策略将问题分解为子问题逐个解决，或者只输出关键推理步骤）
 2. 如何自动化验证CoT输出的推理过程是否正确？（可以引入程序解释器，如Code Interpreter/PAL，让模型生成代码来执行计算并验证结果，而非自然语言推理）
 3. Few-shot CoT中示例的选择对结果有什么影响？（示例的推理风格和逻辑结构需要与目标问题匹配。如果示例是数学推理，而问题是常识推理，模型可能会被误导。）
+
+## 记忆要点
+
+- CoT原理：让模型输出推理步骤再给答案，分解问题并利用更多计算。
+- Zero-shot CoT：加一句“Let's think step by step”，无需示例。
+- Few-shot CoT：提供带推理过程的示例，效果更好但耗Token。
+- 注意：CoT仅对大模型(>100B)有效，适用于逻辑推理，不适用于常识问答。
+

@@ -16,6 +16,11 @@ feynman:
 follow_up:
 - GRPO的组大小G如何选择?
 - GRPO为什么能涌现长链推理?
+memory_points:
+- GRPO用组内相对奖励替代Critic模型，省去Value网络显存
+- 优势计算：A_i = (r_i - mean(r)) / std(r)，通过组内归一化消除尺度差异
+- 相比PPO：显存更低（只需Policy和RM），训练更快，稳定性更好
+- 实战：组大小G需适中，过大会增加方差和成本，过小则基准不准
 ---
 
 # DeepSeek提出的GRPO算法是什么?相比PPO有什么优势
@@ -87,3 +92,11 @@ def compute_group_advantage(rewards):
 1. GRPO中的组大小 G 如何选择？太小或太大有什么影响？
 2. 对于确定性输出（如数学题），组内方差较小时，GRPO的梯度更新是否有效？
 3. GRPO相比其他不依赖Critic的算法（如REINFORCE）的核心改进点在哪里？
+
+## 记忆要点
+
+- GRPO用组内相对奖励替代Critic模型，省去Value网络显存
+- 优势计算：A_i = (r_i - mean(r)) / std(r)，通过组内归一化消除尺度差异
+- 相比PPO：显存更低（只需Policy和RM），训练更快，稳定性更好
+- 实战：组大小G需适中，过大会增加方差和成本，过小则基准不准
+

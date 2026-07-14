@@ -27,6 +27,12 @@ follow_up:
 - MCP和传统的API有什么区别？—— MCP是专为LLM设计的协议，包含语义描述和上下文管理，API只管数据传输
 - 一个MCP Server怎么开发？—— 用TypeScript/Python SDK，实现tools/resources/prompts三个handler，stdio或SSE传输
 - Skill能跨Agent平台使用吗？—— 目前不行，各平台Skill格式不同，MCP正在尝试标准化Skill层
+memory_points:
+- Tools：原子函数，JSON Schema定义，抽象层级最低，粒度细管理开销大。
+- Skills：高阶能力包，封装Prompt+工具链+流程，可复用可分享，抽象层级最高。
+- MCP：标准化传输协议，解耦Agent和工具，一次开发多端接入，抽象层级居中。
+- 关系：Skills编排Tools，MCP传输Tools/数据，实现真正的插件化。
+- 选型：简单调用用Tools，复用能力用Skills，通用服务接入选MCP。
 ---
 
 # 【字节面经】Skills、Tools、MCP三者的区别是什么？如果自己实现工具服务，选哪种方案？
@@ -113,3 +119,12 @@ async def handle_get_status() -> list[TextContent]:
     ┌─────▼─────┐                               ┌─────▼─────┐
     │ MCP Host  │                               │ MCP Host  │
     │ (Client)  │
+
+## 记忆要点
+
+- Tools：原子函数，JSON Schema定义，抽象层级最低，粒度细管理开销大。
+- Skills：高阶能力包，封装Prompt+工具链+流程，可复用可分享，抽象层级最高。
+- MCP：标准化传输协议，解耦Agent和工具，一次开发多端接入，抽象层级居中。
+- 关系：Skills编排Tools，MCP传输Tools/数据，实现真正的插件化。
+- 选型：简单调用用Tools，复用能力用Skills，通用服务接入选MCP。
+

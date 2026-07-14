@@ -16,6 +16,11 @@ feynman:
 follow_up:
 - 宪法原则如何设计?
 - CAI会不会引入AI偏见?
+memory_points:
+- 定义：用宪法原则指导AI自我修正，减少人工标注依赖。
+- 两阶段：SL-CAI(自我批评修正)与RL-CAI(AI生成偏好数据)。
+- 对比RLHF：CAI用AI评估(低成本/高一致)，RLHF用人工(高成本)。
+- 核心优势：价值观显式(宪法)，可扩展性强，Claude系列采用。
 ---
 
 # Constitutional AI (CAI)是什么?它和RLHF有什么区别
@@ -108,3 +113,11 @@ def generate_cai_response(prompt, model, constitution):
                           │ RL 训练 (PPO)      │
                           └───────────────────┘
 ```
+
+## 记忆要点
+
+- 定义：用宪法原则指导AI自我修正，减少人工标注依赖。
+- 两阶段：SL-CAI(自我批评修正)与RL-CAI(AI生成偏好数据)。
+- 对比RLHF：CAI用AI评估(低成本/高一致)，RLHF用人工(高成本)。
+- 核心优势：价值观显式(宪法)，可扩展性强，Claude系列采用。
+

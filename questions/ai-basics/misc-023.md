@@ -18,6 +18,11 @@ feynman:
 follow_up:
 - Attention Sink是什么?为什么 StreamingLLM需要它?
 - YaRN长度外推的原理?
+memory_points:
+- KV Cache优化：量化（INT4/8）、PagedAttention（分块）、Prefix Caching（共享）
+- Attention架构：Ring Attention（多机环形）、StreamingLLM（滑动窗口+Sink）
+- Ring Attention：支持1M+超长上下文，通过Ring All-Pass通信传递KV
+- 实战：长文本下调大vLLM的block_size至256可减少元数据开销
 ---
 
 # 处理100K+长上下文推理时,KV Cache和Attention如何优化
@@ -80,3 +85,11 @@ llm = LLM(
 1. **Attention Sink 的原理**：为什么丢弃中间 token 会导致生成崩塌，而保留开头几个 token 就能稳定输出？(Softmax 归一化特性)
 2. **PagedAttention 的计算复杂度**：在连续生成时，PagedAttention 相比传统显存管理在算子层面有哪些额外开销？(Block table 读取)
 3. **FlashAttention 的地位**：在长上下文优化中，FlashAttention (IO 意识) 是基础，其他策略主要解决的是显存容量和多卡扩展问题。
+
+## 记忆要点
+
+- KV Cache优化：量化（INT4/8）、PagedAttention（分块）、Prefix Caching（共享）
+- Attention架构：Ring Attention（多机环形）、StreamingLLM（滑动窗口+Sink）
+- Ring Attention：支持1M+超长上下文，通过Ring All-Pass通信传递KV
+- 实战：长文本下调大vLLM的block_size至256可减少元数据开销
+

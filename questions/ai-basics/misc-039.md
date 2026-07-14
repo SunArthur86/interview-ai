@@ -17,6 +17,12 @@ feynman:
 follow_up:
 - Projection Layer用线性层还是MLP好?
 - BLIP-2的Q-Former和LLaVA的Projection有什么区别?
+memory_points:
+- 架构三件套：CLIP ViT视觉编码器、投影层（MLP）、LLM（Vicuna/LLaMA）
+- 接入方式：图像经ViT编码，通过投影层映射到LLM Token维度，作为前缀输入
+- 训练两阶段：1.特征对齐（冻ViT/LLM，训投影层） 2.指令微调（训投影+LLM）
+- 为何有效：CLIP提供高质量语义特征，LLM提供强推理，简单MLP足矣
+- 实战优势：多模态理解（如表格结构）比传统CV方案更鲁棒，代码量少
 ---
 
 # LLaVA的架构是什么?它是如何将视觉信息接入LLM的
@@ -107,3 +113,12 @@ print(processor.decode(output[0], skip_special_tokens=True))
    人工标注多模态对话成本极高且质量难以保证。利用GPT-4将纯文本/图像数据转化为复杂的指令跟随数据，是一种高效的数据蒸馏策略。
 3. **视觉特征如何注入LLM？** 
    通常将视觉Token序列拼接到文本Token序列之前（或替换掉文本中的占位符<image>），让LLM将其作为上下文进行处理。
+
+## 记忆要点
+
+- 架构三件套：CLIP ViT视觉编码器、投影层（MLP）、LLM（Vicuna/LLaMA）
+- 接入方式：图像经ViT编码，通过投影层映射到LLM Token维度，作为前缀输入
+- 训练两阶段：1.特征对齐（冻ViT/LLM，训投影层） 2.指令微调（训投影+LLM）
+- 为何有效：CLIP提供高质量语义特征，LLM提供强推理，简单MLP足矣
+- 实战优势：多模态理解（如表格结构）比传统CV方案更鲁棒，代码量少
+

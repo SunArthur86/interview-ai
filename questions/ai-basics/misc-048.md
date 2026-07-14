@@ -18,6 +18,11 @@ feynman:
 follow_up:
 - BGE-M3的「三多」是什么意思?
 - Matryoshka Embedding如何实现维度可变?
+memory_points:
+- 中文首选：BGE-large-zh(精度)或BGE-M3(长文本/多语言)。
+- Cohere v3：多语言极强，适合长文本检索，API调用。
+- E5/GTE：通用性强，中英均衡，适合混合场景。
+- 实战：RAG推荐BGE-M3，混合检索(向量+BM25)效果更佳。
 ---
 
 # 如何选择Embedding模型?BGE、E5、Cohere各有什么特点?中文场景推荐什么
@@ -98,3 +103,11 @@ def hybrid_score(dense_score, bm25_score, alpha=0.7):
 
 **评估指标：**
 *   **MTEB (Massive Text Embedding Benchmark)**: 目前最权威的测评基准，涵盖检索、重排序、聚类等任务。
+
+## 记忆要点
+
+- 中文首选：BGE-large-zh(精度)或BGE-M3(长文本/多语言)。
+- Cohere v3：多语言极强，适合长文本检索，API调用。
+- E5/GTE：通用性强，中英均衡，适合混合场景。
+- 实战：RAG推荐BGE-M3，混合检索(向量+BM25)效果更佳。
+

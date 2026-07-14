@@ -24,6 +24,11 @@ follow_up:
 - RMSNorm 和 LayerNorm 的区别是什么？—— RMSNorm 去掉了均值中心化，只做方差归一化，计算量更少
 - SwiGLU 为什么比 GeLU 好？—— 门控机制让 FFN 有选择性传递信息，表达能力更强
 - Pre-Norm 和 Post-Norm 哪个训练更稳定？—— Pre-Norm 更稳定，但理论上 Post-Norm 上限更高
+memory_points:
+- 结构改进一：用 Pre-RMSNorm 替代后置 LayerNorm，因为梯度更稳定且计算更省时。
+- 结构改进二：采用无偏置设计叠加 RoPE 旋转位置编码，减少参数且支持长度外推。
+- 核心激活：FFN 层换用 SwiGLU，平滑且收敛快。
+- 训练贡献：验证 Scaling Law，以小参数+海量公开数据实现极高性价比并繁荣开源生态。
 ---
 
 # 【美团面经】说一下 LLaMA 的结构吧，它在结构和训练上都做了哪些贡献？
@@ -69,3 +74,11 @@ class SwiGLU(nn.Module):
 | **激活函数** | ReLU / GeLU | SwiGLU | SwiGLU (门控线性单元) 平滑性更好，收敛更快 |
 | **偏置项** | Linear 层含 Bias | 无 Bias (No Bias) | 减少 `d_model` 个参数，推理矩阵乘法略快 |
 | **FFN 结构** | 2x Expansion | ~2.67x Expansion (SwiGLU) | 参数量微增但性能提升显著（性价比高） |
+
+## 记忆要点
+
+- 结构改进一：用 Pre-RMSNorm 替代后置 LayerNorm，因为梯度更稳定且计算更省时。
+- 结构改进二：采用无偏置设计叠加 RoPE 旋转位置编码，减少参数且支持长度外推。
+- 核心激活：FFN 层换用 SwiGLU，平滑且收敛快。
+- 训练贡献：验证 Scaling Law，以小参数+海量公开数据实现极高性价比并繁荣开源生态。
+

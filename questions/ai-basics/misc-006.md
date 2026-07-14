@@ -18,6 +18,11 @@ feynman:
 follow_up:
 - 为什么中文在LLaMA中token效率低?
 - 如何评估一个Tokenizer的好坏?
+memory_points:
+- BPE按频率自底向上合并，WordPiece按似然合并，SentencePiece把空格当字符处理
+- 大模型倾向BPE/SentencePiece：子词覆盖好、多语言友好、无UNK且可逆
+- SentencePiece是框架，支持BPE/Unigram，统一处理空格解决多语言一致性问题
+- 实战：中文在未优化词表中效率低，需针对性优化词表或使用SentencePiece
 ---
 
 # BPE、WordPiece、SentencePiece分词算法有什么区别?为什么大模型多用BPE
@@ -106,3 +111,11 @@ def get_stats(vocab):
 2. **Tokenization Bias**：分词器的选择会影响模型的逻辑推理能力吗？(是的，数值、空格等处理方式的不同可能导致模型算术能力或代码能力的差异，如 LLaMA-2 对空格敏感)。
 3. **Unigram vs BPE**：T5 使用 Unigram 的原因是什么？(Unigram 基于概率模型剪枝，理论上能找到更优的子词切分组合)。
 4. **多字节字符**：对于 Emoji 或中文，BPE 的合并策略是怎样的？(通常是先在 Byte 层面合并，然后再在字符层面合并)。
+
+## 记忆要点
+
+- BPE按频率自底向上合并，WordPiece按似然合并，SentencePiece把空格当字符处理
+- 大模型倾向BPE/SentencePiece：子词覆盖好、多语言友好、无UNK且可逆
+- SentencePiece是框架，支持BPE/Unigram，统一处理空格解决多语言一致性问题
+- 实战：中文在未优化词表中效率低，需针对性优化词表或使用SentencePiece
+

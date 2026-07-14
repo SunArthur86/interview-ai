@@ -23,6 +23,11 @@ follow_up:
 - LLM-as-Judge有哪些偏差？如何校准？
 - 如何自动构建高质量的评测集？
 - 检索指标和生成指标冲突时如何取舍？
+memory_points:
+- 评测分三层：检索层（Recall/MRR）、生成层（Faithfulness/Relevancy）、端到端
+- Faithfulness衡量忠实度（反幻觉），Context Recall衡量检索是否漏掉关键信息
+- 构建Golden Set（200-500条）包含常见、边缘及对抗样本，用于回归测试
+- 集成CI/CD：设定阈值（如Recall@5>0.8），不达标阻断发布
 ---
 
 # 如何为RAG系统设计完整的评测体系？包括检索质量评测和生成质量评测。
@@ -90,3 +95,11 @@ def run_evaluation(dataset):
 1. 当人工标注成本有限时，如何利用"弱监督"或"主动学习"来扩充Golden Set并保证质量？
 2. RAGAS等框架计算Faithfulness的原理是基于NLI（自然语言推理），如果LLM本身推理能力不足，评测指标的可信度如何保证？
 3. 如何评测RAG系统在面对"不知道"问题时拒绝回答的能力？
+
+## 记忆要点
+
+- 评测分三层：检索层（Recall/MRR）、生成层（Faithfulness/Relevancy）、端到端
+- Faithfulness衡量忠实度（反幻觉），Context Recall衡量检索是否漏掉关键信息
+- 构建Golden Set（200-500条）包含常见、边缘及对抗样本，用于回归测试
+- 集成CI/CD：设定阈值（如Recall@5>0.8），不达标阻断发布
+

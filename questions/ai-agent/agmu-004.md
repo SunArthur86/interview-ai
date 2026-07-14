@@ -12,6 +12,11 @@ feynman:
   - Boss-Worker：动态图，并行派发
   - 混合：Boss定阶段，内部跑Pipeline
   - 差异：确定性 vs 灵活性
+memory_points:
+- 本质差异：Pipeline 是固定阶段顺序与数据转换；Boss-Worker 是动态任务分发。
+- 形象比喻：Pipeline 像工厂流水线（强依赖），Boss-Worker 像项目经理排期（弱依赖）。
+- 并行度：Pipeline 受限于最慢阶段（短板），Boss-Worker 易于水平扩展。
+- 避坑指南：简单线性任务用 Pipeline 更快，Boss-Worker 有调度开销。
 ---
 
 # Boss-Worker 和 Pipeline 有什么本质差异
@@ -88,3 +93,11 @@ nclass BossAgent:
 1. 在需要保证强事务性（ACID）的多步操作中（如先扣款再发货），Pipeline 和 Boss-Worker 哪个更容易实现？为什么？
 2. 如果 Boss 需要根据 Worker 的实时反馈动态调整后续策略（如 DAG 的动态剪枝），在设计上如何避免状态管理的混乱？
 3. 观察到 Boss Agent 变得非常“聪明”（调度逻辑极其复杂），这是否是一种反模式？如何通过架构演进来解决 Boss 过于沉重的问题？
+
+## 记忆要点
+
+- 本质差异：Pipeline 是固定阶段顺序与数据转换；Boss-Worker 是动态任务分发。
+- 形象比喻：Pipeline 像工厂流水线（强依赖），Boss-Worker 像项目经理排期（弱依赖）。
+- 并行度：Pipeline 受限于最慢阶段（短板），Boss-Worker 易于水平扩展。
+- 避坑指南：简单线性任务用 Pipeline 更快，Boss-Worker 有调度开销。
+

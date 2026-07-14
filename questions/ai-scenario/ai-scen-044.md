@@ -23,6 +23,12 @@ follow_up:
 - 如何减少LLM代码审查的误报率？
 - LLM审查与传统静态分析工具如何互补？
 - 如何处理大型PR的审查？
+memory_points:
+- 流程：Diff解析 → 静态分析 → LLM深度审查 → 报告生成。
+- 审查维度：静态工具查漏洞，LLM查逻辑Bug/边界条件/性能问题。
+- 上下文：AST解析跨文件依赖，历史PR上下文增强。
+- 效果优化：Few-shot注入历史Review，路径白名单过滤误报。
+- 集成：Pre-commit快速查，PR自动Review，Critical阻断合并。
 ---
 
 # 如何设计一个AI代码审查系统？自动检测PR中的Bug、安全漏洞和性能问题。
@@ -143,3 +149,12 @@ def review_pr(diff_context, file_path):
 1. **Diff上下文构建**：如何只获取变更相关代码而非整个文件，避免Token浪费。
 2. **长Diff处理**：当PR包含1000+行变更时，如何分块审查。
 3. **降低误报**：如何利用代码库的Git历史和开发者反馈来校准LLM的输出。
+
+## 记忆要点
+
+- 流程：Diff解析 → 静态分析 → LLM深度审查 → 报告生成。
+- 审查维度：静态工具查漏洞，LLM查逻辑Bug/边界条件/性能问题。
+- 上下文：AST解析跨文件依赖，历史PR上下文增强。
+- 效果优化：Few-shot注入历史Review，路径白名单过滤误报。
+- 集成：Pre-commit快速查，PR自动Review，Critical阻断合并。
+

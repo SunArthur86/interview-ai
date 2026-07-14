@@ -14,6 +14,11 @@ feynman:
   - 通过Prompt指令要求模型不确定时拒答
   - 调整采样温度降低输出的随机性
   - 利用后处理或第二模型进行事实核查
+memory_points:
+- 幻觉原因：数据错误、过度泛化、知识时效性、Prompt 模糊。
+- 解决方案：RAG（提供外部知识）、Prompt 约束（不知道/引用）、RLHF/DPO（对齐）。
+- 解码策略：降低 Temperature，调整 Top_p，Constrained Decoding（限制候选集）。
+- 检测方法：LogProbs 分析（置信度低），Self-Check（自问自答），后处理事实核查。
 ---
 
 # 如何处理LLM的幻觉（Hallucination）问题？
@@ -101,3 +106,11 @@ feynman:
 1. **RAG 一定比 Fine-tuning 更能减少幻觉吗？**：RAG 适合事实性知识，Fine-tuning 适合学习格式和风格。对于训练数据中固有的错误，RAG 的外部检索能纠正，而 FT 可能会加剧。
 2. **如何检测模型幻觉？**：除了后处理，还有如 LogProbs 分析（模型对生成内容的置信度是否很低）、Self-Check（模型自问自答验证）等方法。
 3. **Temperature 设置为 0 是否能完全消除幻觉？**：不能，它只是消除了随机性，模型依然可能基于错误的先验知识生成确定性的错误内容。
+
+## 记忆要点
+
+- 幻觉原因：数据错误、过度泛化、知识时效性、Prompt 模糊。
+- 解决方案：RAG（提供外部知识）、Prompt 约束（不知道/引用）、RLHF/DPO（对齐）。
+- 解码策略：降低 Temperature，调整 Top_p，Constrained Decoding（限制候选集）。
+- 检测方法：LogProbs 分析（置信度低），Self-Check（自问自答），后处理事实核查。
+

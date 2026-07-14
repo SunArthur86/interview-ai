@@ -24,6 +24,12 @@ follow_up:
 - 如何处理嘈杂环境下的语音识别？
 - 端侧部署ASR/TTS有哪些技术选型？
 - 语音Agent如何管理多轮对话的上下文？
+memory_points:
+- 核心链路：VAD检测(50ms) → 流式ASR(200ms) → LLM首字(300ms) → TTS首包(200ms)。
+- 状态机：IDLE → LISTENING → THINKING → SPEAKING，支持Barge-in打断。
+- 技术选型：ASR用Whisper/Paraformer，TTS选CosyVoice流式合成。
+- 延迟控制：边说边转，边合成边播，全链路控制在1秒内。
+- 实战难点：噪音环境用双阈值VAD，动态调整灵敏度防误触。
 ---
 
 # 如何设计一个实时语音AI助手？支持语音输入、实时对话、语音输出，延迟控制在1秒以内。
@@ -117,3 +123,12 @@ def process_audio_chunk(chunk: np.ndarray, current_state: str):
             ▼                         ▼
        ┌─────────┐              ┌──────────┐
        │  IDLE   │              │INTERRUPTED│ (停止
+
+## 记忆要点
+
+- 核心链路：VAD检测(50ms) → 流式ASR(200ms) → LLM首字(300ms) → TTS首包(200ms)。
+- 状态机：IDLE → LISTENING → THINKING → SPEAKING，支持Barge-in打断。
+- 技术选型：ASR用Whisper/Paraformer，TTS选CosyVoice流式合成。
+- 延迟控制：边说边转，边合成边播，全链路控制在1秒内。
+- 实战难点：噪音环境用双阈值VAD，动态调整灵敏度防误触。
+

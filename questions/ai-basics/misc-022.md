@@ -19,6 +19,11 @@ feynman:
 follow_up:
 - 草稿模型如何选择?
 - Eagle和Medusa有什么区别?
+memory_points:
+- 核心思想：小模型快速草稿，大模型并行验证
+- 加速原理：将串行生成转为并行验证，利用Tree Masking
+- 加速比：理论5-6x，实际2-3x，受接受率限制
+- 实战：开启Temperature会降低命中率，建议验证用Greedy
 ---
 
 # Speculative Decoding的原理是什么?为什么能加速2-3倍
@@ -82,3 +87,11 @@ def get_tree_mask(batch_size, seq_len, k):
 1. **接受率与 Speculation Number ($k$) 的关系**：$k$ 越大吞吐越高，但接受率通常会下降，如何平衡？(一般 $k=5\sim10$)
 2. **Tree Attention 的具体实现**：如何在 CUDA Kernel 层面高效实现 Tree Mask 以避免显存碎片？
 3. **非自回归模型的区别**：Speculative Decoding 本质上还是自回归的，只是利用了并行验证，这与完全非自回归（如 Non-Autoregressive Transformer）有何本质不同？
+
+## 记忆要点
+
+- 核心思想：小模型快速草稿，大模型并行验证
+- 加速原理：将串行生成转为并行验证，利用Tree Masking
+- 加速比：理论5-6x，实际2-3x，受接受率限制
+- 实战：开启Temperature会降低命中率，建议验证用Greedy
+

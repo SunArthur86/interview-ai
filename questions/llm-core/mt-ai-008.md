@@ -24,6 +24,11 @@ follow_up:
 - Qwen 和 LLaMA 架构有什么区别？—— Qwen 用 GQA（1.5起），LLaMA-2 用 MHA，LLaMA-3 才用 GQA
 - Qwen 的训练数据有多大？—— Qwen-2.5 约 18T tokens
 - Qwen-VL 是怎么做多模态的？—— ViT 编码图像 + 适配层对齐到语言空间
+memory_points:
+- Qwen1筑基(双语强)，1.5换代GQA(省显存)，2代破壁128K(多语言)，2.5全能成SOTA
+- 架构演进：MHA转GQA减少KV Cache，通信效率提升30%
+- 长度演进：32K外推 -> YaRN+DCA算法外推128K -> 原生全长训练128K
+- Qwen2.5质变核心：喂入18T海量Token，并衍生Coder/Math专精垂直版本
 ---
 
 # 【美团面经】串一下 Qwen 系列，几版模型都做了哪些贡献？
@@ -110,3 +115,11 @@ outputs = llm.generate(["你好，请介绍一下北京的景点。"], sampling_
 | **Qwen-1.5** | **GQA** | 32K | ↓ ~30% (KV Cache) | 通信效率大幅提升，推理快 |
 | **Qwen-2** | GQA | 128K | 持平 (但在长文本下更优) | 多语言，YaRN 外推算法 |
 | **Qwen-2.5** | GQA | 128K | 微调 (FP8/量化支持更好) | 数学/代码全能，18T 数据训练 |
+
+## 记忆要点
+
+- Qwen1筑基(双语强)，1.5换代GQA(省显存)，2代破壁128K(多语言)，2.5全能成SOTA
+- 架构演进：MHA转GQA减少KV Cache，通信效率提升30%
+- 长度演进：32K外推 -> YaRN+DCA算法外推128K -> 原生全长训练128K
+- Qwen2.5质变核心：喂入18T海量Token，并衍生Coder/Math专精垂直版本
+

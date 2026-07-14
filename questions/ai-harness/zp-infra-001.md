@@ -23,6 +23,10 @@ follow_up:
 - SmoothQuant 为什么能平滑？—— 激活异常值集中在少数 channel，通过缩放因子 s 把激活的异常值'转移'到权重端
 - AWQ 和 GPTQ 哪个精度更好？—— 通常 AWQ 略优，因为考虑了激活信息；GPTQ 纯权重补偿更通用
 - per-tensor/channel/group 哪个最细？—— group 最细（如 group_size=128），channel 次之，tensor 最粗
+memory_points:
+- SmoothQuant：Per-channel/tensor。数学等价变换，将激活难度迁移至权重，适合W8A8。
+- AWQ：Per-group。保留1%显著权重为FP16，其余INT4量化，激活感知，推理快。
+- GPTQ：Per-column。基于Hessian二阶信息补偿权重误差，纯INT4，精度高。
 ---
 
 # 【智谱Infra面经】按照量化粒度说明一下 SmoothQuant、AWQ、GPTQ 分别是什么粒度的？它们的作用流程是什么？
@@ -82,3 +86,10 @@ def smooth_quant_transform(activation, weight, alpha=0.5):
 1. **追问**：GPTQ 和 AWQ 在推理时有什么区别？（答：GPTQ 通常需要在线反量化，或者需要特定的 Dequant Kernel；AWQ 往往通过保留部分 FP16 权重简化了推理 Kernel 实现，实际推理吞吐量 AWQ 往往更有优势）。
 2. **追问**：SmoothQuant 中的 alpha 参数通常取多少？（答：通常取 0.5，表示激活值和权重各承担一半的量化难度，不同模型可能需要微调）。
 3. **追问**：Per-channel 和 Per-token 量化的区别是什么？（答：Per-channel 是对权重矩阵的每一列/行单独定 Scale；Per-token 是对每一个 Token 的激活值单独定 Scale。Per-channel 训练前/后均可，Per-tensor 仅能训练后；Per-token 推理计算开销大但精度高）。
+
+## 记忆要点
+
+- SmoothQuant：Per-channel/tensor。数学等价变换，将激活难度迁移至权重，适合W8A8。
+- AWQ：Per-group。保留1%显著权重为FP16，其余INT4量化，激活感知，推理快。
+- GPTQ：Per-column。基于Hessian二阶信息补偿权重误差，纯INT4，精度高。
+

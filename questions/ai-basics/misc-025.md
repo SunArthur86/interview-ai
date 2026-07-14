@@ -19,6 +19,11 @@ feynman:
 follow_up:
 - 如何评估RAG系统效果?
 - RAG和长上下文(Long Context)如何取舍?
+memory_points:
+- RAG流程：Query改写 -> 向量检索 -> Rerank重排 -> Prompt构造 -> LLM生成。
+- 优势：知识实时更新、减少幻觉、答案可溯源、无需微调成本低。
+- 核心挑战：检索质量（需混合检索）、分块策略（父子分块）、多跳推理、Lost in the Middle现象。
+- 解法：引入CoT提示分析相关文档，或使用Reranker精排Top-K以提升准确率。
 ---
 
 # RAG的基本流程是什么?相比纯LLM有什么优势?核心挑战有哪些
@@ -93,3 +98,11 @@ compression_retriever = ContextualCompressionRetriever(
 - **## 常见考点**
 1. **RAG 与 Fine-tuning 如何选择**？(RAG 适合事实性、动态知识；Fine-tuning 适合语言风格、指令遵循、领域内隐知识)
 2. **混合检索 (Hybrid Search)**：关键词检索 (BM25) 与 向量检索 如何加权？(Reciprocal Rank Fusion, RRF 算法)
+
+## 记忆要点
+
+- RAG流程：Query改写 -> 向量检索 -> Rerank重排 -> Prompt构造 -> LLM生成。
+- 优势：知识实时更新、减少幻觉、答案可溯源、无需微调成本低。
+- 核心挑战：检索质量（需混合检索）、分块策略（父子分块）、多跳推理、Lost in the Middle现象。
+- 解法：引入CoT提示分析相关文档，或使用Reranker精排Top-K以提升准确率。
+

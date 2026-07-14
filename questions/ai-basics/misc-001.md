@@ -16,6 +16,11 @@ feynman:
 follow_up:
 - 为什么除以√d_k?--防止点积过大导致softmax梯度消失
 - Multi-Head Attention的作用?--不同head学习不同子空间的注意力模式
+memory_points:
+- 定义：序列中每个位置直接关注所有其他位置，计算加权求和。
+- 对比RNN：Self-Attention并行计算，长距离依赖O(1)；RNN串行，依赖O(N)。
+- 复杂度：Self-Attention为O(N²·d)，RNN为O(N·d²)。
+- 优势：并行度高，捕捉长距离信息能力强，注意力权重可解释。
 ---
 
 # Transformer中的Self-Attention机制是什么?为什么比RNN更高效
@@ -69,3 +74,11 @@ input_tensor = torch.randn(10, 2, 512)
 model = SelfAttention(embed_dim=512, num_heads=8)
 output = model(input_tensor)
 ```
+
+## 记忆要点
+
+- 定义：序列中每个位置直接关注所有其他位置，计算加权求和。
+- 对比RNN：Self-Attention并行计算，长距离依赖O(1)；RNN串行，依赖O(N)。
+- 复杂度：Self-Attention为O(N²·d)，RNN为O(N·d²)。
+- 优势：并行度高，捕捉长距离信息能力强，注意力权重可解释。
+

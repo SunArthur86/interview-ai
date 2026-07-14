@@ -14,6 +14,11 @@ feynman:
   - 权衡维度大小与存储/检索成本
   - 根据算力选择API或本地部署
   - 长文档场景注意Context Window长度
+memory_points:
+- 选型维度：语言支持（中文选BGE）、维度权衡（精度vs速度）、上下文长度
+- 混合检索：Dense（向量语义）+ Sparse（关键词BM25）互补，效果最佳
+- 评估标准：参考MTEB排行榜Retrieval任务，而非总榜
+- 实战建议：通用选OpenAI，中文选BGE系列，长文档选支持8k长度的模型
 ---
 
 # 如何选择Embedding模型？
@@ -82,3 +87,11 @@ ensemble_retriever = EnsembleRetriever(
     将向量模长变为 1，使得相似度计算简化为点积，且便于使用余弦相似度进行空间度量，消除文本长度对相似度分数的影响。
 3.  **如何评估 Embedding 是否适合我的数据？**
     构造一个包含“Query-正文档-负文档”的小规模测试集，计算 Recall@k 或 MRR 指标进行实测。
+
+## 记忆要点
+
+- 选型维度：语言支持（中文选BGE）、维度权衡（精度vs速度）、上下文长度
+- 混合检索：Dense（向量语义）+ Sparse（关键词BM25）互补，效果最佳
+- 评估标准：参考MTEB排行榜Retrieval任务，而非总榜
+- 实战建议：通用选OpenAI，中文选BGE系列，长文档选支持8k长度的模型
+

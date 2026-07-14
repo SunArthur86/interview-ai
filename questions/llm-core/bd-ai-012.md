@@ -26,6 +26,12 @@ follow_up:
 - Function Calling和RAG能同时用吗？——可以，Agent自主决定调哪个
 - RAG的检索效果怎么评估？——Recall@K + MRR + 人工标注准确率
 - 向量数据库选型？——Milvus(大规模)/Qdrant(轻量)/Pinecone(托管)
+memory_points:
+- 核心区别：FC调API获实时/结构化数据，RAG检索文档获离线/非结构化知识
+- 选型标准：需实时数据/执行操作(查库发邮件)用FC；需领域知识/私有文档用RAG
+- 数据流：FC是Query→API→JSON→LLM；RAG是Query→向量检索→Context→LLM
+- RAG关键：Embedding转向量，向量库做语义检索，非关键词匹配
+- 实战：静态知识(公积金)用RAG，个性化鉴权数据(年假)必须用FC
 ---
 
 # 【字节面经】Function Calling与RAG的区别和联系是什么？什么时候用Function Calling，什么时候用RAG？
@@ -112,3 +118,12 @@ User Query                       User Query
 1. **参数缺失**：如果Function Call需要的参数用户没给，是直接报错还是反问用户？（策略：反问用户补充信息，不要自己瞎编参数）
 2. **多跳查询**：RAG中遇到复杂问题需要多次检索才能回答，如何设计？（Agent推理链路：Answer A -> Question B -> Retrieve B -> Synthesize）
 3. **时效性差异**：RAG适合解决时效性问题吗？（不适合，除非向量库更新频率极高，否则实时数据还是得靠Function Calling）
+
+## 记忆要点
+
+- 核心区别：FC调API获实时/结构化数据，RAG检索文档获离线/非结构化知识
+- 选型标准：需实时数据/执行操作(查库发邮件)用FC；需领域知识/私有文档用RAG
+- 数据流：FC是Query→API→JSON→LLM；RAG是Query→向量检索→Context→LLM
+- RAG关键：Embedding转向量，向量库做语义检索，非关键词匹配
+- 实战：静态知识(公积金)用RAG，个性化鉴权数据(年假)必须用FC
+

@@ -22,6 +22,10 @@ follow_up:
 - 如何计算训练的理论MFU？
 - 通信-计算overlap具体怎么实现？
 - Gradient Checkpoint的代价是什么？
+memory_points:
+- OOM诊断：显存=模型+优化器(2x)+梯度+激活+KV。解法用ZeRO-3切片、Checkpoint换显存、SP切分序列。
+- 低MFU诊断：算力Bound查Kernel利用率，内存Bound查HBM带宽。解法通信Overlap、算子融合、IO加速。
+- Hang诊断：设NCCL_DEBUG=INFO查通信，用py-spy抓堆栈。常见死锁或IB网卡MTU不一致。
 ---
 
 # 大模型训练中如何诊断OOM、低MFU和hang？常用的Profiler工具有哪些？
@@ -104,3 +108,10 @@ train_loader = DataLoader(
 | **PyTorch Profiler** | 整体性能瓶颈分析 | CPU Time, CUDA Time, Memory Usage |
 | **Nsight Systems (nsys)** | 系统级时间线可视化 | Kernel Stream, CUDA memcpy, NCCL Call gap |
 | **Nsight Compute (ncu)** | Kernel 级别深度分析 | Tensor Core Utilization, Memory Throughput |
+
+## 记忆要点
+
+- OOM诊断：显存=模型+优化器(2x)+梯度+激活+KV。解法用ZeRO-3切片、Checkpoint换显存、SP切分序列。
+- 低MFU诊断：算力Bound查Kernel利用率，内存Bound查HBM带宽。解法通信Overlap、算子融合、IO加速。
+- Hang诊断：设NCCL_DEBUG=INFO查通信，用py-spy抓堆栈。常见死锁或IB网卡MTU不一致。
+

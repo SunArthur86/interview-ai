@@ -16,6 +16,11 @@ feynman:
 follow_up:
 - DeepNorm如何解决Post-Norm的稳定性问题?
 - 为什么Post-Norm在浅层模型中效果更好?
+memory_points:
+- RMSNorm优势：去中心化计算，速度快且大模型训练更稳。
+- Pre-Norm：先Norm再残差，梯度传得稳，支持深模型。
+- Post-Norm：先残差后Norm，深层易梯度消失，训练难。
+- 实战：LLaMA用RMSNorm+Pre-Norm解决Loss震荡问题。
 ---
 
 # 为什么LLaMA用RMSNorm而不是LayerNorm?Pre-Norm和Post-Norm有什么区别
@@ -87,3 +92,11 @@ class RMSNorm(nn.Module):
                                             │             (残差连接)           │
                                             └───────────────────────────────┘
 ```
+
+## 记忆要点
+
+- RMSNorm优势：去中心化计算，速度快且大模型训练更稳。
+- Pre-Norm：先Norm再残差，梯度传得稳，支持深模型。
+- Post-Norm：先残差后Norm，深层易梯度消失，训练难。
+- 实战：LLaMA用RMSNorm+Pre-Norm解决Loss震荡问题。
+

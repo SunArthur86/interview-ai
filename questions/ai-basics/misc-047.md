@@ -16,6 +16,11 @@ feynman:
 follow_up:
 - 蒸馏和量化的区别?
 - 如何选择Teacher模型?
+memory_points:
+- 硬标签：One-hot，信息量少，仅含正确答案。
+- 软标签：概率分布，含暗知识(类间相似度)，需温度T平滑。
+- 蒸馏核心：用教师软标签(KL散度)指导学生模型学习。
+- 实战：大模型蒸馏需防幻觉，常混合硬软标签训练。
 ---
 
 # 知识蒸馏在大模型中如何应用?软标签和硬标签的区别是什么
@@ -103,3 +108,11 @@ def distillation_loss(student_logits, teacher_logits, labels, temperature=5.0, a
     # 3. 加权融合
     return alpha * soft_loss + (1.0 - alpha) * hard_loss
 ```
+
+## 记忆要点
+
+- 硬标签：One-hot，信息量少，仅含正确答案。
+- 软标签：概率分布，含暗知识(类间相似度)，需温度T平滑。
+- 蒸馏核心：用教师软标签(KL散度)指导学生模型学习。
+- 实战：大模型蒸馏需防幻觉，常混合硬软标签训练。
+

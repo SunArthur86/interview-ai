@@ -17,6 +17,12 @@ feynman:
 follow_up:
 - Function Calling和JSON Mode有什么区别?
 - 如何处理模型输出不合法JSON的情况?
+memory_points:
+- 核心方法：优先用Function Calling或JSON Mode，通用法用Prompt+Schema
+- Prompt三要素：XML标签分隔、提供Schema、明确只输出JSON
+- 参数设置：温度设为0，预留足够max_tokens防止截断
+- 后处理鲁棒性：正则提取JSON块，用json5容错解析，Pydantic校验
+- Few-shot作用：复杂结构给示例比单纯描述Schema更有效
 ---
 
 # 如何设计结构化Prompt确保LLM稳定输出JSON?有哪些最佳实践
@@ -112,3 +118,12 @@ def robust_json_parse(text: str):
 1. **追问**：如果业务要求必须输出特定的嵌套 JSON 结构（如包含中文字段名），如何保证稳定输出？
 2. **追问**：在流式输出场景下，如何实时校验和解析不完整的 JSON 片段而不阻塞响应？
 3. **追问**：对比 `json5` 和 `lark` 解析器，在处理 LLM 输出时的容错能力有何区别？
+
+## 记忆要点
+
+- 核心方法：优先用Function Calling或JSON Mode，通用法用Prompt+Schema
+- Prompt三要素：XML标签分隔、提供Schema、明确只输出JSON
+- 参数设置：温度设为0，预留足够max_tokens防止截断
+- 后处理鲁棒性：正则提取JSON块，用json5容错解析，Pydantic校验
+- Few-shot作用：复杂结构给示例比单纯描述Schema更有效
+

@@ -27,6 +27,12 @@ follow_up:
 - Copilot的补全有时会"跑偏"，怎么提高准确率？—— 用注释引导意图、保持函数签名清晰、用@引用相关文件
 - Cursor的Codebase索引和纯RAG有什么区别？—— Cursor结合AST+嵌入检索，能理解import关系和调用链
 - 如何评估一个AI编程工具的ROI？—— 从编码效率提升、Bug率变化、Onboarding时间缩短三个维度量化
+memory_points:
+- Copilot：行级/函数级补全，IDE深度集成，适合写样板代码和API调用。
+- Cursor：全文件/多文件编辑，支持Codebase索引，适合重构和理解代码库。
+- Claude Code：CLI Agent，自主执行命令和测试，适合环境搭建和批量修复。
+- Web Chat：适合架构设计、技术选型和Debug思路探讨，思考型任务。
+- 选型：补全用Copilot，重构用Cursor，自主任务用Claude Code，设计用Web。
 ---
 
 # 【字节面经】平常用什么AI编程工具？各自的特点和使用场景是什么？
@@ -92,3 +98,12 @@ Rules:
 | **离线性** | 部分支持 | 否 | 否 | 否 |
 
 **实践心得：** 工具不是越多越好。日常80%时间用Cursor（编辑+对话）+ Copilot（补全），遇到复杂批量任务才启动Claude Code。关键在于建立"AI工具肌肉记忆"——每个工具的快捷键、引用语法、上下文边界都要熟练，才能在编码心流中无缝切换。
+
+## 记忆要点
+
+- Copilot：行级/函数级补全，IDE深度集成，适合写样板代码和API调用。
+- Cursor：全文件/多文件编辑，支持Codebase索引，适合重构和理解代码库。
+- Claude Code：CLI Agent，自主执行命令和测试，适合环境搭建和批量修复。
+- Web Chat：适合架构设计、技术选型和Debug思路探讨，思考型任务。
+- 选型：补全用Copilot，重构用Cursor，自主任务用Claude Code，设计用Web。
+

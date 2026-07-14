@@ -28,6 +28,12 @@ follow_up:
 - Agent的上下文压缩会丢失信息，怎么缓解？—— 用结构化记忆（如Hermes的memories/）保存关键事实，不依赖对话窗口
 - 多Agent系统如何共享记忆？—— 用共享Memory Store（如向量数据库）或MCP Memory Server
 - Claude Code的自动摘要质量如何保证？—— 用专门的summarization prompt + 保留关键代码块和决策点
+memory_points:
+- 记忆：Claude Code自动摘要压缩，Hermes结构化JSON记忆，OpenClaw事件溯源。
+- 工具：Claude Code MCP集成最深，Hermes Skill编排最强，OpenClaw Plugin最灵活。
+- 上下文：Claude Code自动去重压缩，Hermes检索注入，OpenClaw全量日志。
+- 差异：Claude Code无缝但细节丢失，Hermes精确检索适合回溯，OpenClaw适合审计。
+- 策略：长任务需注意上下文窗口限制，利用Resume或Profile隔离管理会话。
 ---
 
 # 【字节面经】对比OpenClaw/Hermes/Claude Code等Agent框架，从记忆机制、工具调用、上下文管理三个维度分析。
@@ -116,3 +122,12 @@ def build_context(query: str, session_id: str):
         "history": history
     }
 ```
+
+## 记忆要点
+
+- 记忆：Claude Code自动摘要压缩，Hermes结构化JSON记忆，OpenClaw事件溯源。
+- 工具：Claude Code MCP集成最深，Hermes Skill编排最强，OpenClaw Plugin最灵活。
+- 上下文：Claude Code自动去重压缩，Hermes检索注入，OpenClaw全量日志。
+- 差异：Claude Code无缝但细节丢失，Hermes精确检索适合回溯，OpenClaw适合审计。
+- 策略：长任务需注意上下文窗口限制，利用Resume或Profile隔离管理会话。
+

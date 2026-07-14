@@ -23,6 +23,10 @@ follow_up:
 - FP4 和 INT4 精度差多少？—— FP4 通常精度损失 <1-2%，INT4 可能 3-5%
 - per-block 32 怎么选的？—— 平衡压缩率和精度，32 是 Blackwell 硬件原生支持的 block size
 - NVFP4 推理比 INT8 快多少？—— 理论 2x（数据搬运减半），实际依赖 kernel 实现
+memory_points:
+- NVFP4原理：1符号+2指数+1尾数，动态范围±448，比INT4更优。
+- 缩放机制：Per-block缩放，每32个元素共享一个FP8 Scale，在最后一维缩放。
+- 保存格式：权重存FP4，额外存FP8 Scale表 [M, N/32]，反量化相乘还原。
 ---
 
 # 【智谱Infra面经】NVFP4 的原理是什么？怎么做缩放的？在哪个维度缩放？保存的格式是什么？
@@ -112,3 +116,10 @@ def pack_fp4_blocks(weight_matrix):
 1. **FP4 的 E2M1 编码具体包含哪些数值？**（特别是特殊值 Inf/NaN 的处理）
 2. **为什么选择 per-block (32) 而不是 per-channel 或 per-tensor？**（精度与显存开销的平衡）
 3. **FP8 缩放因子本身是否需要反量化？**（通常在计算单元内部直接使用 FP8 计算，无需转为 FP32）
+
+## 记忆要点
+
+- NVFP4原理：1符号+2指数+1尾数，动态范围±448，比INT4更优。
+- 缩放机制：Per-block缩放，每32个元素共享一个FP8 Scale，在最后一维缩放。
+- 保存格式：权重存FP4，额外存FP8 Scale表 [M, N/32]，反量化相乘还原。
+

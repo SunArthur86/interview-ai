@@ -14,6 +14,11 @@ feynman:
 follow_up:
 - GRPO和PPO有什么区别?
 - RLHF可能引入什么偏见?
+memory_points:
+- RLHF三阶段：SFT学会对话格式 -> RM训练打分模型 -> PPO强化学习对齐
+- PPO需4个模型（Policy/Value/RM/Ref），显存大且难调参，易Reward Hacking
+- DPO直接优化偏好数据，利用闭式解隐去Reward模型，只需Policy和Ref
+- DPO优势：显存减半、训练稳、无需采样交互，是目前主流对齐方案
 ---
 
 # RLHF的完整流程是什么?为什么需要它?PPO和DPO有什么区别
@@ -110,3 +115,11 @@ def dpo_loss(policy_chosen_logps, policy_rejected_logps,
     
     return loss, acc
 ```
+
+## 记忆要点
+
+- RLHF三阶段：SFT学会对话格式 -> RM训练打分模型 -> PPO强化学习对齐
+- PPO需4个模型（Policy/Value/RM/Ref），显存大且难调参，易Reward Hacking
+- DPO直接优化偏好数据，利用闭式解隐去Reward模型，只需Policy和Ref
+- DPO优势：显存减半、训练稳、无需采样交互，是目前主流对齐方案
+

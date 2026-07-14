@@ -16,6 +16,11 @@ feynman:
 follow_up:
 - Chinchilla最优比例对数据准备有什么指导?
 - 涌现能力是真实的还是评估假象?
+memory_points:
+- 涌现能力：模型规模超临界阈值后突然出现的思维链、上下文学习等能力
+- Scaling Law：性能与算力、参数量、数据量呈幂律关系
+- Chinchilla定律：最优训练Token数约为参数量的20倍，重视数据量
+- 实战：端侧模型常采用Long Chinchilla策略，用更多数据训练小模型以提升上限
 ---
 
 # 大模型的涌现能力(Emergent Abilities)是什么?Scaling Law如何指导模型训练
@@ -104,3 +109,11 @@ def estimate_loss(params, tokens, a=1.8, b=0.6):
 # 预测：7B 模型训练 2T tokens 的 Loss
 print(f"Estimated Loss: {estimate_loss(7e9, 2e12):.4f}")
 ```
+
+## 记忆要点
+
+- 涌现能力：模型规模超临界阈值后突然出现的思维链、上下文学习等能力
+- Scaling Law：性能与算力、参数量、数据量呈幂律关系
+- Chinchilla定律：最优训练Token数约为参数量的20倍，重视数据量
+- 实战：端侧模型常采用Long Chinchilla策略，用更多数据训练小模型以提升上限
+

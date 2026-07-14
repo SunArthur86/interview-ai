@@ -13,6 +13,12 @@ feynman:
   - 补全向量检索的信息损失
   - 牺牲速度换取精度
   - 流程：粗排召回 → 精排截断
+memory_points:
+- Rerank 是“先召回后精排”的两阶段架构，弥补向量检索的信息损失。
+- Bi-Encoder 追求速度（独立编码），Cross-Encoder 追求精度（交互计算）。
+- Rerank 仅处理 Top-100，性价比极高，是锦上添花而非雪中送炭。
+- 核心对比：向量检索适合海量捞取，Rerank 适合精准排序 Top-K。
+- 注意截断策略和空输入处理，避免超长文本报错或异常降级。
 ---
 
 # 什么是Reranking？为什么RAG需要它？
@@ -95,4 +101,12 @@ sorted_docs = [doc for _, doc in sorted(zip(scores, candidates), reverse=True)]
 1.  如果用户 Query 非常简短（如“苹果”），而 Reranker 模型因为没有上下文导致打分置信度普遍不高，你会怎么优化检索链路？（提示：结合 Query Expansion 或 HyDE）
 2.  在高并发场景下，Reranker 模型是 CPU 计算密集型，你会如何做推理加速或架构优化？（提示：量化 int8、批处理、独立 GPU 服务部署）
 3.  除了精度，Reranker 在处理“否定意图”时有什么天然优势？能否举例说明？
+
+## 记忆要点
+
+- Rerank 是“先召回后精排”的两阶段架构，弥补向量检索的信息损失。
+- Bi-Encoder 追求速度（独立编码），Cross-Encoder 追求精度（交互计算）。
+- Rerank 仅处理 Top-100，性价比极高，是锦上添花而非雪中送炭。
+- 核心对比：向量检索适合海量捞取，Rerank 适合精准排序 Top-K。
+- 注意截断策略和空输入处理，避免超长文本报错或异常降级。
 

@@ -23,6 +23,11 @@ follow_up:
 - INT4量化对生成质量影响有多大？
 - AWQ如何确定哪些权重是「重要」的？
 - QAT和PTQ在实际中如何选择？
+memory_points:
+- GPTQ：基于二阶信息的 PTQ，INT4 精度好，通用性强，但推理有解码开销。
+- AWQ：激活感知量化，保留 1% 关键通道为 FP16，推理速度优于 GPTQ。
+- SmoothQuant：将激活难度迁移至权重，解决异常值问题，适合 INT8。
+- FP8：H100 原生支持，无需软件模拟，量化误差最小，依赖硬件。
 ---
 
 # 模型量化方法对比：GPTQ vs AWQ vs FP8 vs SmoothQuant，各有什么优缺点？
@@ -109,3 +114,11 @@ def scale_weights(layer, activation_scale):
 | **显存占用 (70B)** | ~40GB (INT4) | ~42GB (INT4 mix FP16) | ~80GB (INT8) | ~45GB (FP8) |
 | **推理速度** | 中 (需Dequant) | 快 (Simulated Group Gemm) | 快 (Native INT8) | 最快 (Native FP8) |
 | **抗异常值能力** | 弱 (容易 outliers) | 强 (Scale化解) | 强 (Smooth迁移) | 强 (FP8动态范围) |
+
+## 记忆要点
+
+- GPTQ：基于二阶信息的 PTQ，INT4 精度好，通用性强，但推理有解码开销。
+- AWQ：激活感知量化，保留 1% 关键通道为 FP16，推理速度优于 GPTQ。
+- SmoothQuant：将激活难度迁移至权重，解决异常值问题，适合 INT8。
+- FP8：H100 原生支持，无需软件模拟，量化误差最小，依赖硬件。
+

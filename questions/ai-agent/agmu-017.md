@@ -14,6 +14,10 @@ feynman:
   - 集成：交互逻辑测试
   - 端到端：整体任务成功率
   - 防偏：LLM-as-judge需黄金集校准
+memory_points:
+- 评估分层进行：单元测单 Agent，集成测交互，E2E 测任务成功率。
+- 配合 LLM-as-a-judge 和 Golden Set，防偏见。
+- Tracing 可视化全链路，定位 Token 消耗与中间状态。
 ---
 
 # 多 Agent 的评估怎么做
@@ -104,3 +108,10 @@ def run_with_timeout_and_loop_check(step_func: Callable, max_steps: int = 20) ->
 1. 如果 E2E 评估显示成功率下降，但单元测试都通过了，你会怎么排查？（提示：关注 Agent 间的交互损耗和上下文传递噪声）。
 2. 如何构建高质量的 Golden Set？除了人工标注，有没有自动化生成并清洗测试数据的方法？
 3. 在资源受限的情况下（如只有 GPT-3.5 可用做裁判），如何保证评估的客观性？
+
+## 记忆要点
+
+- 评估分层进行：单元测单 Agent，集成测交互，E2E 测任务成功率。
+- 配合 LLM-as-a-judge 和 Golden Set，防偏见。
+- Tracing 可视化全链路，定位 Token 消耗与中间状态。
+

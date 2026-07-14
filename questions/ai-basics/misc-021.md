@@ -17,6 +17,11 @@ feynman:
 follow_up:
 - 为什么Temperature=0不等于确定性输出?
 - repetition_penalty如何影响生成质量?
+memory_points:
+- Temperature：控制随机性，低T确定（代码），高T创意（写作）
+- Top-k：截断低概率噪声，固定候选集大小（如k=40）
+- Top-p：动态截断长尾，保证累积概率质量（如p=0.9）
+- 组合建议：T+Top-p最常用，代码用T=0.1，创意用T=0.7
 ---
 
 # Temperature、Top-p、Top-k采样策略各自的作用?如何组合使用
@@ -119,3 +124,11 @@ def sample_with_strategy(logits, temperature=0.7, top_k=40, top_p=0.9):
   1. 为什么在代码生成或数学推理任务中，单纯的Greedy Search（Temperature=0）往往不如Temperature=0.1效果更好？
   2. Min-P采样是近年来提出的新策略，它与Top-p有何本质区别，为何在处理某些模型的“白板”问题时效果更好？
   3. 在Speculative Decoding（投机采样）场景下，Draft Model和Target Model的采样策略参数（如Temperature）是否必须保持一致，为什么？
+
+## 记忆要点
+
+- Temperature：控制随机性，低T确定（代码），高T创意（写作）
+- Top-k：截断低概率噪声，固定候选集大小（如k=40）
+- Top-p：动态截断长尾，保证累积概率质量（如p=0.9）
+- 组合建议：T+Top-p最常用，代码用T=0.1，创意用T=0.7
+

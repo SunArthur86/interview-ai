@@ -17,6 +17,12 @@ feynman:
 follow_up:
 - System Prompt应该多长?
 - 如何版本管理Prompt?
+memory_points:
+- 设计框架CREATE：Context背景、Role职责、Examples示例、Rules规则
+- 关键原则：具体>模糊，正面指令>负面指令，结构化Markdown组织
+- 指令技巧：Let's think step by step激发思维链，专家角色激活领域知识
+- 易错点：指令过载（不超过3-5条核心），避免过多负面暗示
+- 长Prompt处理：核心Identity保留，规则可用检索提取，每轮重注
 ---
 
 # System Prompt设计的最佳实践是什么?如何设计有效的角色和约束
@@ -83,3 +89,12 @@ follow_up:
 1. **追问**：在长上下文场景下，如何保证 System Prompt 的核心指令在 128k 甚至更长的窗口后依然有效？
 2. **追问**：如果要设计一个“通用型”Agent 的 System Prompt，如何平衡“通用性”和“特定任务的表现力”？
 3. **追问**：你提到“Let's think step by step”，在什么场景下这种 CoT（思维链）提示反而会降低模型性能？
+
+## 记忆要点
+
+- 设计框架CREATE：Context背景、Role职责、Examples示例、Rules规则
+- 关键原则：具体>模糊，正面指令>负面指令，结构化Markdown组织
+- 指令技巧：Let's think step by step激发思维链，专家角色激活领域知识
+- 易错点：指令过载（不超过3-5条核心），避免过多负面暗示
+- 长Prompt处理：核心Identity保留，规则可用检索提取，每轮重注
+

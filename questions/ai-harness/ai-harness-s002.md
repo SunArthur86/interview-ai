@@ -14,6 +14,11 @@ feynman:
   - Decode阶段访存密集，逐Token生成受限于显存带宽
   - Prefill决定首字延迟(TTFT)，Decode决定生成速度(TPOT)
   - 优化需针对不同阶段的瓶颈分别采取措施
+memory_points:
+- 两阶段对比：Prefill并行算KV密集（决定TTFT），Decode串行读KV受限（决定TPOT）。
+- 计算瓶颈对比：Prefill吃算力做O(N^2)矩阵乘，Decode吃显存带宽做大Cache读取。
+- 优化策略口诀：Pre用FlashAttn分块算，Dec靠量化投机采样，混批调靠vLLM连续批处理。
+- 长上下文避坑：Prompt极长时Prefill耗时O(N^2)激增，TTFT可能远超Decode时间。
 ---
 
 # LLM推理的Prefill和Decode阶段有什么区别？
@@ -89,3 +94,11 @@ def profile_phase(stage, input_ids, past_kv=None):
    **纠正**：在极长上下文（如 1M tokens）场景下，Prefill 的计算量 $O(N^2)$ 会变得极其巨大，此时 TTFT 可能长达数十秒，甚至超过整个 Decode 阶段的时间。
 2. **误区**：Batch Size 越大，推理吞吐量一定线性增加。
    **纠正**：在 Decode 阶段，过大的 Batch Size 可能导致 KV Cache 占用过多显存，触发 OOM 或者频繁的内存碎片整理；同时，如果 Batch 内各序列长度差异巨大，计算会受限于最长的序列，导致 Padding 浪费。
+
+## 记忆要点
+
+- 两阶段对比：Prefill并行算KV密集（决定TTFT），Decode串行读KV受限（决定TPOT）。
+- 计算瓶颈对比：Prefill吃算力做O(N^2)矩阵乘，Decode吃显存带宽做大Cache读取。
+- 优化策略口诀：Pre用FlashAttn分块算，Dec靠量化投机采样，混批调靠vLLM连续批处理。
+- 长上下文避坑：Prompt极长时Prefill耗时O(N^2)激增，TTFT可能远超Decode时间。
+

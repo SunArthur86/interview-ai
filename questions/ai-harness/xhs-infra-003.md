@@ -22,6 +22,11 @@ follow_up:
 - ZeRO-3和FSDP有什么区别？
 - 3D Parallelism中DP/TP/PP如何配比？
 - 如何诊断训练中的通信瓶颈？
+memory_points:
+- ZeRO-1：分片 Optimizer States，节省 4 倍显存，通信开销同 DP。
+- ZeRO-2：增加分片 Gradients，节省 8 倍显存，通信开销略增。
+- ZeRO-3：增加分片 Parameters，节省 N 倍显存，通信开销大增。
+- ZeRO-3 缓解：通信计算重叠、3D 并行组合、CPU Offload、NCCL 参数调优。
 ---
 
 # DeepSpeed ZeRO-1/2/3的区别是什么？ZeRO-3的通信瓶颈如何缓解？
@@ -86,3 +91,11 @@ ZeRO（Zero Redundancy Optimizer）通过分片消除数据并行中的冗余。
 | **显存节省** | 极致（支持 CPU/NVME Offload） | 一般（依赖模型并行切分） | 高（支持 Offload） |
 | **通信模式** | All-Gather / Reduce-Scatter | All-Reduce (TP内) | All-Gather / Reduce-Scatter |
 | **适用场景** | 超大规模模型单卡/多卡训练 | 推理极致性能或特定训练架构 | PyTorch 生态原生迁移 |
+
+## 记忆要点
+
+- ZeRO-1：分片 Optimizer States，节省 4 倍显存，通信开销同 DP。
+- ZeRO-2：增加分片 Gradients，节省 8 倍显存，通信开销略增。
+- ZeRO-3：增加分片 Parameters，节省 N 倍显存，通信开销大增。
+- ZeRO-3 缓解：通信计算重叠、3D 并行组合、CPU Offload、NCCL 参数调优。
+

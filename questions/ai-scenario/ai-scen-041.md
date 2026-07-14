@@ -23,6 +23,12 @@ follow_up:
 - 如何确保AI筛选不存在性别/年龄歧视？
 - 简历格式多样性如何处理？
 - 如何衡量筛选系统的效果？
+memory_points:
+- 流程：简历解析(LayoutLM/LLM) → JD建模 → 规则过滤 → 语义匹配。
+- 解析方案：LayoutLMv3微调为主，LLM辅助校验，正则淘汰。
+- 匹配引擎：硬性条件(学历/年限)漏斗过滤 + Embedding语义匹配。
+- 实体对齐：构建技能图谱，解决AWS与Amazon Web Services归一。
+- 易错点：关键词匹配需防Java包含JavaScript误判。
 ---
 
 # 如何设计一个AI简历筛选系统？日均处理10000+简历，自动匹配岗位要求。
@@ -133,3 +139,12 @@ def is_qualified(resume_json, jd_requirements):
     │   Scoring & Rank │
     └──────────────────┘
 ```
+
+## 记忆要点
+
+- 流程：简历解析(LayoutLM/LLM) → JD建模 → 规则过滤 → 语义匹配。
+- 解析方案：LayoutLMv3微调为主，LLM辅助校验，正则淘汰。
+- 匹配引擎：硬性条件(学历/年限)漏斗过滤 + Embedding语义匹配。
+- 实体对齐：构建技能图谱，解决AWS与Amazon Web Services归一。
+- 易错点：关键词匹配需防Java包含JavaScript误判。
+

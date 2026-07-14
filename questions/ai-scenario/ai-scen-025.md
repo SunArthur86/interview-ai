@@ -23,6 +23,12 @@ follow_up:
 - 端侧1.5B模型能胜任哪些任务？
 - 如何平衡模型大小和电池消耗？
 - 端侧部署的数据隐私优势如何量化？
+memory_points:
+- 核心约束：内存受限（4-8GB），需INT4量化（1.5B模型约800MB）+KV Cache清理防OOM。
+- 推理框架：iOS首选Core ML（ANE加速），Android选MediaPipe/MLC-LLM，跨平台选llama.cpp。
+- 端云协同：隐私/简单任务端侧，复杂/耗电任务上云；基于Prompt复杂度动态路由。
+- 性能优化：滑动窗口分段摘要、Speculative Decoding加速、内存映射按需加载。
+- 关键指标：iPhone 15 Pro跑1.5B INT4，内存约1GB，速度15-20 tokens/s。
 ---
 
 # 如何设计端侧LLM部署方案？在手机或IoT设备上运行大语言模型。
@@ -140,4 +146,12 @@ def decide_route(prompt: str, context: dict):
 | **MLC LLM** | TVM生态，编译优化极深 | iOS/Android/Web | Vulkan/Metal/OpenGL | MLC格式 (需编译) |
 | **MediaPipe** | Google官方，集成度高 | Android/iOS/Web | GPU/NPU | TFLite (有限) |
 | **Core ML** | Apple生态原生性能 | iOS/macOS | ANE (NPU) | Core ML模型 |
+
+## 记忆要点
+
+- 核心约束：内存受限（4-8GB），需INT4量化（1.5B模型约800MB）+KV Cache清理防OOM。
+- 推理框架：iOS首选Core ML（ANE加速），Android选MediaPipe/MLC-LLM，跨平台选llama.cpp。
+- 端云协同：隐私/简单任务端侧，复杂/耗电任务上云；基于Prompt复杂度动态路由。
+- 性能优化：滑动窗口分段摘要、Speculative Decoding加速、内存映射按需加载。
+- 关键指标：iPhone 15 Pro跑1.5B INT4，内存约1GB，速度15-20 tokens/s。
 

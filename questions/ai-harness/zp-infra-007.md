@@ -22,6 +22,11 @@ follow_up:
 - 为什么 FlashAttention 能加速？—— 不是算得更快，而是减少了 HBM 读写次数
 - online softmax 怎么做的？—— 分块计算时维护 running max 和 running sum，逐步归一化
 - FlashAttention 反向传播怎么工作？—— 不存 attention matrix，反向时用存的 softmax 统计量重算
+memory_points:
+- 核心原理：Tiling分块计算+Online Softmax，避免读写HBM，将显存从O(N²)降至O(N)
+- v1重计算：前向不存Attention矩阵，反向重算以换空间，解决显存瓶颈
+- v2优化：调整线程块与并行策略，减少非Matmul计算，提升算力利用率
+- v3特性：利用H100的TMA异步搬运与FP8 Tensor Core，实现计算与传输重叠
 ---
 
 # 【智谱Infra面经】FlashAttention 的核心原理是什么？v1/v2/v3 各有什么改进？
@@ -89,3 +94,11 @@ def flash_attn_impl(q, k, v):
 1. **Online Softmax 是如何实现的？为什么需要两遍 Pass？**（第一遍计算 max，第二遍计算 sum 和 exp，保证数值稳定性）
 2. **FlashAttention 是如何利用 Softmax 的数学特性进行分块归约的？**（Softmax 是可分解的行归约操作）
 3. **v2 相比 v1 调整了线程块策略是为了解决什么问题？**（v1 并行度不足导致算力利用率不高，v2 通过调整 Tiling 策略提升并行度）
+
+## 记忆要点
+
+- 核心原理：Tiling分块计算+Online Softmax，避免读写HBM，将显存从O(N²)降至O(N)
+- v1重计算：前向不存Attention矩阵，反向重算以换空间，解决显存瓶颈
+- v2优化：调整线程块与并行策略，减少非Matmul计算，提升算力利用率
+- v3特性：利用H100的TMA异步搬运与FP8 Tensor Core，实现计算与传输重叠
+

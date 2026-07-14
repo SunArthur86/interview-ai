@@ -14,6 +14,11 @@ feynman:
   - 提供Few-shot示例引导模型模仿
   - 使用思维链(CoT)提升复杂推理能力
   - 加入负面约束防止模型幻觉
+memory_points:
+- 基础技巧：角色设定、任务分解、Few-shot（示例多样性）、输出格式约束、CoT。
+- 高级技巧：Self-Consistency（多数投票）、ToT（树状探索）、ReAct（推理+行动）。
+- 工程实践：Prompt 模板化管理（Git），A/B 测试，结构化输出（JSON Mode/Pydantic）。
+- 注意事项：CoT 适合复杂推理但增加延迟，简单任务慎用；Few-shot 样本需动态检索。
 ---
 
 # LLM应用的Prompt工程有哪些最佳实践？
@@ -71,3 +76,11 @@ feynman:
 1. **如何处理 Prompt 越界问题？**：System Prompt 和 User Prompt 的优先级是如何处理的（通常 System 优先级最高，但部分模型可通过特定 Prompt 注入覆盖）。
 2. **Few-shot 学习的样本选择策略？**：如何通过 Embedding 相似度从向量库中动态检索最相关的 Examples，而不是静态写死。
 3. **CoT 的局限性？**：在闭集任务中显式推理有时反而会引入噪音，如何判断何时该用 CoT。
+
+## 记忆要点
+
+- 基础技巧：角色设定、任务分解、Few-shot（示例多样性）、输出格式约束、CoT。
+- 高级技巧：Self-Consistency（多数投票）、ToT（树状探索）、ReAct（推理+行动）。
+- 工程实践：Prompt 模板化管理（Git），A/B 测试，结构化输出（JSON Mode/Pydantic）。
+- 注意事项：CoT 适合复杂推理但增加延迟，简单任务慎用；Few-shot 样本需动态检索。
+

@@ -14,6 +14,11 @@ feynman:
 follow_up:
 - Naive RAG vs RAG-Fusion如何处理长上下文?
 - 为什么注意力会集中在开头和结尾?
+memory_points:
+- 现象：U型曲线，模型易忽略长上下文中间信息。
+- 原因：注意力机制偏向首尾，类似人类首因/近因效应。
+- 缓解：重排(重要放两头)、文档压缩、结构化Prompt。
+- 实战：检索Top-K文档用XML标签分隔，显式提示关注中间。
 ---
 
 # 为什么LLM存在「Lost in the Middle」问题?如何缓解
@@ -99,3 +104,11 @@ Instruction: Please check ALL documents, especially the middle ones, before answ
 Answer:"""
     return prompt
 ```
+
+## 记忆要点
+
+- 现象：U型曲线，模型易忽略长上下文中间信息。
+- 原因：注意力机制偏向首尾，类似人类首因/近因效应。
+- 缓解：重排(重要放两头)、文档压缩、结构化Prompt。
+- 实战：检索Top-K文档用XML标签分隔，显式提示关注中间。
+

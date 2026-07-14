@@ -16,6 +16,11 @@ feynman:
 follow_up:
 - 为什么示例顺序影响这么大?
 - 如何自动选择最优示例?
+memory_points:
+- ICL原理：从Prompt示例中学习模式，无需梯度更新，类似KNN检索。
+- 示例选择策略：随机(基线)、相似度(常用)、多样性、投票。
+- 关键点：示例顺序影响大，3-5个效果最好，格式必须一致。
+- Self-Consistency：多路径生成+多数投票，可提升准确率5-15%。
 ---
 
 # In-Context Learning (ICL) 的原理是什么?Few-shot示例如何选择
@@ -92,3 +97,11 @@ def select_few_shot_examples(query, corpus_embeddings, k=3):
 1. 当Context Window长度有限，无法塞入很多示例时，如何在ICL效率和效果间平衡？（可以考虑使用模型压缩或转向Instruction Tuning模型；或者在ICL中使用PEFT如LoRA来微调小模型以替代长示例）
 2. ICL中的“Recitation”现象是什么？模型是否会死记硬背示例？（如果示例列表很长，模型可能会通过注意力机制直接从Context中“复制”答案而不是进行泛化推理，这被称为Recitation，削弱了泛化能力）
 3. 如何利用反向思维进行ICL？（提供输入和错误输出，让模型解释原因并修正，这在纠错类任务中往往比正向示例更有效。）
+
+## 记忆要点
+
+- ICL原理：从Prompt示例中学习模式，无需梯度更新，类似KNN检索。
+- 示例选择策略：随机(基线)、相似度(常用)、多样性、投票。
+- 关键点：示例顺序影响大，3-5个效果最好，格式必须一致。
+- Self-Consistency：多路径生成+多数投票，可提升准确率5-15%。
+

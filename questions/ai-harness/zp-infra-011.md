@@ -23,6 +23,11 @@ follow_up:
 - KV Cache 从 CPU 换回 GPU 有多快？—— PCIe 4.0 约 64GB/s，1M token KV（~10GB）约 0.15s
 - 怎么监控 Agent Serving 健康？—— P99 延迟、KV 命中率、GPU 利用率、队列深度
 - 如何处理突发流量？—— 请求排队 + 优先级调度 + 自动扩缩 GPU 实例
+memory_points:
+- 调度策略：Prefill/Decode分离，长上下文用专用Prefill节点，避免阻塞Decode
+- KV管理：Radix Tree共享System Prompt前缀，分层存储（GPU热数据+CPU冷数据）
+- 多模态处理：图片通过VLM编码，特征存入KV Cache或独立索引
+- 负载均衡：基于请求长度和计算量动态调度，优先保证高并发短请求的SLA
 ---
 
 # 【智谱Infra面经】设计一个支持 1M 上下文 + 多模态的高并发 Agent Serving 系统，如何处理调度、KV 管理和负载均衡？
@@ -99,3 +104,11 @@ else:
 1. **Iterative Scheduling 相比 Continuous Batching 的优势？**（Continuous Batching 需等整个 batch 内最慢的请求完成步进，Iterative 可让完成的请求先出，更适合长短不一的 1M 场景）
 2. **如何处理 1M 长度下的 Attention 计算延迟？**（使用 Ring Attention 或 Block Sparse Attention，如 Longformer 架构）
 3. **多模态特征占用的显存通常比文本大多少？如何优化？**（图片特征通常维度高且序列长，可使用 Feature Linear Projection 或 VQ-VAE 进行压缩量化）
+
+## 记忆要点
+
+- 调度策略：Prefill/Decode分离，长上下文用专用Prefill节点，避免阻塞Decode
+- KV管理：Radix Tree共享System Prompt前缀，分层存储（GPU热数据+CPU冷数据）
+- 多模态处理：图片通过VLM编码，特征存入KV Cache或独立索引
+- 负载均衡：基于请求长度和计算量动态调度，优先保证高并发短请求的SLA
+

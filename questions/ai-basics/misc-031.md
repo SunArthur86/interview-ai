@@ -19,6 +19,11 @@ feynman:
 follow_up:
 - 如何减少RAG的幻觉?
 - Faithfulness如何自动计算?
+memory_points:
+- Ragas核心指标：Context Precision(查准)、Context Recall(查全)、Faithfulness(忠实度)、Answer Relevancy(相关)。
+- Faithfulness：答案陈述是否被Context支持，防幻觉。
+- Context Recall：标准答案信息是否在Context中找到，防漏检。
+- 评估流程：RAG输出 -> LLM-as-a-Judge -> 打分。无需人工标注但需注意评估模型偏见。
 ---
 
 # 如何评估RAG系统的质量?Ragas框架的核心指标有哪些
@@ -115,3 +120,11 @@ print(result.to_pandas())
 1. 在没有Ground Truth的情况下，如何计算Context Recall？（Ragas使用一种基于“上下文充分性”的启发式方法，让LLM判断Context是否足够回答问题，但这不是标准的Recall；或者利用LLM生成参考答案来模拟GT）
 2. 如果RAG系统的上下文窗口有限，导致Context被截断，会主要影响哪个指标？（主要影响Context Recall，因为相关文档可能被截断；同时也可能影响Faithfulness，因为依据缺失导致模型被迫幻觉）
 3. 除了Ragas，如何进行端到端的用户满意度评估？（引入人工反馈RLHF，或根据用户点击率、点赞率等隐性指标构建Human Preference Metrics）
+
+## 记忆要点
+
+- Ragas核心指标：Context Precision(查准)、Context Recall(查全)、Faithfulness(忠实度)、Answer Relevancy(相关)。
+- Faithfulness：答案陈述是否被Context支持，防幻觉。
+- Context Recall：标准答案信息是否在Context中找到，防漏检。
+- 评估流程：RAG输出 -> LLM-as-a-Judge -> 打分。无需人工标注但需注意评估模型偏见。
+

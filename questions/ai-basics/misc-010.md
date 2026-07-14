@@ -16,6 +16,11 @@ feynman:
 follow_up:
 - LoRA为什么用零初始化的高斯初始化?
 - QLoRA的NF4量化为什么比INT4好?
+memory_points:
+- LoRA冻结原权重W，旁路加低秩矩阵BA，h=Wx+BAx，r通常取4-64
+- 参数量：2×d×r，相比全量微调极大减少，推理时可合并回W无开销
+- 初始化：A随机初始化，B初始化为0，保证训练初始行为不变
+- QLoRA改进：4-bit NF4量化、双重量化、分页优化器，单卡微调70B模型
 ---
 
 # LoRA的原理是什么?rank r 如何选择?QLoRA做了什么改进
@@ -106,3 +111,11 @@ class LoRALinear(nn.Module):
         # Y = Wx + BAx * scaling
         return self.linear(x) + self.lora_up(self.lora_down(x)) * self.scaling
 ```
+
+## 记忆要点
+
+- LoRA冻结原权重W，旁路加低秩矩阵BA，h=Wx+BAx，r通常取4-64
+- 参数量：2×d×r，相比全量微调极大减少，推理时可合并回W无开销
+- 初始化：A随机初始化，B初始化为0，保证训练初始行为不变
+- QLoRA改进：4-bit NF4量化、双重量化、分页优化器，单卡微调70B模型
+

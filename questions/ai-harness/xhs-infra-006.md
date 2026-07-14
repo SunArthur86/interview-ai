@@ -22,6 +22,11 @@ follow_up:
 - 如何判断一个Kernel是memory-bound还是compute-bound？
 - shared memory tiling的大小如何选择？
 - MoE模型的router kernel有什么特殊优化？
+memory_points:
+- 内存优化：Coalescing 合并访问，Shared Memory Tiling 分块复用，Padding 消除 Bank Conflict。
+- Tensor Core：使用 WMMA API，要求 FP16/BF16 输入和 FP32 累加，数据布局需对齐。
+- 流水线：Double Buffering 异步加载，隐藏内存延迟，掩盖数据传输时间。
+- 性能分析：用 Roofline 模型判断是 Memory Bound 还是 Compute Bound，对症下药。
 ---
 
 # CUDA Kernel优化：如何写一个高效的GEMM（矩阵乘法）？bank conflict和Tensor Core如何优化？
@@ -124,3 +129,11 @@ __global__ void wmma_gemm(half *A, half *B, float *C, int M, int N, int K) {
 | **编程复杂度** | 低 | 中 (需手动Tiling/Unroll) | 高 (需特定数据布局/Alignment) |
 | **主要瓶颈** | Latency | Shared Memory Bandwidth / Bank Conflict | Register File Bandwidth |
 | **适用算子** | Element-wise, Reduction | 卷积, 小矩阵乘法 | 大矩阵乘法 (GEMM), Attention QKV |
+
+## 记忆要点
+
+- 内存优化：Coalescing 合并访问，Shared Memory Tiling 分块复用，Padding 消除 Bank Conflict。
+- Tensor Core：使用 WMMA API，要求 FP16/BF16 输入和 FP32 累加，数据布局需对齐。
+- 流水线：Double Buffering 异步加载，隐藏内存延迟，掩盖数据传输时间。
+- 性能分析：用 Roofline 模型判断是 Memory Bound 还是 Compute Bound，对症下药。
+

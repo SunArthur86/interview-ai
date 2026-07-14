@@ -25,6 +25,11 @@ follow_up:
 - DPO 和 PPO 的区别？—— DPO 无需 RM、无需在线采样，直接离线优化偏好
 - SFT 数据怎么构建？—— 人工标注 + 强模型蒸馏 + Self-Instruct
 - 为什么需要安全对齐？—— 防止越狱攻击、有害内容、隐私泄露
+memory_points:
+- 核心链路：SFT（指令微调）建立格式，接着训练奖励模型，最后用 RLHF 做人类对齐。
+- SFT 细节：数据质量重于数量，核心是让模型听懂指令并严格遵循输出格式。
+- RLHF vs DPO：因为 RLHF 训练极度复杂且不稳，所以 DPO 免去 RM 直接偏好优化成高性价比首选。
+- 进阶演进：DeepSeek-R1 跳过 SFT 直接进行强化学习，验证了纯 RL 激发深度推理的潜力。
 ---
 
 # 【美团面经】说一说大模型后训练（Post-training）的流程？
@@ -86,3 +91,11 @@ def dpo_loss(policy_chosen_logps, policy_rejected_logps, ref_chosen_logps, ref_r
 | **显存占用** | 极高（需存储多模型副本及 Rollout 缓存） | 较低（仅相当于 SFT） |
 | **训练稳定性** | 较差（超参数敏感，易 KL 散度发散） | 较好（本质是分类优化） |
 | **效果** | SOTA天花板（OpenAI 路线） | 接近 RLHF，性价比首选 |
+
+## 记忆要点
+
+- 核心链路：SFT（指令微调）建立格式，接着训练奖励模型，最后用 RLHF 做人类对齐。
+- SFT 细节：数据质量重于数量，核心是让模型听懂指令并严格遵循输出格式。
+- RLHF vs DPO：因为 RLHF 训练极度复杂且不稳，所以 DPO 免去 RM 直接偏好优化成高性价比首选。
+- 进阶演进：DeepSeek-R1 跳过 SFT 直接进行强化学习，验证了纯 RL 激发深度推理的潜力。
+

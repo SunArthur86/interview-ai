@@ -13,6 +13,11 @@ feynman:
   - MSE假设高斯噪声，适合回归任务
   - Cross-Entropy导数简单，避免梯度消失
   - 分类本质是概率分布匹配，故用交叉熵
+memory_points:
+- MSE：用于回归，假设误差高斯分布，梯度随误差减小而变慢。
+- 交叉熵：用于分类，基于最大似然估计，梯度与误差成正比，收敛快。
+- 关键区别：分类不用MSE是因为Sigmoid导数会导致梯度消失，CE抵消了该影响。
+- 实战：LLM训练本质是超大规模多分类，必须使用Cross-Entropy。
 ---
 
 # 交叉熵损失和均方误差有什么区别？什么时候用哪个？
@@ -74,3 +79,11 @@ loss = ce_loss(logits, class_targets)
 1. **为什么Cross-Entropy比MSE收敛快？**（答：MSE梯度包含导数项，导致平坦区；CE梯度与误差线性相关）
 2. **Hinge Loss vs Cross-Entropy？**（答：SVM用Hinge Loss关注支持向量（最大间隔），CE关注概率校准；CE更适合概率输出，Hinge适合硬分类）
 3. **二分类用Sigmoid还是Softmax？**（答：数学上等价，Softmax是Sigmoid的归一化形式；多分类必须用Softmax）
+
+## 记忆要点
+
+- MSE：用于回归，假设误差高斯分布，梯度随误差减小而变慢。
+- 交叉熵：用于分类，基于最大似然估计，梯度与误差成正比，收敛快。
+- 关键区别：分类不用MSE是因为Sigmoid导数会导致梯度消失，CE抵消了该影响。
+- 实战：LLM训练本质是超大规模多分类，必须使用Cross-Entropy。
+
